@@ -1,0 +1,14 @@
+{
+    "version": 2,
+    "configurePresets": [
+        {
+            "name": "emsdk",
+            "displayName": "Emscripten Multi-Config",
+            "binaryDir": "${sourceDir}/build",
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+            }
+        }
+    ]
+}

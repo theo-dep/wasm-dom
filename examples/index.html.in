@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Example @EXAMPLE_TITLE@</title>
+</head>
+
+<body>
+    <div id="root">
+        Waiting for wasm-dom to replace this node.
+    </div>
+</body>
+
+<script src="@EXAMPLE_TARGET@"></script>
+
+</html>
