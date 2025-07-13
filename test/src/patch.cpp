@@ -12,7 +12,7 @@
 using namespace wasmdom;
 
 int refCount = 1;
-bool refCallback(emscripten::val node)
+bool refCallback(emscripten::val /*node*/)
 {
     ++refCount;
     return true;
@@ -907,18 +907,18 @@ TEST_CASE("patch", "[patch]")
                               h(std::string("span"), std::string("5")) });
         VNode* vnode2 = h("span",
                           Children{
-                              NULL,
+                              nullptr,
                               h(std::string("span"), std::string("2")),
-                              NULL,
-                              NULL,
+                              nullptr,
+                              nullptr,
                               h(std::string("span"), std::string("1")),
                               h(std::string("span"), std::string("0")),
-                              NULL,
+                              nullptr,
                               h(std::string("span"), std::string("5")),
                               h(std::string("span"), std::string("4")),
-                              NULL,
+                              nullptr,
                               h(std::string("span"), std::string("3")),
-                              NULL });
+                              nullptr });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
@@ -946,12 +946,12 @@ TEST_CASE("patch", "[patch]")
                               h(std::string("span"), std::string("5")) });
         VNode* vnode2 = h("span",
                           Children{
-                              NULL,
-                              NULL,
-                              NULL,
-                              NULL,
-                              NULL,
-                              NULL });
+                              nullptr,
+                              nullptr,
+                              nullptr,
+                              nullptr,
+                              nullptr,
+                              nullptr });
         VNode* vnode3 = h("span",
                           Children{
                               h(std::string("span"), std::string("5")),
@@ -1287,26 +1287,26 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode1 = h("i",
                           Children{
-                              NULL,
+                              nullptr,
                               h(std::string("i"), std::string("1")),
                               h(std::string("i"), std::string("2")),
-                              NULL });
+                              nullptr });
         VNode* vnode2 = h("i",
                           Children{
                               h(std::string("i"), std::string("2")),
-                              NULL,
-                              NULL,
+                              nullptr,
+                              nullptr,
                               h(std::string("i"), std::string("1")),
-                              NULL });
+                              nullptr });
         VNode* vnode3 = h("i",
                           Children{
-                              NULL,
+                              nullptr,
                               h(std::string("i"), std::string("1")),
-                              NULL,
-                              NULL,
+                              nullptr,
+                              nullptr,
                               h(std::string("i"), std::string("2")),
-                              NULL,
-                              NULL });
+                              nullptr,
+                              nullptr });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
@@ -1333,8 +1333,8 @@ TEST_CASE("patch", "[patch]")
                               h(std::string("i"), std::string("2")) });
         VNode* vnode2 = h("i",
                           Children{
-                              NULL,
-                              NULL });
+                              nullptr,
+                              nullptr });
         VNode* vnode3 = h("i",
                           Children{
                               h(std::string("i"), std::string("2")),

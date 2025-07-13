@@ -12,7 +12,7 @@ int main()
         wasmdom::h("div",
                    wasmdom::Data(
                        wasmdom::Callbacks{
-                           { "onclick", [](emscripten::val e) -> bool {
+                           { "onclick", [](emscripten::val /*e*/) -> bool {
                                 emscripten::val::global("console").call<void>("log", emscripten::val("another click"));
                                 return true;
                             } } }),

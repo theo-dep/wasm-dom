@@ -24,7 +24,7 @@ namespace wasmdom
 
     VNode* const emptyNode = h("");
 
-    VNode* currentNode = NULL;
+    VNode* currentNode = nullptr;
 
 }
 
@@ -177,7 +177,7 @@ namespace wasmdom
                     } else {
                         if (elmToMove != newStartVnode)
                             patchVNode(elmToMove, newStartVnode, parentElm);
-                        oldCh[oldKeyToIdx[newStartVnode->key]] = NULL;
+                        oldCh[oldKeyToIdx[newStartVnode->key]] = nullptr;
                         EM_ASM_({ Module.insertBefore($0, $1, $2); }, parentElm, elmToMove->elm, oldStartVnode->elm);
                     }
                 }
@@ -186,7 +186,7 @@ namespace wasmdom
         }
         if (oldStartIdx <= oldEndIdx | newStartIdx <= newEndIdx) {
             if (oldStartIdx > oldEndIdx) {
-                addVNodes(parentElm, newEndIdx + 1 <= newCh.size() - 1 ? newCh[newEndIdx + 1]->elm : 0, newCh, newStartIdx, newEndIdx);
+                addVNodes(parentElm, newEndIdx + 1 <= static_cast<int>(newCh.size()) - 1 ? newCh[newEndIdx + 1]->elm : 0, newCh, newStartIdx, newEndIdx);
             } else {
                 removeVNodes(oldCh, oldStartIdx, oldEndIdx);
             }
@@ -231,7 +231,7 @@ wasmdom::VNode* wasmdom::patch(VNode* const oldVnode, VNode* const vnode)
     if (!UNSAFE_PATCH &&
         currentNode != oldVnode &&
         currentNode)
-        return NULL;
+        return nullptr;
 
     if (oldVnode == vnode)
         return vnode;

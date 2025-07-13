@@ -109,7 +109,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
             h("div",
               Data(
                   Callbacks{
-                      { "onclick", [&count](emscripten::val e) -> bool {
+                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
                            ++count;
                            return false;
                        } } }))
@@ -132,7 +132,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
             h("div",
               Data(
                   Callbacks{
-                      { "onclick", [&count](emscripten::val e) -> bool {
+                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
                            ++count;
                            return false;
                        } } }))
@@ -150,7 +150,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
             h("div",
               Data(
                   Callbacks{
-                      { "onclick", [&count](emscripten::val e) -> bool {
+                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
                            --count;
                            return false;
                        } } }))
@@ -171,7 +171,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
             h("div",
               Data(
                   Callbacks{
-                      { "onclick", [&count](emscripten::val e) -> bool {
+                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
                            ++count;
                            return false;
                        } } }))
@@ -189,7 +189,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
             h("div",
               Data(
                   Callbacks{
-                      { "onclick", [&count](emscripten::val e) -> bool {
+                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
                            ++count;
                            return false;
                        } } }))
@@ -208,7 +208,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
             h("div",
               Data(
                   Callbacks{
-                      { "ref", [](emscripten::val e) -> bool {
+                      { "ref", [](emscripten::val /*e*/) -> bool {
                            return false;
                        } } }))
         };

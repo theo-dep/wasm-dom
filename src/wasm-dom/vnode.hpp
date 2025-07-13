@@ -48,11 +48,6 @@ namespace wasmdom
     {
         Data() {};
         Data(
-            const Data& data)
-            : attrs(data.attrs)
-            , props(data.props)
-            , callbacks(data.callbacks) {};
-        Data(
             const Attrs& dataAttrs,
             const Props& dataProps = Props(),
             const Callbacks& dataCallbacks = Callbacks())

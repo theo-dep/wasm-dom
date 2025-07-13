@@ -6,7 +6,7 @@ using namespace wasmdom;
 
 TEST_CASE("toHTML", "[toHTML]")
 {
-    SECTION("should handle NULL VNode")
+    SECTION("should handle nullptr VNode")
     {
         VNode* vnode = nullptr;
         REQUIRE(toHTML(vnode) == "");
@@ -109,7 +109,7 @@ TEST_CASE("toHTML", "[toHTML]")
     SECTION("should omit callbacks")
     {
         VNode* vnode = h("div", Data(Callbacks{
-                                    { "onclick", [](emscripten::val e) -> bool {
+                                    { "onclick", [](emscripten::val /*e*/) -> bool {
                                          return true;
                                      } } }));
         REQUIRE(toHTML(vnode) == "<div></div>");

@@ -291,7 +291,7 @@ The `patch` takes two arguments, the first is a DOM element (you can get it usin
 
 If a DOM element is passed, `newVnode` will be turned into a DOM node, and the passed element will be replaced by the created DOM node. If an `oldVnode` is passed, asm-dom will efficiently modify it to match the description in the new vnode.
 
-**If `unsafePatch` in `init` is equal to false, any old vnode passed must be the resulting vnode from the previous call to patch. Otherwise, no operation is performed and NULL is returned.**
+**If `unsafePatch` in `init` is equal to false, any old vnode passed must be the resulting vnode from the previous call to patch. Otherwise, no operation is performed and nullptr is returned.**
 
 ```c++
 VNode* oldVnode = h("span", std::string("old node"));
@@ -305,7 +305,7 @@ patch(oldVnode, newVnode);
 
 // with unsafePatch = false
 VNode* vnode = h("div");
-patch(oldVnode, vnode); // returns NULL, found oldVnode, expected newVnode
+patch(oldVnode, vnode); // returns nullptr, found oldVnode, expected newVnode
 ```
 
 With `unsafePatch = true` you can implement some interesting mechanisms, for example you can do something like this:

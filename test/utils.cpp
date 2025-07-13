@@ -41,12 +41,12 @@ void setupDom()
 
 void reset()
 {
-    wasmdom::currentNode = NULL;
+    wasmdom::currentNode = nullptr;
     wasmdom::CLEAR_MEMORY = true;
     wasmdom::UNSAFE_PATCH = false;
 }
 
-bool onClick(emscripten::val event)
+bool onClick(emscripten::val /*event*/)
 {
     return true;
 }

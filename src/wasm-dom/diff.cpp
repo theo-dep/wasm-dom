@@ -105,7 +105,7 @@ namespace wasmdom
 
         if (vnode->hash & hasRef) {
             bool (*const* callback)(emscripten::val) = callbacks.at("ref").target<bool (*)(emscripten::val)>();
-            bool (*const* oldCallback)(emscripten::val) = oldVnode->hash & hasRef ? oldCallbacks.at("ref").target<bool (*)(emscripten::val)>() : NULL;
+            bool (*const* oldCallback)(emscripten::val) = oldVnode->hash & hasRef ? oldCallbacks.at("ref").target<bool (*)(emscripten::val)>() : nullptr;
             if (!callback || !oldCallback || *oldCallback != *callback) {
                 if (oldVnode->hash & hasRef) {
                     oldCallbacks.at("ref")(emscripten::val::null());

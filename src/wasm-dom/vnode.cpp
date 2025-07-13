@@ -30,7 +30,7 @@ void wasmdom::VNode::normalize(const bool injectSvgNamespace)
             hash |= isComment;
             sel = "";
         } else {
-            children.erase(std::remove(children.begin(), children.end(), (VNode*)NULL), children.end());
+            children.erase(std::remove(children.begin(), children.end(), (VNode*)nullptr), children.end());
 
             Attrs::iterator it = data.attrs.begin();
             while (it != data.attrs.end()) {

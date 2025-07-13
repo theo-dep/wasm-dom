@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(WASM_DOM_TESTS "Build and add tests to test runner" ON)
 option(WASM_DOM_EXAMPLES "Build examples" ON)
 
+add_compile_options(-Werror -Wall -Wextra -pedantic -sSTRICT -Wno-dollar-in-identifier-extension)
+add_link_options(-sNO_FILESYSTEM)
+
 add_subdirectory(src)
 
 if(WASM_DOM_TESTS)
