@@ -22,4 +22,16 @@ namespace wasmdom
     VNode* h(const std::string& sel, const Data& data, const Children& children);
     VNode* h(const std::string& sel, const Data& data, VNode* child);
 
+    inline VNode* t(const std::string& text) { return h(text, true); }
+
+#define SEL(X)                  \
+    template <typename... Args> \
+    inline VNode* X(Args&&... args) { return h(#X, std::forward<Args>(args)...); }
+
+    SEL(div)
+    SEL(span)
+    SEL(a)
+
+#undef SEL
+
 }

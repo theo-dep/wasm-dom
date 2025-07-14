@@ -40,7 +40,7 @@ At the beginning wasm-dom is born from the idea to test the powerful of WebAssem
 using namespace wasmdom;
 
 int main() {
-  Config config = Config();
+  Config config;
   init(config);
 
   VNode* vnode = h("div",

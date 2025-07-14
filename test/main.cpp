@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv)
 {
-    wasmdom::Config config = wasmdom::Config();
+    wasmdom::Config config;
     config.unsafePatch = true;
 
     wasmdom::init(config);
