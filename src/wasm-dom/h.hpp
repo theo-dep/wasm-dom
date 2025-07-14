@@ -1,32 +1,36 @@
 #pragma once
 
-#include <wasm-dom/vnodeforward.hpp>
+#include "attribute.hpp"
+#include "vnodeforward.hpp"
 
-#include <map>
 #include <string>
 #include <vector>
 
 namespace wasmdom
 {
 
-    struct Data;
-    struct VNode;
-
-    VNode* h(const std::string& sel);
-    VNode* h(const std::string& sel, const std::string& text);
-    VNode* h(const std::string& sel, const bool text);
-    VNode* h(const std::string& sel, const Data& data);
-    VNode* h(const std::string& sel, const Children& children);
-    VNode* h(const std::string& sel, VNode* child);
-    VNode* h(const std::string& sel, const Data& data, const std::string& text);
-    VNode* h(const std::string& sel, const Data& data, const Children& children);
-    VNode* h(const std::string& sel, const Data& data, VNode* child);
+    VNode* h(std::string sel);
+    VNode* h(std::string sel, std::string text);
+    VNode* h(std::string sel, bool text);
+    VNode* h(std::string sel, Attributes attrs);
+    VNode* h(std::string sel, Children children);
+    VNode* h(std::string sel, VNode* child);
+    VNode* h(std::string sel, Attributes attrs, std::string text);
+    VNode* h(std::string sel, Attributes attrs, Children children);
+    VNode* h(std::string sel, Attributes attrs, VNode* child);
 
     inline VNode* t(const std::string& text) { return h(text, true); }
 
-#define SEL(X)                  \
-    template <typename... Args> \
-    inline VNode* X(Args&&... args) { return h(#X, std::forward<Args>(args)...); }
+#define SEL(X)                                     \
+    VNode* X();                                    \
+    VNode* X(std::string text);                    \
+    VNode* X(bool text);                           \
+    VNode* X(Attributes attrs);                    \
+    VNode* X(Children children);                   \
+    VNode* X(VNode* child);                        \
+    VNode* X(Attributes attrs, std::string text);  \
+    VNode* X(Attributes attrs, Children children); \
+    VNode* X(Attributes attrs, VNode* child);
 
     SEL(div)
     SEL(span)

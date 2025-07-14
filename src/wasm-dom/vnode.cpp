@@ -1,11 +1,8 @@
 #include "vnode.hpp"
 
-#include "vnodeforward.hpp"
-
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
-#include <cstdint>
 #include <string>
 #include <unordered_map>
 
@@ -20,7 +17,7 @@ namespace wasmdom
 void wasmdom::VNode::normalize(const bool injectSvgNamespace)
 {
     if (!(hash & isNormalized)) {
-        if (data.attrs.count("key")) {
+        if (data.attrs.contains("key")) {
             hash |= hasKey;
             key = data.attrs["key"];
             data.attrs.erase("key");
@@ -32,7 +29,7 @@ void wasmdom::VNode::normalize(const bool injectSvgNamespace)
         } else {
             children.erase(std::remove(children.begin(), children.end(), (VNode*)nullptr), children.end());
 
-            Attrs::iterator it = data.attrs.begin();
+            auto it = data.attrs.begin();
             while (it != data.attrs.end()) {
                 if (it->first == "ns") {
                     hash |= hasNS;
@@ -60,6 +57,7 @@ void wasmdom::VNode::normalize(const bool injectSvgNamespace)
                 hash |= hasProps;
             if (!data.callbacks.empty())
                 hash |= hasCallbacks;
+
             if (!children.empty()) {
                 hash |= hasDirectChildren;
 
@@ -79,7 +77,7 @@ void wasmdom::VNode::normalize(const bool injectSvgNamespace)
 
                 hash |= (hashes[sel] << 13) | isElement;
 
-                if ((hash & hasCallbacks) && data.callbacks.count("ref")) {
+                if ((hash & hasCallbacks) && data.callbacks.contains("ref")) {
                     hash |= hasRef;
                 }
             }
@@ -113,11 +111,11 @@ namespace wasmdom
 
     emscripten::val functionCallback(const std::uintptr_t& vnode, std::string callback, emscripten::val event)
     {
-        Callbacks cbs = reinterpret_cast<VNode*>(vnode)->data.callbacks;
-        if (!cbs.count(callback)) {
+        const Callbacks& cbs = reinterpret_cast<VNode*>(vnode)->data.callbacks;
+        if (!cbs.contains(callback)) {
             callback = "on" + callback;
         }
-        return emscripten::val(cbs[callback](event));
+        return emscripten::val(cbs.at(callback)(event));
     }
 
 }

@@ -2,8 +2,6 @@
 
 #include <emscripten/val.h>
 
-#include <vector>
-
 namespace wasmdom
 {
 

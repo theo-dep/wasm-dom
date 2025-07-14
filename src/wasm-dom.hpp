@@ -7,4 +7,3 @@
 #include "wasm-dom/tohtml.hpp"
 #include "wasm-dom/tovnode.hpp"
 #include "wasm-dom/vnode.hpp"
-#include "wasm-dom/vnodeforward.hpp"

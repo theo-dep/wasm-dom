@@ -1,20 +1,10 @@
 #pragma once
 
-#include <emscripten/val.h>
-
-#include <functional>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#include "attribute.hpp"
+#include "vnodeforward.hpp"
 
 namespace wasmdom
 {
-
-    typedef std::function<bool(emscripten::val)> Callback;
-    typedef std::unordered_map<std::string, std::string> Attrs;
-    typedef std::unordered_map<std::string, emscripten::val> Props;
-    typedef std::unordered_map<std::string, Callback> Callbacks;
 
     enum VNodeFlags
     {
@@ -44,48 +34,19 @@ namespace wasmdom
         id = extractSel | hasKey | nodeType
     };
 
-    struct Data
-    {
-        Data() {};
-        Data(
-            const Attrs& dataAttrs,
-            const Props& dataProps = Props(),
-            const Callbacks& dataCallbacks = Callbacks())
-            : attrs(dataAttrs)
-            , props(dataProps)
-            , callbacks(dataCallbacks) {};
-        Data(
-            const Attrs& dataAttrs,
-            const Callbacks& dataCallbacks)
-            : attrs(dataAttrs)
-            , callbacks(dataCallbacks) {};
-        Data(
-            const Props& dataProps,
-            const Callbacks& dataCallbacks = Callbacks())
-            : props(dataProps)
-            , callbacks(dataCallbacks) {};
-        Data(
-            const Callbacks& dataCallbacks)
-            : callbacks(dataCallbacks) {};
-
-        Attrs attrs;
-        Props props;
-        Callbacks callbacks;
-    };
-
     struct VNode
     {
     private:
         void normalize(const bool injectSvgNamespace);
 
     public:
-        VNode(
-            const std::string& nodeSel)
-            : sel(nodeSel) {};
-        VNode(
-            const std::string& nodeSel,
-            const std::string& nodeText)
-            : sel(nodeSel)
+        VNode(std::string nodeSel)
+            : sel{ nodeSel }
+        {
+        }
+        VNode(std::string nodeSel,
+              std::string nodeText)
+            : sel{ nodeSel }
         {
             normalize();
             if (hash & isComment) {
@@ -94,10 +55,9 @@ namespace wasmdom
                 children.push_back(new VNode(nodeText, true));
                 hash |= hasText;
             }
-        };
-        VNode(
-            const std::string& nodeText,
-            const bool textNode)
+        }
+        VNode(std::string nodeText,
+              bool textNode)
         {
             if (textNode) {
                 normalize();
@@ -108,28 +68,30 @@ namespace wasmdom
                 sel = nodeText;
                 normalize();
             }
-        };
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData)
-            : sel(nodeSel)
-            , data(nodeData) {};
-        VNode(
-            const std::string& nodeSel,
-            const std::vector<VNode*>& nodeChildren)
-            : sel(nodeSel)
-            , children(nodeChildren) {};
-        VNode(
-            const std::string& nodeSel,
-            VNode* child)
-            : sel(nodeSel)
-            , children{ child } {};
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData,
-            const std::string& nodeText)
-            : sel(nodeSel)
-            , data(nodeData)
+        }
+        VNode(std::string nodeSel,
+              Attributes nodeAttrs)
+            : sel{ nodeSel }
+            , data{ attributesToVNode(nodeAttrs) }
+        {
+        }
+        VNode(std::string nodeSel,
+              Children nodeChildren)
+            : sel{ nodeSel }
+            , children{ nodeChildren }
+        {
+        }
+        VNode(std::string nodeSel,
+              VNode* child)
+            : sel{ nodeSel }
+            , children{ child }
+        {
+        }
+        VNode(std::string nodeSel,
+              Attributes nodeAttrs,
+              std::string nodeText)
+            : sel{ nodeSel }
+            , data{ attributesToVNode(nodeAttrs) }
         {
             normalize();
             if (hash & isComment) {
@@ -138,33 +100,35 @@ namespace wasmdom
                 children.push_back(new VNode(nodeText, true));
                 hash |= hasText;
             }
-        };
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData,
-            const std::vector<VNode*>& nodeChildren)
-            : sel(nodeSel)
-            , data(nodeData)
-            , children(nodeChildren) {};
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData,
-            VNode* child)
-            : sel(nodeSel)
-            , data(nodeData)
-            , children{ child } {};
+        }
+        VNode(std::string nodeSel,
+              Attributes nodeAttrs,
+              Children nodeChildren)
+            : sel{ nodeSel }
+            , data{ attributesToVNode(nodeAttrs) }
+            , children{ nodeChildren }
+        {
+        }
+        VNode(std::string nodeSel,
+              Attributes nodeAttrs,
+              VNode* child)
+            : sel{ nodeSel }
+            , data{ attributesToVNode(nodeAttrs) }
+            , children{ child }
+        {
+        }
         ~VNode();
 
-        void normalize() { normalize(false); };
+        void normalize() { normalize(false); }
 
         // contains selector for elements and fragments, text for comments and textNodes
         std::string sel;
         std::string key;
         std::string ns;
         unsigned int hash = 0;
-        Data data;
+        VNodeAttributes data;
         int elm = 0;
-        std::vector<VNode*> children;
+        Children children;
     };
 
     void deleteVNode(const VNode* const vnode);

@@ -8,8 +8,6 @@
 
 #include <emscripten.h>
 
-#include <algorithm>
-#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -65,7 +63,7 @@ namespace wasmdom
                                                  Module['UTF8ToString']($0)); }, vnode->sel.c_str());
         }
 
-        for (std::vector<VNode*>::size_type i = 0, j = vnode->children.size(); i != j; ++i) {
+        for (Children::size_type i = 0, j = vnode->children.size(); i != j; ++i) {
             int elm = createElm(vnode->children[i]);
             EM_ASM_({ Module.appendChild($0, $1); }, vnode->elm, elm);
         }
@@ -78,9 +76,9 @@ namespace wasmdom
     void addVNodes(
         const int parentElm,
         const int before,
-        const std::vector<VNode*>& vnodes,
-        std::vector<VNode*>::size_type startIdx,
-        const std::vector<VNode*>::size_type endIdx)
+        const Children& vnodes,
+        Children::size_type startIdx,
+        const Children::size_type endIdx)
     {
         while (startIdx <= endIdx) {
             int elm = createElm(vnodes[startIdx++]);
@@ -89,19 +87,18 @@ namespace wasmdom
     }
 
     void removeVNodes(
-        const std::vector<VNode*>& vnodes,
-        std::vector<VNode*>::size_type startIdx,
-        const std::vector<VNode*>::size_type endIdx)
+        const Children& vnodes,
+        Children::size_type startIdx,
+        const Children::size_type endIdx)
     {
         while (startIdx <= endIdx) {
-            VNode* const vnode = vnodes[startIdx++];
+            const VNode* const vnode = vnodes[startIdx++];
 
             if (vnode) {
                 EM_ASM_({ Module.removeChild($0); }, vnode->elm);
 
                 if (vnode->hash & hasRef) {
-                    vnode->data.callbacks["ref"](
-                        emscripten::val::null());
+                    vnode->data.callbacks.at("ref")(emscripten::val::null());
                 }
             }
         }
@@ -109,8 +106,8 @@ namespace wasmdom
 
     void updateChildren(
         int parentElm,
-        std::vector<VNode*> oldCh,
-        const std::vector<VNode*>& newCh)
+        Children oldCh,
+        const Children& newCh)
     {
         int oldStartIdx = 0;
         int newStartIdx = 0;
@@ -192,7 +189,6 @@ namespace wasmdom
             }
         }
     }
-
 }
 
 void wasmdom::patchVNode(VNode* __restrict__ const oldVnode, VNode* __restrict__ const vnode, const int parentElm)

@@ -2,10 +2,10 @@
 
 #include "config.hpp"
 #include "vnode.hpp"
-#include "vnodeforward.hpp"
 
 #include <emscripten/val.h>
 
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 
@@ -120,16 +120,16 @@ namespace wasmdom
 
     void appendAttributes(const VNode* const vnode, std::string& html)
     {
-        for (auto& it : vnode->data.attrs) {
-            html.append(" " + it.first + "=\"" + encode(it.second) + "\"");
+        for (const auto& [key, val] : vnode->data.attrs) {
+            html.append(" " + key + "=\"" + encode(val) + "\"");
         }
 
         emscripten::val String = emscripten::val::global("String");
-        for (auto& it : vnode->data.props) {
-            if (!omitProps[it.first]) {
-                std::string key = it.first;
-                std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-                html.append(" " + key + "=\"" + encode(String(it.second).as<std::string>()) + "\"");
+        for (const auto& [key, val] : vnode->data.props) {
+            if (!omitProps[key]) {
+                std::string lowerKey = key;
+                std::transform(key.cbegin(), key.cend(), lowerKey.begin(), ::tolower);
+                html.append(" " + lowerKey + "=\"" + encode(String(val).as<std::string>()) + "\"");
             }
         }
     }
@@ -144,8 +144,8 @@ namespace wasmdom
         } else if (vnode->hash & isComment) {
             html.append("<!--" + vnode->sel + "-->");
         } else if (vnode->hash & isFragment) {
-            for (Children::size_type i = 0; i != vnode->children.size(); ++i) {
-                toHTML(vnode->children[i], html);
+            for (const VNode* const child : vnode->children) {
+                toHTML(child, html);
             }
         } else {
             bool isSvg = (vnode->hash & hasNS) && vnode->ns == "http://www.w3.org/2000/svg";
@@ -158,16 +158,15 @@ namespace wasmdom
             }
             html.append(">");
 
-            if (
-                isSvgContainerElement ||
+            if (isSvgContainerElement ||
                 (!isSvg && !voidElements[vnode->sel])) {
 
-                if (vnode->data.props.count("innerHTML") != 0) {
+                if (vnode->data.props.contains("innerHTML")) {
                     html.append(vnode->data.props.at("innerHTML").as<std::string>());
                 } else
 
-                    for (Children::size_type i = 0; i != vnode->children.size(); ++i) {
-                        toHTML(vnode->children[i], html);
+                    for (const VNode* const child : vnode->children) {
+                        toHTML(child, html);
                     }
                 html.append("</" + vnode->sel + ">");
             }

@@ -1,6 +1,7 @@
 set(TARGET_NAME wasm-dom)
 
 add_library(${TARGET_NAME}
+    wasm-dom/attribute.cpp
     wasm-dom/config.cpp
     wasm-dom/diff.cpp
     wasm-dom/h.cpp

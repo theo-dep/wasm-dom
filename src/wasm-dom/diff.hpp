@@ -5,6 +5,6 @@ namespace wasmdom
 
     struct VNode;
 
-    void diff(VNode* __restrict__ const oldVnode, VNode* __restrict__ const vnode);
+    void diff(const VNode* __restrict__ const oldVnode, const VNode* __restrict__ const vnode);
 
 }
