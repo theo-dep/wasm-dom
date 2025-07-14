@@ -10,12 +10,12 @@ TEST_CASE("h", "[h]")
 {
     SECTION("should delete a vnode")
     {
-        VNode* vnode = h("div", Children{
-                                    h("span"),
-                                    h("div", Children{
-                                                 h("video"),
-                                             }),
-                                });
+        VNode* vnode{
+            h("div", Children{
+                         h("span"),
+                         h("div", h("video")),
+                     })
+        };
         deleteVNode(vnode);
     }
 
@@ -38,8 +38,7 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(Attrs{
-                  { "foo", "bar" } }),
+              { { "foo", "bar" } },
               h("span"))
         };
     }
@@ -63,8 +62,7 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(Attrs{
-                  { "foo", "bar" } }),
+              { { "foo", "bar" } },
               "I am a string")
         };
     }
@@ -73,8 +71,7 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(Attrs{
-                  { "foo", "bar" } }),
+              { { "foo", "bar" } },
               Children{ h("span"), h("i") })
         };
     }
@@ -88,14 +85,12 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } }))
+              { { "data-empty", "" },
+                { "data-dash", "-" },
+                { "data-dashed", "foo-bar" },
+                { "data-camel", "fooBar" },
+                { "data-integer", "0" },
+                { "data-float", "0.1" } })
         };
     }
 
@@ -103,14 +98,12 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("i",
-              Data(
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } }))
+              { { "data-empty", emscripten::val("") },
+                { "data-dash", emscripten::val("") },
+                { "data-dashed", emscripten::val("foo-bar") },
+                { "data-camel", emscripten::val("fooBar") },
+                { "data-integer", emscripten::val(0) },
+                { "data-float", emscripten::val(0.1) } })
         };
     }
 
@@ -118,10 +111,9 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("i",
-              Data(
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
+              {
+                  { "onclick", onClick },
+              })
         };
     }
 
@@ -129,21 +121,18 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } },
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } }))
+              { { "data-empty", "" },
+                { "data-dash", "-" },
+                { "data-dashed", "foo-bar" },
+                { "data-camel", "fooBar" },
+                { "data-integer", "0" },
+                { "data-float", "0.1" },
+                { "data-empty-2", emscripten::val("") },
+                { "data-dash-2", emscripten::val("") },
+                { "data-dashed-2", emscripten::val("foo-bar") },
+                { "data-camel-2", emscripten::val("fooBar") },
+                { "data-integer-2", emscripten::val(0) },
+                { "data-float-2", emscripten::val(0.1) } })
         };
     }
 
@@ -151,17 +140,15 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } },
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
+              {
+                  { "data-empty", "" },
+                  { "data-dash", "-" },
+                  { "data-dashed", "foo-bar" },
+                  { "data-camel", "fooBar" },
+                  { "data-integer", "0" },
+                  { "data-float", "0.1" },
+                  { "onclick", onClick },
+              })
         };
     }
 
@@ -169,17 +156,15 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("i",
-              Data(
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } },
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
+              {
+                  { "data-empty", emscripten::val("") },
+                  { "data-dash", emscripten::val("") },
+                  { "data-dashed", emscripten::val("foo-bar") },
+                  { "data-camel", emscripten::val("fooBar") },
+                  { "data-integer", emscripten::val(0) },
+                  { "data-float", emscripten::val(0.1) },
+                  { "onclick", onClick },
+              })
         };
     }
 
@@ -187,24 +172,21 @@ TEST_CASE("h", "[h]")
     {
         ScopedVNode vnode{
             h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } },
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } },
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
+              {
+                  { "data-empty", "" },
+                  { "data-dash", "-" },
+                  { "data-dashed", "foo-bar" },
+                  { "data-camel", "fooBar" },
+                  { "data-integer", "0" },
+                  { "data-float", "0.1" },
+                  { "data-empty-2", emscripten::val("") },
+                  { "data-dash-2", emscripten::val("") },
+                  { "data-dashed-2", emscripten::val("foo-bar") },
+                  { "data-camel-2", emscripten::val("fooBar") },
+                  { "data-integer-2", emscripten::val(0) },
+                  { "data-float-2", emscripten::val(0.1) },
+                  { "onclick", onClick },
+              })
         };
     }
 }

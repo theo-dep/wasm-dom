@@ -14,9 +14,7 @@ TEST_CASE("props", "[props]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Props{
-                      { "src", emscripten::val("http://localhost/") } }))
+              { { "src", emscripten::val("http://localhost/") } })
         };
 
         patch(getRoot(), vnode.get());
@@ -28,14 +26,10 @@ TEST_CASE("props", "[props]")
     SECTION("changes an elements props")
     {
         VNode* vnode = h("a",
-                         Data(
-                             Props{
-                                 { "src", emscripten::val("http://other/") } }));
+                         { { "src", emscripten::val("http://other/") } });
         ScopedVNode vnode2{
             h("a",
-              Data(
-                  Props{
-                      { "src", emscripten::val("http://localhost/") } }))
+              { { "src", emscripten::val("http://localhost/") } })
         };
 
         patch(getRoot(), vnode);
@@ -47,11 +41,11 @@ TEST_CASE("props", "[props]")
 
     SECTION("preserves memoized props")
     {
-        Data data = Data(
-            Props{
-                { "src", emscripten::val("http://other/") } });
-        ScopedVNode vnode{ h("a", data) };
-        ScopedVNode vnode2{ h("a", data) };
+        Attributes attrs = {
+            { "src", emscripten::val("http://other/") }
+        };
+        ScopedVNode vnode{ h("a", attrs) };
+        ScopedVNode vnode2{ h("a", attrs) };
 
         patch(getRoot(), vnode.get());
 
@@ -67,9 +61,7 @@ TEST_CASE("props", "[props]")
     SECTION("removes an elements props")
     {
         VNode* vnode = h("a",
-                         Data(
-                             Props{
-                                 { "src", emscripten::val("http://other/") } }));
+                         { { "src", emscripten::val("http://other/") } });
         ScopedVNode vnode2{ h("a") };
 
         patch(getRoot(), vnode);
@@ -83,15 +75,11 @@ TEST_CASE("props", "[props]")
     {
         ScopedVNode vnode{
             h("input",
-              Data(
-                  Props{
-                      { "value", emscripten::val("foo") } }))
+              { { "value", emscripten::val("foo") } })
         };
         ScopedVNode vnode2{
             h("input",
-              Data(
-                  Props{
-                      { "value", emscripten::val("foo") } }))
+              { { "value", emscripten::val("foo") } })
         };
 
         patch(getRoot(), vnode.get());
@@ -111,19 +99,13 @@ TEST_CASE("props", "[props]")
     {
         ScopedVNode vnode{
             h("input",
-              Data(
-                  Attrs{
-                      { "type", "checkbox" } },
-                  Props{
-                      { "checked", emscripten::val(true) } }))
+              { { "type", "checkbox" },
+                { "checked", emscripten::val(true) } })
         };
         ScopedVNode vnode2{
             h("input",
-              Data(
-                  Attrs{
-                      { "type", "checkbox" } },
-                  Props{
-                      { "checked", emscripten::val(true) } }))
+              { { "type", "checkbox" },
+                { "checked", emscripten::val(true) } })
         };
 
         patch(getRoot(), vnode.get());

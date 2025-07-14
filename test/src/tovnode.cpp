@@ -139,12 +139,9 @@ TEST_CASE("toVNode", "[toVNode]")
 
         ScopedVNode nextVNode{
             h("div",
-              Data(
-                  Attrs{
-                      { "id", "id" },
-                      { "class", "class" } }),
-              Children{
-                  h("span", std::string("Hi")) })
+              { { "id", "id" },
+                { "class", "class" } },
+              h("span", std::string("Hi")))
         };
 
         patch(toVNode(prevElm), nextVNode.get());
@@ -168,12 +165,9 @@ TEST_CASE("toVNode", "[toVNode]")
             h("",
               Children{
                   h("div",
-                    Data(
-                        Attrs{
-                            { "id", "id" },
-                            { "class", "class" } }),
-                    Children{
-                        h("span", std::string("Hi")) }) })
+                    { { "id", "id" },
+                      { "class", "class" } },
+                    h("span", std::string("Hi"))) })
         };
 
         patch(toVNode(prevElm), nextVNode.get());
@@ -205,12 +199,9 @@ TEST_CASE("toVNode", "[toVNode]")
 
         ScopedVNode nextVNode{
             h("div",
-              Data(
-                  Attrs{
-                      { "id", "id" },
-                      { "class", "class" } }),
-              Children{
-                  h("Foobar", true) })
+              { { "id", "id" },
+                { "class", "class" } },
+              h("Foobar", true))
         };
 
         patch(toVNode(prevElm), nextVNode.get());
@@ -240,12 +231,9 @@ TEST_CASE("toVNode", "[toVNode]")
 
         ScopedVNode nextVNode{
             h("div",
-              Data(
-                  Attrs{
-                      { "id", "id" },
-                      { "class", "class" } }),
-              Children{
-                  h("h2", std::string("Hello")) })
+              { { "id", "id" },
+                { "class", "class" } },
+              h("h2", std::string("Hello")))
         };
 
         patch(toVNode(prevElm), nextVNode.get());

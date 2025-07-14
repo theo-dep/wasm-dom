@@ -50,74 +50,72 @@ TEST_CASE("toHTML", "[toHTML]")
 
     SECTION("should parse attributes")
     {
-        VNode* vnode = h("div", Attrs{ { "data-foo", "bar 字à" } });
+        VNode* vnode = h("div", { { "data-foo", "bar 字à" } });
         REQUIRE(toHTML(vnode) == "<div data-foo=\"bar 字à\"></div>");
     }
 
     SECTION("should omit falsy attributes")
     {
-        VNode* vnode = h("div", Attrs{ { "readonly", "false" }, { "style", "width: 250px; height: 250px;" } });
+        VNode* vnode = h("div", { { "readonly", "false" }, { "style", "width: 250px; height: 250px;" } });
         REQUIRE(toHTML(vnode) == "<div style=\"width: 250px; height: 250px;\"></div>");
     }
 
     SECTION("should set truthy attributes to empty string")
     {
-        VNode* vnode = h("div", Attrs{ { "readonly", "true" } });
+        VNode* vnode = h("div", { { "readonly", "true" } });
         REQUIRE(toHTML(vnode) == "<div readonly=\"\"></div>");
     }
 
     SECTION("should parse props")
     {
-        VNode* vnode = h("div", Props{ { "readonly", emscripten::val(true) } });
+        VNode* vnode = h("div", { { "readonly", emscripten::val(true) } });
         REQUIRE(toHTML(vnode) == "<div readonly=\"true\"></div>");
     }
 
     SECTION("should omit props")
     {
         VNode* vnode = h("div",
-                         Props{
-                             { "attributes", emscripten::val("foo") },
-                             { "childElementCount", emscripten::val("foo") },
-                             { "children", emscripten::val("foo") },
-                             { "classList", emscripten::val("foo") },
-                             { "clientHeight", emscripten::val("foo") },
-                             { "clientLeft", emscripten::val("foo") },
-                             { "clientTop", emscripten::val("foo") },
-                             { "clientWidth", emscripten::val("foo") },
-                             { "currentStyle", emscripten::val("foo") },
-                             { "firstElementChild", emscripten::val("foo") },
-                             { "innerHTML", emscripten::val("foo") },
-                             { "lastElementChild", emscripten::val("foo") },
-                             { "nextElementSibling", emscripten::val("foo") },
-                             { "ongotpointercapture", emscripten::val("foo") },
-                             { "onlostpointercapture", emscripten::val("foo") },
-                             { "onwheel", emscripten::val("foo") },
-                             { "outerHTML", emscripten::val("foo") },
-                             { "previousElementSibling", emscripten::val("foo") },
-                             { "runtimeStyle", emscripten::val("foo") },
-                             { "scrollHeight", emscripten::val("foo") },
-                             { "scrollLeft", emscripten::val("foo") },
-                             { "scrollLeftMax", emscripten::val("foo") },
-                             { "scrollTop", emscripten::val("foo") },
-                             { "scrollTopMax", emscripten::val("foo") },
-                             { "scrollWidth", emscripten::val("foo") },
-                             { "tabStop", emscripten::val("foo") },
-                             { "tagName", emscripten::val("foo") } });
+                         { { "attributes", emscripten::val("foo") },
+                           { "childElementCount", emscripten::val("foo") },
+                           { "children", emscripten::val("foo") },
+                           { "classList", emscripten::val("foo") },
+                           { "clientHeight", emscripten::val("foo") },
+                           { "clientLeft", emscripten::val("foo") },
+                           { "clientTop", emscripten::val("foo") },
+                           { "clientWidth", emscripten::val("foo") },
+                           { "currentStyle", emscripten::val("foo") },
+                           { "firstElementChild", emscripten::val("foo") },
+                           { "innerHTML", emscripten::val("foo") },
+                           { "lastElementChild", emscripten::val("foo") },
+                           { "nextElementSibling", emscripten::val("foo") },
+                           { "ongotpointercapture", emscripten::val("foo") },
+                           { "onlostpointercapture", emscripten::val("foo") },
+                           { "onwheel", emscripten::val("foo") },
+                           { "outerHTML", emscripten::val("foo") },
+                           { "previousElementSibling", emscripten::val("foo") },
+                           { "runtimeStyle", emscripten::val("foo") },
+                           { "scrollHeight", emscripten::val("foo") },
+                           { "scrollLeft", emscripten::val("foo") },
+                           { "scrollLeftMax", emscripten::val("foo") },
+                           { "scrollTop", emscripten::val("foo") },
+                           { "scrollTopMax", emscripten::val("foo") },
+                           { "scrollWidth", emscripten::val("foo") },
+                           { "tabStop", emscripten::val("foo") },
+                           { "tagName", emscripten::val("foo") } });
         REQUIRE(toHTML(vnode) == "<div>foo</div>");
     }
 
     SECTION("should omit callbacks")
     {
-        VNode* vnode = h("div", Data(Callbacks{
-                                    { "onclick", [](emscripten::val /*e*/) -> bool {
-                                         return true;
-                                     } } }));
+        VNode* vnode = h("div", { { "onclick", [](emscripten::val /*e*/) -> bool {
+                                       return true;
+                                   } } });
         REQUIRE(toHTML(vnode) == "<div></div>");
     }
 
     SECTION("should handle innerHTML")
     {
-        VNode* vnode = h("div", Props{ { "innerHTML", emscripten::val::u8string("<p>a text 字à</p>") } });
+        VNode* vnode = h("div", { { "innerHTML", emscripten::val::u8string("<p>a text 字à</p>") } });
         REQUIRE(toHTML(vnode) == "<div><p>a text 字à</p></div>");
     }
 
@@ -185,13 +183,13 @@ TEST_CASE("toHTML", "[toHTML]")
 
     SECTION("should escape attributes")
     {
-        VNode* vnode = h("div", Attrs{ { "data-foo", "<>\"'&`text" } });
+        VNode* vnode = h("div", { { "data-foo", "<>\"'&`text" } });
         REQUIRE(toHTML(vnode) == "<div data-foo=\"&lt;&gt;&quot;&apos;&amp;&#96;text\"></div>");
     }
 
     SECTION("should escape props")
     {
-        VNode* vnode = h("div", Props{ { "data-foo", emscripten::val("<>\"'&`text") } });
+        VNode* vnode = h("div", { { "data-foo", emscripten::val("<>\"'&`text") } });
         REQUIRE(toHTML(vnode) == "<div data-foo=\"&lt;&gt;&quot;&apos;&amp;&#96;text\"></div>");
     }
 }

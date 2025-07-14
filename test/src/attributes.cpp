@@ -13,11 +13,9 @@ TEST_CASE("attributes", "[attributes]")
     SECTION("should have their provided values")
     {
         ScopedVNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "href", "/foo" },
-                             { "minlength", "1" },
-                             { "value", "foo" } }))
+            h("div", { { "href", "/foo" },
+                       { "minlength", "1" },
+                       { "value", "foo" } })
         };
 
         patch(getRoot(), vnode.get());
@@ -31,12 +29,12 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("can be memoized")
     {
-        Data data = Data(
-            Attrs{
-                { "href", "/foo" },
-                { "minlength", "1" },
-                { "value", "foo" } });
-        ScopedVNode vnode{ h("div", data) };
+        Attributes attrs = {
+            { "href", "/foo" },
+            { "minlength", "1" },
+            { "value", "foo" }
+        };
+        ScopedVNode vnode{ h("div", attrs) };
 
         patch(getRoot(), vnode.get());
 
@@ -46,7 +44,7 @@ TEST_CASE("attributes", "[attributes]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
 
-        ScopedVNode vnode2{ h("div", data) };
+        ScopedVNode vnode2{ h("div", attrs) };
 
         patch(vnode.release(), vnode2.get());
 
@@ -60,11 +58,9 @@ TEST_CASE("attributes", "[attributes]")
     SECTION("should be omitted when falsy values are provided")
     {
         ScopedVNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "href", "null" },
-                             { "minlength", "0" },
-                             { "value", "false" } }))
+            h("div", { { "href", "null" },
+                       { "minlength", "0" },
+                       { "value", "false" } })
         };
 
         patch(getRoot(), vnode.get());
@@ -79,11 +75,9 @@ TEST_CASE("attributes", "[attributes]")
     SECTION("should set truthy values to empty string")
     {
         ScopedVNode vnode{
-            h("input", Data(
-                           Attrs{
-                               { "href", "null" },
-                               { "minlength", "0" },
-                               { "readonly", "true" } }))
+            h("input", { { "href", "null" },
+                         { "minlength", "0" },
+                         { "readonly", "true" } })
         };
 
         patch(getRoot(), vnode.get());
@@ -98,9 +92,7 @@ TEST_CASE("attributes", "[attributes]")
     SECTION("should be set correctly when namespaced")
     {
         ScopedVNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "xlink:href", "#foo" } }))
+            h("div", { { "xlink:href", "#foo" } })
         };
 
         patch(getRoot(), vnode.get());

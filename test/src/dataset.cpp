@@ -13,9 +13,7 @@ TEST_CASE("dataset", "[dataset]")
     SECTION("should set on initial element creation")
     {
         ScopedVNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "data-foo", "foo" } }))
+            h("div", { { "data-foo", "foo" } })
         };
 
         patch(getRoot(), vnode.get());
@@ -27,11 +25,11 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("should update dataset")
     {
-        Data data = Data(
-            Attrs{
-                { "data-foo", "foo" },
-                { "data-bar", "bar" } });
-        ScopedVNode vnode{ h("i", data) };
+        Attributes attrs = {
+            { "data-foo", "foo" },
+            { "data-bar", "bar" }
+        };
+        ScopedVNode vnode{ h("i", attrs) };
 
         patch(getRoot(), vnode.get());
 
@@ -40,7 +38,7 @@ TEST_CASE("dataset", "[dataset]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
-        ScopedVNode vnode2{ h("i", data) };
+        ScopedVNode vnode2{ h("i", attrs) };
 
         patch(vnode.release(), vnode2.get());
 
@@ -53,10 +51,8 @@ TEST_CASE("dataset", "[dataset]")
     SECTION("can be memorized")
     {
         ScopedVNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "data-foo", "foo" },
-                             { "data-bar", "bar" } }))
+            h("div", { { "data-foo", "foo" },
+                       { "data-bar", "bar" } })
         };
 
         patch(getRoot(), vnode.get());
@@ -67,9 +63,7 @@ TEST_CASE("dataset", "[dataset]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
         ScopedVNode vnode2{
-            h("div", Data(
-                         Attrs{
-                             { "data-baz", "baz" } }))
+            h("div", { { "data-baz", "baz" } })
         };
 
         patch(vnode.release(), vnode2.get());

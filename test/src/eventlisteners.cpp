@@ -23,11 +23,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", callback } }),
-              Children{
-                  h(std::string("a"), std::string("Click my parent")) })
+              { { "onclick", callback } },
+              h("a", "Click my parent"))
         };
 
         patch(getRoot(), vnode.get());
@@ -43,11 +40,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", callback } }),
-              Children{
-                  h(std::string("a"), std::string("Click my parent")) })
+              { { "onclick", callback } },
+              h("a", "Click my parent"))
         };
 
         patch(getRoot(), vnode.get());
@@ -60,8 +54,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         ScopedVNode vnode2{
             h("div",
-              Children{
-                  h(std::string("a"), std::string("Click my parent")) })
+              h("a", "Click my parent"))
         };
 
         patch(vnode.release(), vnode2.get());
@@ -77,15 +70,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", callback } }),
-              Children{
-                  h("a",
-                    Data(
-                        Callbacks{
-                            { "onclick", callback } }),
-                    std::string("Click my parent")) })
+              { { "onclick", callback } },
+              h("a",
+                { { "onclick", callback } },
+                "Click my parent"))
         };
 
         patch(getRoot(), vnode.get());
@@ -107,12 +95,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
-                           ++count;
-                           return false;
-                       } } }))
+              { { "onclick", [&count](emscripten::val /*e*/) -> bool {
+                     ++count;
+                     return false;
+                 } } })
         };
 
         patch(getRoot(), vnode.get());
@@ -130,12 +116,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
-                           ++count;
-                           return false;
-                       } } }))
+              { { "onclick", [&count](emscripten::val /*e*/) -> bool {
+                     ++count;
+                     return false;
+                 } } })
         };
 
         patch(getRoot(), vnode.get());
@@ -148,12 +132,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         ScopedVNode vnode2{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
-                           --count;
-                           return false;
-                       } } }))
+              { { "onclick", [&count](emscripten::val /*e*/) -> bool {
+                     --count;
+                     return false;
+                 } } })
         };
 
         patch(vnode.release(), vnode2.get());
@@ -169,12 +151,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
-                           ++count;
-                           return false;
-                       } } }))
+              { { "onclick", [&count](emscripten::val /*e*/) -> bool {
+                     ++count;
+                     return false;
+                 } } })
         };
 
         patch(getRoot(), vnode.get());
@@ -187,12 +167,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         ScopedVNode vnode2{
             h("div",
-              Data(
-                  Callbacks{
-                      { "onclick", [&count](emscripten::val /*e*/) -> bool {
-                           ++count;
-                           return false;
-                       } } }))
+              { { "onclick", [&count](emscripten::val /*e*/) -> bool {
+                     ++count;
+                     return false;
+                 } } })
         };
 
         patch(vnode.release(), vnode2.get());
@@ -206,11 +184,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         ScopedVNode vnode{
             h("div",
-              Data(
-                  Callbacks{
-                      { "ref", [](emscripten::val /*e*/) -> bool {
-                           return false;
-                       } } }))
+              { { "ref", [](emscripten::val /*e*/) -> bool {
+                     return false;
+                 } } })
         };
 
         patch(getRoot(), vnode.get());

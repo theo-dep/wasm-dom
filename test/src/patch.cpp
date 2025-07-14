@@ -42,9 +42,7 @@ bool refCallbackWithChecks2(emscripten::val node)
 VNode* spanNum(int i)
 {
     return h("span",
-             Data(
-                 Attrs{
-                     { "key", std::to_string(i) } }),
+             { { "key", std::to_string(i) } },
              std::to_string(i));
 }
 
@@ -54,10 +52,8 @@ VNode* spanNumWithOpacity(int z, std::string o)
     std::string opacity = std::string("opacity: ");
     opacity.append(o);
     return h("span",
-             Data(
-                 Attrs{
-                     { "key", zString },
-                     { "style", opacity } }),
+             { { "key", zString },
+               { "style", opacity } },
              zString);
 }
 
@@ -109,9 +105,7 @@ TEST_CASE("patch", "[patch]")
         std::string svgNamespace = "http://www.w3.org/2000/svg";
         VNode* vnode = h("div",
                          h("div",
-                           Data(
-                               Attrs{
-                                   { "ns", svgNamespace } })));
+                           { { "ns", svgNamespace } }));
         patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["firstChild"]["namespaceURI"].strictlyEquals(emscripten::val(svgNamespace)));
@@ -123,12 +117,9 @@ TEST_CASE("patch", "[patch]")
         std::string svgNamespace = "http://www.w3.org/2000/svg";
         std::string XHTMLNamespace = "http://www.w3.org/1999/xhtml";
         VNode* vnode = h("svg",
-                         Children{
-                             h("foreignObject",
-                               Children{
-                                   h("div",
-                                     Children{
-                                         h("I am HTML embedded in SVG", true) }) }) });
+                         h("foreignObject",
+                           h("div",
+                             h("I am HTML embedded in SVG", true))));
 
         patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
@@ -141,9 +132,7 @@ TEST_CASE("patch", "[patch]")
     SECTION("should create elements with class")
     {
         VNode* vnode = h("div",
-                         Data(
-                             Attrs{
-                                 { "class", "foo" } }));
+                         { { "class", "foo" } });
         VNode* elmPtr = patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("class")).strictlyEquals(emscripten::val("foo")));
@@ -153,8 +142,7 @@ TEST_CASE("patch", "[patch]")
     SECTION("should create elements with text content")
     {
         VNode* vnode = h("div",
-                         Children{
-                             h("I am a string", true) });
+                         h("I am a string", true));
         VNode* elmPtr = patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["innerHTML"].strictlyEquals(emscripten::val("I am a string")));
@@ -167,9 +155,8 @@ TEST_CASE("patch", "[patch]")
     SECTION("should create elements with span and text content")
     {
         VNode* vnode = h("a",
-                         Children{
-                             h("span"),
-                             h("I am a string", true) });
+                         Children{ h("span"),
+                                   h("I am a string", true) });
         VNode* elmPtr = patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
@@ -183,12 +170,9 @@ TEST_CASE("patch", "[patch]")
         elmWithIdAndClass.set("id", emscripten::val("id"));
         elmWithIdAndClass.set("className", emscripten::val("class"));
         VNode* vnode = h("div",
-                         Data(
-                             Attrs{
-                                 { "id", "id" },
-                                 { "class", "class" } }),
-                         Children{
-                             h(std::string("span"), std::string("Hi")) });
+                         { { "id", "id" },
+                           { "class", "class" } },
+                         h(std::string("span"), std::string("Hi")));
 
         patch(elmWithIdAndClass, vnode);
         emscripten::val elm = getNode(vnode);
@@ -238,13 +222,11 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode1 = h("div",
                           h("",
-                            Children{
-                                h("span", std::string("foo")) }));
+                            h("span", std::string("foo"))));
         VNode* vnode2 = h("div",
                           h("",
-                            Children{
-                                h("span", std::string("foo")),
-                                h("span", std::string("bar")) }));
+                            Children{ h("span", std::string("foo")),
+                                      h("span", std::string("bar")) }));
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
@@ -266,13 +248,11 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode1 = h("div",
                           h("",
-                            Children{
-                                h("span", std::string("foo")),
-                                h("span", std::string("bar")) }));
+                            Children{ h("span", std::string("foo")),
+                                      h("span", std::string("bar")) }));
         VNode* vnode2 = h("div",
                           h("",
-                            Children{
-                                h("span", std::string("foo")) }));
+                            h("span", std::string("foo"))));
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
@@ -296,13 +276,11 @@ TEST_CASE("patch", "[patch]")
     SECTION("should append elements")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1) });
+                          spanNum(1));
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
@@ -317,16 +295,14 @@ TEST_CASE("patch", "[patch]")
     SECTION("should prepend elements")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(4),
-                              spanNum(5) });
+                          Children{ spanNum(4),
+                                    spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
@@ -344,18 +320,16 @@ TEST_CASE("patch", "[patch]")
     SECTION("should add elements in the middle")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
@@ -373,17 +347,15 @@ TEST_CASE("patch", "[patch]")
     SECTION("should add elements at begin and end")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4) });
+                          { spanNum(2),
+                            spanNum(3),
+                            spanNum(4) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
@@ -401,17 +373,12 @@ TEST_CASE("patch", "[patch]")
     SECTION("should add children to parent with no children")
     {
         VNode* vnode1 = h("span",
-                          Data(
-                              Attrs{
-                                  { "key", "span" } }));
+                          { { "key", "span" } });
         VNode* vnode2 = h("span",
-                          Data(
-                              Attrs{
-                                  { "key", "span" } }),
-                          Children{
-                              h(std::string("span"), std::string("1")),
-                              h(std::string("span"), std::string("2")),
-                              h(std::string("span"), std::string("3")) });
+                          { { "key", "span" } },
+                          { h(std::string("span"), std::string("1")),
+                            h(std::string("span"), std::string("2")),
+                            h(std::string("span"), std::string("3")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(0)));
@@ -427,17 +394,13 @@ TEST_CASE("patch", "[patch]")
     SECTION("should remove all children from parent")
     {
         VNode* vnode1 = h("span",
-                          Data(
-                              Attrs{
-                                  { "key", "span" } }),
+                          { { "key", "span" } },
                           Children{
                               h(std::string("span"), std::string("1")),
                               h(std::string("span"), std::string("2")),
                               h(std::string("span"), std::string("3")) });
         VNode* vnode2 = h("span",
-                          Data(
-                              Attrs{
-                                  { "key", "span" } }));
+                          { { "key", "span" } });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
@@ -453,23 +416,17 @@ TEST_CASE("patch", "[patch]")
     SECTION("should update one child with same key but different sel")
     {
         VNode* vnode1 = h("span",
-                          Data(
-                              Attrs{
-                                  { "key", "span" } }),
+                          { { "key", "span" } },
                           Children{
                               spanNum(1),
                               spanNum(2),
                               spanNum(3) });
         VNode* vnode2 = h("span",
-                          Data(
-                              Attrs{
-                                  { "key", "span" } }),
+                          { { "key", "span" } },
                           Children{
                               spanNum(1),
                               h("i",
-                                Data(
-                                    Attrs{
-                                        { "key", "2" } }),
+                                { { "key", "2" } },
                                 std::string("2")),
                               spanNum(3) });
         patch(getRoot(), vnode1);
@@ -1353,13 +1310,9 @@ TEST_CASE("patch", "[patch]")
     SECTION("should set asmDomRaws")
     {
         VNode* vnode1 = h("i",
-                          Data(
-                              Props{
-                                  { "foo", emscripten::val("") } }));
+                          { { "foo", emscripten::val("") } });
         VNode* vnode2 = h("i",
-                          Data(
-                              Props{
-                                  { "bar", emscripten::val("") } }));
+                          { { "bar", emscripten::val("") } });
         VNode* vnode3 = h("i");
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
@@ -1376,13 +1329,9 @@ TEST_CASE("patch", "[patch]")
     SECTION("should set asmDomEvents")
     {
         VNode* vnode1 = h("i",
-                          Data(
-                              Callbacks{
-                                  { "onclick", onClick } }));
+                          { { "onclick", onClick } });
         VNode* vnode2 = h("i",
-                          Data(
-                              Callbacks{
-                                  { "onkeydown", onClick } }));
+                          { { "onkeydown", onClick } });
         VNode* vnode3 = h("i");
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
@@ -1411,10 +1360,8 @@ TEST_CASE("patch", "[patch]")
     SECTION("should patch a WebComponent with attributes")
     {
         VNode* vnode = h("web-component",
-                         Data(
-                             Attrs{
-                                 { "foo", "bar" },
-                                 { "bar", "42" } }));
+                         { { "foo", "bar" },
+                           { "bar", "42" } });
         patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
@@ -1426,10 +1373,8 @@ TEST_CASE("patch", "[patch]")
     SECTION("should patch a WebComponent with eventListeners")
     {
         VNode* vnode = h("web-component",
-                         Data(
-                             Callbacks{
-                                 { "onclick", onClick },
-                                 { "onfoo-event", onClick } }));
+                         { { "onclick", onClick },
+                           { "onfoo-event", onClick } });
         patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
@@ -1439,9 +1384,7 @@ TEST_CASE("patch", "[patch]")
     SECTION("should create a template node")
     {
         VNode* vnode = h("template",
-                         Data(
-                             Attrs{
-                                 { "id", "template-node" } }),
+                         { { "id", "template-node" } },
                          Children{
                              h("style", std::string("p { color: green; }")),
                              h("p", std::string("Hello world!")) });
@@ -1458,19 +1401,16 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Attrs{
-                                    { "data-foo", "bar" } },
-                                Callbacks{
-                                    { "ref", [&](emscripten::val node) -> bool {
-                                         ++refCount;
-                                         if (refCount == 2) {
-                                             REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("bar")));
-                                         } else {
-                                             REQUIRE(node.strictlyEquals(emscripten::val::null()));
-                                         }
-                                         return true;
-                                     } } })));
+                            { { "data-foo", "bar" },
+                              { "ref", [&](emscripten::val node) -> bool {
+                                   ++refCount;
+                                   if (refCount == 2) {
+                                       REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("bar")));
+                                   } else {
+                                       REQUIRE(node.strictlyEquals(emscripten::val::null()));
+                                   }
+                                   return true;
+                               } } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
@@ -1489,9 +1429,7 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallback } })));
+                            { { "ref", refCallback } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
@@ -1505,9 +1443,7 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallback } })));
+                            { { "ref", refCallback } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
@@ -1526,9 +1462,7 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallback } })));
+                            { { "ref", refCallback } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
@@ -1547,18 +1481,14 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallback } })));
+                            { { "ref", refCallback } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
 
         VNode* vnode2 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallback } })));
+                            { { "ref", refCallback } }));
         patch(vnode1, vnode2);
 
         REQUIRE(refCount == 2);
@@ -1572,24 +1502,20 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", [&](emscripten::val e) -> bool {
-                                         refCallbackWithChecks(e);
-                                         return true;
-                                     } } })));
+                            { { "ref", [&](emscripten::val e) -> bool {
+                                   refCallbackWithChecks(e);
+                                   return true;
+                               } } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
 
         VNode* vnode2 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", [&](emscripten::val e) -> bool {
-                                         refCallbackWithChecks(e);
-                                         return false;
-                                     } } })));
+                            { { "ref", [&](emscripten::val e) -> bool {
+                                   refCallbackWithChecks(e);
+                                   return false;
+                               } } }));
         patch(vnode1, vnode2);
 
         REQUIRE(refCount == 4);
@@ -1603,21 +1529,17 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", [&](emscripten::val e) -> bool {
-                                         refCallbackWithChecks(e);
-                                         return false;
-                                     } } })));
+                            { { "ref", [&](emscripten::val e) -> bool {
+                                   refCallbackWithChecks(e);
+                                   return false;
+                               } } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
 
         VNode* vnode2 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallbackWithChecks } })));
+                            { { "ref", refCallbackWithChecks } }));
         patch(vnode1, vnode2);
 
         REQUIRE(refCount == 4);
@@ -1631,18 +1553,14 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode1 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallbackWithChecks } })));
+                            { { "ref", refCallbackWithChecks } }));
         patch(getRoot(), vnode1);
 
         REQUIRE(refCount == 2);
 
         VNode* vnode2 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallbackWithChecks2 } })));
+                            { { "ref", refCallbackWithChecks2 } }));
         patch(vnode1, vnode2);
 
         REQUIRE(refCount == 4);
@@ -1659,9 +1577,7 @@ TEST_CASE("patch", "[patch]")
 
         VNode* vnode2 = h("div",
                           h("div",
-                            Data(
-                                Callbacks{
-                                    { "ref", refCallback } })));
+                            { { "ref", refCallback } }));
         patch(vnode1, vnode2);
 
         REQUIRE(refCount == 2);
@@ -1672,10 +1588,8 @@ TEST_CASE("patch", "[patch]")
     SECTION("should not set ref as callback")
     {
         VNode* vnode1 = h("i",
-                          Data(
-                              Callbacks{
-                                  { "onclick", onClick },
-                                  { "ref", onClick } }));
+                          { { "onclick", onClick },
+                            { "ref", onClick } });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
