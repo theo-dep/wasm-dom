@@ -32,3 +32,13 @@ foreach(test ${TEST_CASES})
         COMMAND ${NODE_JS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/runner.js" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/tests.js" "[${test}]"
     )
 endforeach()
+
+add_executable(benchmarks main.cpp utils.cpp benchmarks.cpp)
+
+target_link_libraries(benchmarks PRIVATE wasm-dom Catch2::Catch2)
+target_link_options(benchmarks PRIVATE -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH -sMODULARIZE=1 -sEXPORT_NAME=Module -sEXIT_RUNTIME=1 -sNO_DISABLE_EXCEPTION_CATCHING)
+
+set(CMAKE_CTEST_ARGUMENTS "--verbose")
+add_test(NAME benchmarks
+    COMMAND ${NODE_JS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/runner.js" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/benchmarks.js"
+)
