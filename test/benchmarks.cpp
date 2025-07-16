@@ -16,19 +16,15 @@ TEST_CASE("benchmark")
         meter.measure([&](int i) {
             storage[i] =
                 h("div",
-                  Data(
-                      Attrs{
-                          { "foo", "foo" },
-                          { "bar", "bar" },
-                          { "baz", "baz" } }),
-                  Children{
-                      h("div", Data(Attrs{ { "foo", "foo" } })),
-                      h("div", Data(Attrs{ { "foo", "foo" } })),
-                      h("div", Data(Attrs{ { "foo", "foo" } }),
-                        Children{
-                            h("div", Data(Attrs{ { "foo", "foo" } })),
-                            h("div", Data(Attrs{ { "foo", "foo" } })),
-                            h("div", Data(Attrs{ { "foo", "foo" } })) }) });
+                  { { "foo", "foo" },
+                    { "bar", "bar" },
+                    { "baz", "baz" } },
+                  { h("div", { { "foo", "foo" } }),
+                    h("div", { { "foo", "foo" } }),
+                    h("div", { { "foo", "foo" } },
+                      { h("div", { { "foo", "foo" } }),
+                        h("div", { { "foo", "foo" } }),
+                        h("div", { { "foo", "foo" } }) }) });
         });
 
         for (const VNode* vnode : storage)
@@ -44,21 +40,14 @@ TEST_CASE("benchmark")
             children.reserve(100);
             for (int i = 0; i < 100; ++i) {
                 children.push_back(h("span",
-                                     Data(
-                                         Attrs{
-                                             { "e", std::to_string(i) } }),
-                                     Children{
-                                         h("span",
-                                           Data(
-                                               Attrs{
-                                                   { "e", std::to_string(i - 3) } })) }));
+                                     { { "e", std::to_string(i) } },
+                                     h("span",
+                                       { { "e", std::to_string(i - 3) } })));
             }
             return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
+                     { { "foo", "foo" },
+                       { "bar", "bar" },
+                       { "baz", "baz" } },
                      children);
         };
 
@@ -93,21 +82,14 @@ TEST_CASE("benchmark")
             children.reserve(100);
             for (int i = 0; i < 100; ++i) {
                 children.push_back(h("span",
-                                     Data(
-                                         Attrs{
-                                             { "e", std::to_string(i) } }),
-                                     Children{
-                                         h("span",
-                                           Data(
-                                               Attrs{
-                                                   { "e", std::to_string(i - 1) } })) }));
+                                     { { "e", std::to_string(i) } },
+                                     h("span",
+                                       { { "e", std::to_string(i - 1) } })));
             }
             return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
+                     { { "foo", "foo" },
+                       { "bar", "bar" },
+                       { "baz", "baz" } },
                      children);
         };
         const auto createVNode2 = [] {
@@ -115,21 +97,14 @@ TEST_CASE("benchmark")
             children.reserve(100);
             for (int i = 0; i < 100; ++i) {
                 children.push_back(h("span",
-                                     Data(
-                                         Attrs{
-                                             { "e", "27" } }),
-                                     Children{
-                                         h("span",
-                                           Data(
-                                               Attrs{
-                                                   { "e", "27" } })) }));
+                                     { { "e", "27" } },
+                                     h("span",
+                                       { { "e", "27" } })));
             }
             return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
+                     { { "foo", "foo" },
+                       { "bar", "bar" },
+                       { "baz", "baz" } },
                      children);
         };
 
@@ -164,24 +139,19 @@ TEST_CASE("benchmark")
             children.reserve(100);
             for (int i = 0; i < 100; ++i) {
                 children.push_back(h("span",
-                                     Children{
-                                         h("span") }));
+                                     h("span")));
             }
             return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
+                     { { "foo", "foo" },
+                       { "bar", "bar" },
+                       { "baz", "baz" } },
                      children);
         };
         const auto createVNode2 = [] {
             return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }));
+                     { { "foo", "foo" },
+                       { "bar", "bar" },
+                       { "baz", "baz" } });
         };
 
         std::vector<std::pair<VNode*, VNode*>> storage(meter.runs());
