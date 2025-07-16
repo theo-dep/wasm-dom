@@ -163,11 +163,10 @@ TEST_CASE("toVNode", "[toVNode]")
 
         ScopedVNode nextVNode{
             h("",
-              Children{
-                  h("div",
-                    { { "id", "id" },
-                      { "class", "class" } },
-                    h("span", std::string("Hi"))) })
+              { h("div",
+                  { { "id", "id" },
+                    { "class", "class" } },
+                  h("span", std::string("Hi"))) })
         };
 
         patch(toVNode(prevElm), nextVNode.get());

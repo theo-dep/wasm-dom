@@ -26,7 +26,7 @@ TEST_CASE("toHTML", "[toHTML]")
 
     SECTION("should parse fragments")
     {
-        VNode* vnode = h("", Children{ h("span"), h("b") });
+        VNode* vnode = h("", { h("span"), h("b") });
         REQUIRE(toHTML(vnode) == "<span></span><b></b>");
     }
 
@@ -38,7 +38,7 @@ TEST_CASE("toHTML", "[toHTML]")
 
     SECTION("should handle children")
     {
-        VNode* vnode = h("div", Children{ h("span"), h("b") });
+        VNode* vnode = h("div", { h("span"), h("b") });
         REQUIRE(toHTML(vnode) == "<div><span></span><b></b></div>");
     }
 
@@ -122,50 +122,48 @@ TEST_CASE("toHTML", "[toHTML]")
     SECTION("should handle svg container elements")
     {
         VNode* vnode = h("svg",
-                         Children{
-                             h("a"),
-                             h("defs"),
-                             h("glyph"),
-                             h("g"),
-                             h("marker"),
-                             h("mask"),
-                             h("missing-glyph"),
-                             h("pattern"),
-                             h("svg"),
-                             h("switch"),
-                             h("symbol"),
-                             h("text"),
-                             h("desc"),
-                             h("metadata"),
-                             h("title") });
+                         { h("a"),
+                           h("defs"),
+                           h("glyph"),
+                           h("g"),
+                           h("marker"),
+                           h("mask"),
+                           h("missing-glyph"),
+                           h("pattern"),
+                           h("svg"),
+                           h("switch"),
+                           h("symbol"),
+                           h("text"),
+                           h("desc"),
+                           h("metadata"),
+                           h("title") });
         REQUIRE(toHTML(vnode) == "<svg><a></a><defs></defs><glyph></glyph><g></g><marker></marker><mask></mask><missing-glyph></missing-glyph><pattern></pattern><svg></svg><switch></switch><symbol></symbol><text></text><desc></desc><metadata></metadata><title></title></svg>");
     }
 
     SECTION("should handle svg non container elements")
     {
-        VNode* vnode = h("svg", Children{ h("rect") });
+        VNode* vnode = h("svg", { h("rect") });
         REQUIRE(toHTML(vnode) == "<svg><rect /></svg>");
     }
 
     SECTION("should handle void elements")
     {
         VNode* vnode = h("div",
-                         Children{
-                             h("area"),
-                             h("base"),
-                             h("br"),
-                             h("col"),
-                             h("embed"),
-                             h("hr"),
-                             h("img"),
-                             h("input"),
-                             h("keygen"),
-                             h("link"),
-                             h("meta"),
-                             h("param"),
-                             h("source"),
-                             h("track"),
-                             h("wbr") });
+                         { h("area"),
+                           h("base"),
+                           h("br"),
+                           h("col"),
+                           h("embed"),
+                           h("hr"),
+                           h("img"),
+                           h("input"),
+                           h("keygen"),
+                           h("link"),
+                           h("meta"),
+                           h("param"),
+                           h("source"),
+                           h("track"),
+                           h("wbr") });
         REQUIRE(toHTML(vnode) == "<div><area><base><br><col><embed><hr><img><input><keygen><link><meta><param><source><track><wbr></div>");
     }
 

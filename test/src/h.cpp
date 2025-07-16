@@ -11,7 +11,7 @@ TEST_CASE("h", "[h]")
     SECTION("should delete a vnode")
     {
         VNode* vnode{
-            h("div", Children{
+            h("div", {
                          h("span"),
                          h("div", h("video")),
                      })
@@ -26,7 +26,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with children")
     {
-        ScopedVNode vnode{ h("div", Children{ h("span"), h("b") }) };
+        ScopedVNode vnode{ h("div", { h("span"), h("b") }) };
     }
 
     SECTION("should create a vnode with one child")
@@ -72,7 +72,7 @@ TEST_CASE("h", "[h]")
         ScopedVNode vnode{
             h("div",
               { { "foo", "bar" } },
-              Children{ h("span"), h("i") })
+              { h("span"), h("i") })
         };
     }
 

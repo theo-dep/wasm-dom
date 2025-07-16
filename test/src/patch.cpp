@@ -155,8 +155,8 @@ TEST_CASE("patch", "[patch]")
     SECTION("should create elements with span and text content")
     {
         VNode* vnode = h("a",
-                         Children{ h("span"),
-                                   h("I am a string", true) });
+                         { h("span"),
+                           h("I am a string", true) });
         VNode* elmPtr = patch(getRoot(), vnode);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
@@ -225,8 +225,8 @@ TEST_CASE("patch", "[patch]")
                             h("span", std::string("foo"))));
         VNode* vnode2 = h("div",
                           h("",
-                            Children{ h("span", std::string("foo")),
-                                      h("span", std::string("bar")) }));
+                            { h("span", std::string("foo")),
+                              h("span", std::string("bar")) }));
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
@@ -248,8 +248,8 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode1 = h("div",
                           h("",
-                            Children{ h("span", std::string("foo")),
-                                      h("span", std::string("bar")) }));
+                            { h("span", std::string("foo")),
+                              h("span", std::string("bar")) }));
         VNode* vnode2 = h("div",
                           h("",
                             h("span", std::string("foo"))));
@@ -295,8 +295,8 @@ TEST_CASE("patch", "[patch]")
     SECTION("should prepend elements")
     {
         VNode* vnode1 = h("span",
-                          Children{ spanNum(4),
-                                    spanNum(5) });
+                          { spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
                           { spanNum(1),
                             spanNum(2),
@@ -395,10 +395,9 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode1 = h("span",
                           { { "key", "span" } },
-                          Children{
-                              h(std::string("span"), std::string("1")),
-                              h(std::string("span"), std::string("2")),
-                              h(std::string("span"), std::string("3")) });
+                          { h(std::string("span"), std::string("1")),
+                            h(std::string("span"), std::string("2")),
+                            h(std::string("span"), std::string("3")) });
         VNode* vnode2 = h("span",
                           { { "key", "span" } });
         patch(getRoot(), vnode1);
@@ -417,18 +416,16 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode1 = h("span",
                           { { "key", "span" } },
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3) });
         VNode* vnode2 = h("span",
                           { { "key", "span" } },
-                          Children{
-                              spanNum(1),
-                              h("i",
-                                { { "key", "2" } },
-                                std::string("2")),
-                              spanNum(3) });
+                          { spanNum(1),
+                            h("i",
+                              { { "key", "2" } },
+                              std::string("2")),
+                            spanNum(3) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
@@ -448,17 +445,15 @@ TEST_CASE("patch", "[patch]")
     SECTION("should remove elements from the beginning")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
@@ -474,17 +469,15 @@ TEST_CASE("patch", "[patch]")
     SECTION("should remove elements from the end")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
@@ -500,18 +493,16 @@ TEST_CASE("patch", "[patch]")
     SECTION("should remove elements from the middle")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(4),
+                            spanNum(5) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
@@ -528,17 +519,15 @@ TEST_CASE("patch", "[patch]")
     SECTION("should move element forward")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(1),
-                              spanNum(4) });
+                          { spanNum(2),
+                            spanNum(3),
+                            spanNum(1),
+                            spanNum(4) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
@@ -555,15 +544,13 @@ TEST_CASE("patch", "[patch]")
     SECTION("should move element to end")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(1) });
+                          { spanNum(2),
+                            spanNum(3),
+                            spanNum(1) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
@@ -579,17 +566,15 @@ TEST_CASE("patch", "[patch]")
     SECTION("should move element backwards")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(4),
-                              spanNum(2),
-                              spanNum(3) });
+                          { spanNum(1),
+                            spanNum(4),
+                            spanNum(2),
+                            spanNum(3) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
@@ -606,17 +591,15 @@ TEST_CASE("patch", "[patch]")
     SECTION("should swap first and last")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(4),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(1) });
+                          { spanNum(4),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(1) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
@@ -633,19 +616,17 @@ TEST_CASE("patch", "[patch]")
     SECTION("should move to left and replace")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(4),
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(6) });
+                          { spanNum(4),
+                            spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(6) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
@@ -663,14 +644,12 @@ TEST_CASE("patch", "[patch]")
     SECTION("should move to left and leaves hole")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(1),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(4),
-                              spanNum(6) });
+                          { spanNum(4),
+                            spanNum(6) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
@@ -685,15 +664,13 @@ TEST_CASE("patch", "[patch]")
     SECTION("should handle moved and set to undefined element ending at the end")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(2),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(2),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(4),
-                              spanNum(5),
-                              spanNum(3) });
+                          { spanNum(4),
+                            spanNum(5),
+                            spanNum(3) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
@@ -709,19 +686,17 @@ TEST_CASE("patch", "[patch]")
     SECTION("should move a key in non-keyed nodes with a size up")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              h(std::string("span"), std::string("a")),
-                              h(std::string("span"), std::string("b")),
-                              h(std::string("span"), std::string("c")) });
+                          { spanNum(1),
+                            h(std::string("span"), std::string("a")),
+                            h(std::string("span"), std::string("b")),
+                            h(std::string("span"), std::string("c")) });
         VNode* vnode2 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("d")),
-                              h(std::string("span"), std::string("a")),
-                              h(std::string("span"), std::string("b")),
-                              h(std::string("span"), std::string("c")),
-                              spanNum(1),
-                              h(std::string("span"), std::string("e")) });
+                          { h(std::string("span"), std::string("d")),
+                            h(std::string("span"), std::string("a")),
+                            h(std::string("span"), std::string("b")),
+                            h(std::string("span"), std::string("c")),
+                            spanNum(1),
+                            h(std::string("span"), std::string("e")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
@@ -736,25 +711,23 @@ TEST_CASE("patch", "[patch]")
     SECTION("should reverse elements")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5),
-                              spanNum(6),
-                              spanNum(7),
-                              spanNum(8) });
+                          { spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5),
+                            spanNum(6),
+                            spanNum(7),
+                            spanNum(8) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(8),
-                              spanNum(7),
-                              spanNum(6),
-                              spanNum(5),
-                              spanNum(4),
-                              spanNum(3),
-                              spanNum(2),
-                              spanNum(1) });
+                          { spanNum(8),
+                            spanNum(7),
+                            spanNum(6),
+                            spanNum(5),
+                            spanNum(4),
+                            spanNum(3),
+                            spanNum(2),
+                            spanNum(1) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(8)));
@@ -775,21 +748,19 @@ TEST_CASE("patch", "[patch]")
     SECTION("should reverse elements with 0")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              spanNum(0),
-                              spanNum(1),
-                              spanNum(2),
-                              spanNum(3),
-                              spanNum(4),
-                              spanNum(5) });
+                          { spanNum(0),
+                            spanNum(1),
+                            spanNum(2),
+                            spanNum(3),
+                            spanNum(4),
+                            spanNum(5) });
         VNode* vnode2 = h("span",
-                          Children{
-                              spanNum(4),
-                              spanNum(3),
-                              spanNum(2),
-                              spanNum(1),
-                              spanNum(5),
-                              spanNum(0) });
+                          { spanNum(4),
+                            spanNum(3),
+                            spanNum(2),
+                            spanNum(1),
+                            spanNum(5),
+                            spanNum(0) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
@@ -836,11 +807,11 @@ TEST_CASE("patch", "[patch]")
                 opacities[i] = std::string("0.");
                 opacities[i].append(std::to_string(rand() % 99999));
             }
-            Children opacityChildren;
+            Children opacity;
             for (i = 0; i < elms; ++i) {
-                opacityChildren.push_back(spanNumWithOpacity(shufArr[i], opacities[i]));
+                opacity.push_back(spanNumWithOpacity(shufArr[i], opacities[i]));
             }
-            VNode* vnode2 = h("span", opacityChildren);
+            VNode* vnode2 = h("span", opacity);
 
             patch(vnode1, vnode2);
             elm = getNode(vnode2);
@@ -855,27 +826,25 @@ TEST_CASE("patch", "[patch]")
     SECTION("should support null/undefined children")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("0")),
-                              h(std::string("span"), std::string("1")),
-                              h(std::string("span"), std::string("2")),
-                              h(std::string("span"), std::string("3")),
-                              h(std::string("span"), std::string("4")),
-                              h(std::string("span"), std::string("5")) });
+                          { h(std::string("span"), std::string("0")),
+                            h(std::string("span"), std::string("1")),
+                            h(std::string("span"), std::string("2")),
+                            h(std::string("span"), std::string("3")),
+                            h(std::string("span"), std::string("4")),
+                            h(std::string("span"), std::string("5")) });
         VNode* vnode2 = h("span",
-                          Children{
-                              nullptr,
-                              h(std::string("span"), std::string("2")),
-                              nullptr,
-                              nullptr,
-                              h(std::string("span"), std::string("1")),
-                              h(std::string("span"), std::string("0")),
-                              nullptr,
-                              h(std::string("span"), std::string("5")),
-                              h(std::string("span"), std::string("4")),
-                              nullptr,
-                              h(std::string("span"), std::string("3")),
-                              nullptr });
+                          { nullptr,
+                            h(std::string("span"), std::string("2")),
+                            nullptr,
+                            nullptr,
+                            h(std::string("span"), std::string("1")),
+                            h(std::string("span"), std::string("0")),
+                            nullptr,
+                            h(std::string("span"), std::string("5")),
+                            h(std::string("span"), std::string("4")),
+                            nullptr,
+                            h(std::string("span"), std::string("3")),
+                            nullptr });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
@@ -894,29 +863,26 @@ TEST_CASE("patch", "[patch]")
     SECTION("should support all null/undefined children")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("0")),
-                              h(std::string("span"), std::string("1")),
-                              h(std::string("span"), std::string("2")),
-                              h(std::string("span"), std::string("3")),
-                              h(std::string("span"), std::string("4")),
-                              h(std::string("span"), std::string("5")) });
+                          { h(std::string("span"), std::string("0")),
+                            h(std::string("span"), std::string("1")),
+                            h(std::string("span"), std::string("2")),
+                            h(std::string("span"), std::string("3")),
+                            h(std::string("span"), std::string("4")),
+                            h(std::string("span"), std::string("5")) });
         VNode* vnode2 = h("span",
-                          Children{
-                              nullptr,
-                              nullptr,
-                              nullptr,
-                              nullptr,
-                              nullptr,
-                              nullptr });
+                          { nullptr,
+                            nullptr,
+                            nullptr,
+                            nullptr,
+                            nullptr,
+                            nullptr });
         VNode* vnode3 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("5")),
-                              h(std::string("span"), std::string("4")),
-                              h(std::string("span"), std::string("3")),
-                              h(std::string("span"), std::string("2")),
-                              h(std::string("span"), std::string("1")),
-                              h(std::string("span"), std::string("0")) });
+                          { h(std::string("span"), std::string("5")),
+                            h(std::string("span"), std::string("4")),
+                            h(std::string("span"), std::string("3")),
+                            h(std::string("span"), std::string("2")),
+                            h(std::string("span"), std::string("1")),
+                            h(std::string("span"), std::string("0")) });
         patch(getRoot(), vnode1);
         patch(vnode1, vnode2);
         emscripten::val elm = getBodyFirstChild();
@@ -956,7 +922,7 @@ TEST_CASE("patch", "[patch]")
                     arr[j] = 0;
             }
             std::vector<int> shufArr = shuffle(arr, len);
-            Children children = Children();
+            Children children;
             for (j = 0; j < len; ++j) {
                 children.push_back(shufArr[j] == 0 ? 0 : h(std::string("span"), std::to_string(shufArr[j])));
             }
@@ -979,12 +945,10 @@ TEST_CASE("patch", "[patch]")
     SECTION("should append elements")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("Hello")) });
+                          { h(std::string("span"), std::string("Hello")) });
         VNode* vnode2 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("Hello")),
-                              h(std::string("span"), std::string("World")) });
+                          { h(std::string("span"), std::string("Hello")),
+                            h(std::string("span"), std::string("World")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
@@ -1000,13 +964,11 @@ TEST_CASE("patch", "[patch]")
     SECTION("should handle unmoved text nodes")
     {
         VNode* vnode1 = h("div",
-                          Children{
-                              h("Text", true),
-                              h(std::string("span"), std::string("Span")) });
+                          { h("Text", true),
+                            h(std::string("span"), std::string("Span")) });
         VNode* vnode2 = h("div",
-                          Children{
-                              h("Text", true),
-                              h(std::string("span"), std::string("Span")) });
+                          { h("Text", true),
+                            h(std::string("span"), std::string("Span")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
@@ -1019,13 +981,11 @@ TEST_CASE("patch", "[patch]")
     SECTION("should handle changing text children")
     {
         VNode* vnode1 = h("div",
-                          Children{
-                              h("Text", true),
-                              h(std::string("span"), std::string("Span")) });
+                          { h("Text", true),
+                            h(std::string("span"), std::string("Span")) });
         VNode* vnode2 = h("div",
-                          Children{
-                              h("Text2", true),
-                              h(std::string("span"), std::string("Span")) });
+                          { h("Text2", true),
+                            h(std::string("span"), std::string("Span")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
@@ -1038,13 +998,11 @@ TEST_CASE("patch", "[patch]")
     SECTION("should handle unmoved comment nodes")
     {
         VNode* vnode1 = h("div",
-                          Children{
-                              h(std::string("!"), std::string("Text")),
-                              h(std::string("span"), std::string("Span")) });
+                          { h(std::string("!"), std::string("Text")),
+                            h(std::string("span"), std::string("Span")) });
         VNode* vnode2 = h("div",
-                          Children{
-                              h(std::string("!"), std::string("Text")),
-                              h(std::string("span"), std::string("Span")) });
+                          { h(std::string("!"), std::string("Text")),
+                            h(std::string("span"), std::string("Span")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
@@ -1057,13 +1015,11 @@ TEST_CASE("patch", "[patch]")
     SECTION("should handle changing comment text")
     {
         VNode* vnode1 = h("div",
-                          Children{
-                              h(std::string("!"), std::string("Text")),
-                              h(std::string("span"), std::string("Span")) });
+                          { h(std::string("!"), std::string("Text")),
+                            h(std::string("span"), std::string("Span")) });
         VNode* vnode2 = h("div",
-                          Children{
-                              h(std::string("!"), std::string("Text2")),
-                              h(std::string("span"), std::string("Span")) });
+                          { h(std::string("!"), std::string("Text2")),
+                            h(std::string("span"), std::string("Span")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
@@ -1076,13 +1032,11 @@ TEST_CASE("patch", "[patch]")
     SECTION("should handle changing empty comment")
     {
         VNode* vnode1 = h("div",
-                          Children{
-                              h("!"),
-                              h(std::string("span"), std::string("Span")) });
+                          { h("!"),
+                            h(std::string("span"), std::string("Span")) });
         VNode* vnode2 = h("div",
-                          Children{
-                              h(std::string("!"), std::string("Test")),
-                              h(std::string("span"), std::string("Span")) });
+                          { h(std::string("!"), std::string("Test")),
+                            h(std::string("span"), std::string("Span")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("")));
@@ -1095,12 +1049,10 @@ TEST_CASE("patch", "[patch]")
     SECTION("should prepend element")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("World")) });
+                          { h(std::string("span"), std::string("World")) });
         VNode* vnode2 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("Hello")),
-                              h(std::string("span"), std::string("World")) });
+                          { h(std::string("span"), std::string("Hello")),
+                            h(std::string("span"), std::string("World")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
@@ -1116,12 +1068,10 @@ TEST_CASE("patch", "[patch]")
     SECTION("should prepend element of different tag type")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("World")) });
+                          { h(std::string("span"), std::string("World")) });
         VNode* vnode2 = h("span",
-                          Children{
-                              h(std::string("div"), std::string("Hello")),
-                              h(std::string("span"), std::string("World")) });
+                          { h(std::string("div"), std::string("Hello")),
+                            h(std::string("span"), std::string("World")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
@@ -1139,14 +1089,12 @@ TEST_CASE("patch", "[patch]")
     SECTION("should remove elements")
     {
         VNode* vnode1 = h("div",
-                          Children{
-                              h(std::string("span"), std::string("One")),
-                              h(std::string("span"), std::string("Two")),
-                              h(std::string("span"), std::string("Three")) });
+                          { h(std::string("span"), std::string("One")),
+                            h(std::string("span"), std::string("Two")),
+                            h(std::string("span"), std::string("Three")) });
         VNode* vnode2 = h("div",
-                          Children{
-                              h(std::string("span"), std::string("One")),
-                              h(std::string("span"), std::string("Three")) });
+                          { h(std::string("span"), std::string("One")),
+                            h(std::string("span"), std::string("Three")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("One")));
@@ -1176,9 +1124,8 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode1 = h(std::string("div"), std::string("One"));
         VNode* vnode2 = h("div",
-                          Children{
-                              h(std::string("div"), std::string("Two")),
-                              h(std::string("span"), std::string("Three")) });
+                          { h(std::string("div"), std::string("Two")),
+                            h(std::string("span"), std::string("Three")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("One")));
@@ -1192,12 +1139,10 @@ TEST_CASE("patch", "[patch]")
     SECTION("should remove a text node among other elements")
     {
         VNode* vnode1 = h("div",
-                          Children{
-                              h(std::string("One"), true),
-                              h(std::string("span"), std::string("Two")) });
+                          { h(std::string("One"), true),
+                            h(std::string("span"), std::string("Two")) });
         VNode* vnode2 = h("div",
-                          Children{
-                              h(std::string("div"), std::string("Three")) });
+                          { h(std::string("div"), std::string("Three")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("One")));
@@ -1213,15 +1158,13 @@ TEST_CASE("patch", "[patch]")
     SECTION("should reorder elements")
     {
         VNode* vnode1 = h("span",
-                          Children{
-                              h(std::string("span"), std::string("One")),
-                              h(std::string("div"), std::string("Two")),
-                              h(std::string("b"), std::string("Three")) });
+                          { h(std::string("span"), std::string("One")),
+                            h(std::string("div"), std::string("Two")),
+                            h(std::string("b"), std::string("Three")) });
         VNode* vnode2 = h("span",
-                          Children{
-                              h(std::string("b"), std::string("Three")),
-                              h(std::string("span"), std::string("One")),
-                              h(std::string("div"), std::string("Two")) });
+                          { h(std::string("b"), std::string("Three")),
+                            h(std::string("span"), std::string("One")),
+                            h(std::string("div"), std::string("Two")) });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
@@ -1243,27 +1186,24 @@ TEST_CASE("patch", "[patch]")
     SECTION("should support null/undefined children")
     {
         VNode* vnode1 = h("i",
-                          Children{
-                              nullptr,
-                              h(std::string("i"), std::string("1")),
-                              h(std::string("i"), std::string("2")),
-                              nullptr });
+                          { nullptr,
+                            h(std::string("i"), std::string("1")),
+                            h(std::string("i"), std::string("2")),
+                            nullptr });
         VNode* vnode2 = h("i",
-                          Children{
-                              h(std::string("i"), std::string("2")),
-                              nullptr,
-                              nullptr,
-                              h(std::string("i"), std::string("1")),
-                              nullptr });
+                          { h(std::string("i"), std::string("2")),
+                            nullptr,
+                            nullptr,
+                            h(std::string("i"), std::string("1")),
+                            nullptr });
         VNode* vnode3 = h("i",
-                          Children{
-                              nullptr,
-                              h(std::string("i"), std::string("1")),
-                              nullptr,
-                              nullptr,
-                              h(std::string("i"), std::string("2")),
-                              nullptr,
-                              nullptr });
+                          { nullptr,
+                            h(std::string("i"), std::string("1")),
+                            nullptr,
+                            nullptr,
+                            h(std::string("i"), std::string("2")),
+                            nullptr,
+                            nullptr });
         patch(getRoot(), vnode1);
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
@@ -1285,17 +1225,14 @@ TEST_CASE("patch", "[patch]")
     SECTION("should support all null/undefined children")
     {
         VNode* vnode1 = h("i",
-                          Children{
-                              h(std::string("i"), std::string("1")),
-                              h(std::string("i"), std::string("2")) });
+                          { h(std::string("i"), std::string("1")),
+                            h(std::string("i"), std::string("2")) });
         VNode* vnode2 = h("i",
-                          Children{
-                              nullptr,
-                              nullptr });
+                          { nullptr,
+                            nullptr });
         VNode* vnode3 = h("i",
-                          Children{
-                              h(std::string("i"), std::string("2")),
-                              h(std::string("i"), std::string("1")) });
+                          { h(std::string("i"), std::string("2")),
+                            h(std::string("i"), std::string("1")) });
         patch(getRoot(), vnode1);
         patch(vnode1, vnode2);
         emscripten::val elm = getBodyFirstChild();
@@ -1385,9 +1322,8 @@ TEST_CASE("patch", "[patch]")
     {
         VNode* vnode = h("template",
                          { { "id", "template-node" } },
-                         Children{
-                             h("style", std::string("p { color: green; }")),
-                             h("p", std::string("Hello world!")) });
+                         { h("style", std::string("p { color: green; }")),
+                           h("p", std::string("Hello world!")) });
         patch(getRoot(), vnode);
         emscripten::val tmpl = emscripten::val::global("document").call<emscripten::val>("getElementById", emscripten::val("template-node"));
         emscripten::val fragment = tmpl["content"].call<emscripten::val>("cloneNode", emscripten::val(true));
