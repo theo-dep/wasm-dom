@@ -13,7 +13,7 @@ int main()
         div(
             { { "onclick",
                 [](emscripten::val /*e*/) -> bool {
-                    emscripten::val::global("console").call<void>("log", emscripten::val("another click"));
+                    emscripten::val::global("console").call<void>("log", std::string("another click"));
                     return true;
                 } } },
             { span({ { "style", "font-weight: normal; font-style: italic" } },

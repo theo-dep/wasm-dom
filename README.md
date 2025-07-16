@@ -37,48 +37,41 @@ At the beginning wasm-dom is born from the idea to test the powerful of WebAssem
 ```c++
 #include "wasm-dom.hpp"
 
-using namespace wasmdom;
-
 int main() {
+  using namespace wasmdom;
+
   Config config;
   init(config);
 
-  VNode* vnode = h("div",
-    Data(
-      Callbacks {
-        {"onclick", [](emscripten::val e) -> bool {
-          emscripten::val::global("console").call<void>("log", emscripten::val("clicked"));
+  VNode* vnode = {
+    div(
+      {
+        { "onclick", [](emscripten::val e) -> bool {
+          emscripten::val::global("console").call<void>("log", std::string("clicked"));
           return true;
         }}
+      },
+      {
+        span(
+          {
+            { "style", "font-weight: bold" }
+          },
+          "This is bold"
+        ),
+        t(" and this is just normal text "),
+        a(
+          {
+            { "href", "/foo" }
+          },
+          "I'll take you places!"
+        )
       }
-    ),
-    Children {
-      h("span",
-        Data(
-          Attrs {
-            {"style", "font-weight: bold"}
-          }
-        ),
-        std::string("This is bold")
-      ),
-      h(" and this is just normal text", true),
-      h("a",
-        Data(
-          Attrs {
-            {"href", "/foo"}
-          }
-        ),
-        std::string("I'll take you places!")
-      )
-    }
-  );
+    )
+  };
 
   // Patch into empty DOM element – this modifies the DOM as a side effect
   patch(
-    emscripten::val::global("document").call<emscripten::val>(
-      "getElementById",
-      std::string("root")
-    ),
+    emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root")),
     vnode
   );
 
