@@ -4,6 +4,8 @@
 #include "wasm-dom/patch.hpp"
 #include "wasm-dom/vnode.hpp"
 
+#include <emscripten.h>
+
 emscripten::val getRoot()
 {
     return emscripten::val::global("document").call<emscripten::val>("getElementById", emscripten::val("root"));
@@ -19,15 +21,20 @@ emscripten::val getNode(wasmdom::VNode* vnode)
     return emscripten::val::module_property("nodes")[std::to_string(vnode->elm).c_str()];
 }
 
+EM_JS(void, createDom, (), {
+    const dom = new JSDOM('<!DOCTYPE html><body></body>');
+    globalThis.dom = dom;
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+    globalThis.navigator = dom.window.navigator;
+});
+
 void setupDom()
 {
+    createDom();
+
     emscripten::val document = emscripten::val::global("document");
     emscripten::val body = document["body"];
-
-    // while (body.firstChild) body.removeChild(body.firstChild);
-    while (!body["firstChild"].isNull()) {
-        body.call<emscripten::val>("removeChild", body["firstChild"]);
-    }
 
     // const root = document.createElement('div');
     emscripten::val root = document.call<emscripten::val>("createElement", std::string("div"));
