@@ -7,8 +7,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(WASM_DOM_TESTS "Build and add tests to test runner" ON)
 option(WASM_DOM_EXAMPLES "Build examples" ON)
 
+set(WASM_DOM_COVERAGE OFF CACHE BOOL "Enable code coverage instrumentation")
+
 add_compile_options(-Werror -Wall -Wextra -pedantic -sSTRICT -Wno-dollar-in-identifier-extension)
-add_link_options(-sNO_FILESYSTEM)
+
+if(WASM_DOM_COVERAGE)
+    add_subdirectory(coverage)
+else()
+    add_link_options(-sNO_FILESYSTEM)
+endif()
 
 add_subdirectory(src)
 

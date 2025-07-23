@@ -1,0 +1,2 @@
+#!/bin/sh
+exec $EMSDK/upstream/bin/llvm-cov gcov "$@"

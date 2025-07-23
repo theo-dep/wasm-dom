@@ -9,6 +9,17 @@
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
             }
+        },
+        {
+            "name": "coverage",
+            "displayName": "Code Coverage",
+            "binaryDir": "${sourceDir}/build/coverage",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "WASM_DOM_COVERAGE": true,
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+            }
         }
     ]
 }
