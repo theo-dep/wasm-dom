@@ -1,6 +1,7 @@
 # wasm-dom
 
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
+[![codecov](https://codecov.io/github/theo-dep/wasm-dom/graph/badge.svg?token=Q96WRJMWUJ)](https://codecov.io/github/theo-dep/wasm-dom)
 
 > A minimal WebAssembly virtual DOM to build C++ SPA (Single page applications)
 

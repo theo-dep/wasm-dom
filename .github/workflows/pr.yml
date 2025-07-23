@@ -1,0 +1,103 @@
+name: Build with Emscripten
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: emscripten/emsdk:latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y ninja-build
+
+    - name: Verify installations
+      run: |
+        cmake --version
+        echo "Ninja $(ninja --version)"
+        emcc --version
+
+    - name: Configure CMake
+      run: |
+        cmake --preset emsdk
+
+    - name: Build project
+      run: |
+        cmake --build build --config Release -j$(nproc)
+
+  build-coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: emscripten/emsdk:latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y ninja-build lcov gpg
+
+    - name: Verify installations
+      run: |
+        cmake --version
+        echo "Ninja $(ninja --version)"
+        emcc --version
+        lcov --version
+
+    - name: Configure CMake with coverage
+      run: |
+        cmake --preset coverage
+
+    - name: Build project with coverage
+      run: |
+        cmake --build build/coverage -j$(nproc)
+
+    - name: Run tests with coverage
+      run: |
+        node test/runner.js build/coverage/test/tests.js -r junit -o tests.xml
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        file: tests.xml
+        fail_ci_if_error: true
+
+    - name: Generate coverage data
+      if: ${{ !cancelled() }}
+      run: |
+        lcov -b . -d build/coverage/src/CMakeFiles/wasm-dom.dir/wasm-dom/ -c -o lcov.info --gcov-tool `pwd`/coverage/llvm-gcov --no-external
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: ${{ !cancelled() }}
+      with:
+        file: lcov.info
+        fail_ci_if_error: true
+
+    - name: Generate coverage report
+      if: ${{ !cancelled() }}
+      run: |
+        genhtml lcov.info -o output
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: coverage-report
+        path: output
+        retention-days: 3
