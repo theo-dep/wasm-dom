@@ -54,6 +54,11 @@ TEST_CASE("h", "[h]")
         ScopedVNode vnode{ h("!", "test") };
     }
 
+    SECTION("should create a vnode for comment with attrs")
+    {
+        ScopedVNode vnode{ h("!", Data(Attrs{ { "foo", "bar" } }), "test") };
+    }
+
     SECTION("should create a vnode for fragment")
     {
         ScopedVNode vnode{ h("") };
@@ -82,6 +87,11 @@ TEST_CASE("h", "[h]")
     SECTION("should create a vnode with text")
     {
         ScopedVNode vnode{ h("this is a text", true) };
+    }
+
+    SECTION("should create a vnode with random text")
+    {
+        ScopedVNode vnode{ h("fakeNode", false) };
     }
 
     SECTION("should create a vnode with attrs")

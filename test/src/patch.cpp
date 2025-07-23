@@ -95,6 +95,16 @@ TEST_CASE("patch", "[patch]")
         deleteVNode(vnode);
     }
 
+    SECTION("should patch the same node")
+    {
+        VNode* vnode = h("div");
+        VNode* elmPtr = patch(getRoot(), vnode);
+        VNode* elmSamePtr = patch(vnode, elmPtr);
+        emscripten::val elm = getBodyFirstChild();
+        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
+        deleteVNode(elmSamePtr);
+    }
+
     SECTION("should have a tag")
     {
         VNode* vnode = h("div");
