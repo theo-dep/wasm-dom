@@ -12,7 +12,7 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("should set on initial element creation")
     {
-        VNode* vnode{
+        VNode vnode{
             h("div", Data(
                          Attrs{
                              { "data-foo", "foo" } }))
@@ -32,7 +32,7 @@ TEST_CASE("dataset", "[dataset]")
             Attrs{
                 { "data-foo", "foo" },
                 { "data-bar", "bar" } });
-        VNode* vnode{ h("i", data) };
+        VNode vnode{ h("i", data) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -42,7 +42,7 @@ TEST_CASE("dataset", "[dataset]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
-        VNode* vnode2{ h("i", data) };
+        VNode vnode2{ h("i", data) };
 
         vdom.patch(vnode2);
 
@@ -54,7 +54,7 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("can be memorized")
     {
-        VNode* vnode{
+        VNode vnode{
             h("div", Data(
                          Attrs{
                              { "data-foo", "foo" },
@@ -69,7 +69,7 @@ TEST_CASE("dataset", "[dataset]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
-        VNode* vnode2{
+        VNode vnode2{
             h("div", Data(
                          Attrs{
                              { "data-baz", "baz" } }))

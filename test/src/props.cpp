@@ -12,7 +12,7 @@ TEST_CASE("props", "[props]")
 
     SECTION("should create element with prop")
     {
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Props{
@@ -28,11 +28,11 @@ TEST_CASE("props", "[props]")
 
     SECTION("changes an elements props")
     {
-        VNode* vnode = h("a",
-                         Data(
-                             Props{
-                                 { "src", emscripten::val("http://other/") } }));
-        VNode* vnode2{
+        VNode vnode = h("a",
+                        Data(
+                            Props{
+                                { "src", emscripten::val("http://other/") } }));
+        VNode vnode2{
             h("a",
               Data(
                   Props{
@@ -47,13 +47,13 @@ TEST_CASE("props", "[props]")
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
     }
 
-    SECTION("preserves memoized props")
+    SECTION("preserves memorized props")
     {
         Data data = Data(
             Props{
                 { "src", emscripten::val("http://other/") } });
-        VNode* vnode{ h("a", data) };
-        VNode* vnode2{ h("a", data) };
+        VNode vnode{ h("a", data) };
+        VNode vnode2{ h("a", data) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -69,11 +69,11 @@ TEST_CASE("props", "[props]")
 
     SECTION("removes an elements props")
     {
-        VNode* vnode = h("a",
-                         Data(
-                             Props{
-                                 { "src", emscripten::val("http://other/") } }));
-        VNode* vnode2{ h("a") };
+        VNode vnode = h("a",
+                        Data(
+                            Props{
+                                { "src", emscripten::val("http://other/") } }));
+        VNode vnode2{ h("a") };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -85,13 +85,13 @@ TEST_CASE("props", "[props]")
 
     SECTION("should update value prop if user interacted with the element")
     {
-        VNode* vnode{
+        VNode vnode{
             h("input",
               Data(
                   Props{
                       { "value", emscripten::val("foo") } }))
         };
-        VNode* vnode2{
+        VNode vnode2{
             h("input",
               Data(
                   Props{
@@ -114,7 +114,7 @@ TEST_CASE("props", "[props]")
 
     SECTION("should update checked prop if user interacted with the element")
     {
-        VNode* vnode{
+        VNode vnode{
             h("input",
               Data(
                   Attrs{
@@ -122,7 +122,7 @@ TEST_CASE("props", "[props]")
                   Props{
                       { "checked", emscripten::val(true) } }))
         };
-        VNode* vnode2{
+        VNode vnode2{
             h("input",
               Data(
                   Attrs{

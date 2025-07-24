@@ -9,7 +9,7 @@ namespace wasmdom
 
 emscripten::val getRoot();
 emscripten::val getBodyFirstChild();
-emscripten::val getNode(const wasmdom::VNode* vnode);
+emscripten::val getNode(const wasmdom::VNode& vnode);
 
 void setupDom();
 

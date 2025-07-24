@@ -8,7 +8,7 @@ int main()
 
     // Create the view
     using namespace wasmdom;
-    wasmdom::VNode* vnode = {
+    wasmdom::VNode vnode = {
         div(
             Callbacks{ { "onclick",
                          [](emscripten::val /*e*/) -> bool {

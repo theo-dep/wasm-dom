@@ -1,7 +1,5 @@
 #include "vnode.hpp"
 
-#include "vnodeforward.hpp"
-
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
@@ -15,27 +13,30 @@ namespace wasmdom
 
 void wasmdom::VNode::normalize(bool injectSvgNamespace)
 {
-    if (!(_hash & isNormalized)) {
-        if (_data.attrs.count("key")) {
-            _hash |= hasKey;
-            _key = _data.attrs["key"];
-            _data.attrs.erase("key");
+    if (!_data)
+        return;
+
+    if (!(_data->hash & isNormalized)) {
+        if (_data->data.attrs.count("key")) {
+            _data->hash |= hasKey;
+            _data->key = _data->data.attrs["key"];
+            _data->data.attrs.erase("key");
         }
 
-        if (_sel[0] == '!') {
-            _hash |= isComment;
-            _sel = "";
+        if (_data->sel[0] == '!') {
+            _data->hash |= isComment;
+            _data->sel = "";
         } else {
-            _children.erase(std::remove(_children.begin(), _children.end(), (VNode*)nullptr), _children.end());
+            std::erase(_data->children, nullptr);
 
-            Attrs::iterator it = _data.attrs.begin();
-            while (it != _data.attrs.end()) {
+            Attrs::iterator it = _data->data.attrs.begin();
+            while (it != _data->data.attrs.end()) {
                 if (it->first == "ns") {
-                    _hash |= hasNS;
-                    _ns = it->second;
-                    it = _data.attrs.erase(it);
+                    _data->hash |= hasNS;
+                    _data->ns = it->second;
+                    it = _data->data.attrs.erase(it);
                 } else if (it->second == "false") {
-                    it = _data.attrs.erase(it);
+                    it = _data->data.attrs.erase(it);
                 } else {
                     if (it->second == "true") {
                         it->second = "";
@@ -44,58 +45,49 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            bool addNS = injectSvgNamespace || (_sel[0] == 's' && _sel[1] == 'v' && _sel[2] == 'g');
+            bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
             if (addNS) {
-                _hash |= hasNS;
-                _ns = "http://www.w3.org/2000/svg";
+                _data->hash |= hasNS;
+                _data->ns = "http://www.w3.org/2000/svg";
             }
 
-            if (!_data.attrs.empty())
-                _hash |= hasAttrs;
-            if (!_data.props.empty())
-                _hash |= hasProps;
-            if (!_data.callbacks.empty())
-                _hash |= hasCallbacks;
-            if (!_children.empty()) {
-                _hash |= hasDirectChildren;
+            if (!_data->data.attrs.empty())
+                _data->hash |= hasAttrs;
+            if (!_data->data.props.empty())
+                _data->hash |= hasProps;
+            if (!_data->data.callbacks.empty())
+                _data->hash |= hasCallbacks;
+            if (!_data->children.empty()) {
+                _data->hash |= hasDirectChildren;
 
-                Children::size_type i = _children.size();
+                Children::size_type i = _data->children.size();
                 while (i--) {
-                    _children[i]->normalize(addNS && _sel != "foreignObject");
+                    _data->children[i].normalize(addNS && _data->sel != "foreignObject");
                 }
             }
 
-            if (_sel[0] == '\0') {
-                _hash |= isFragment;
+            if (_data->sel[0] == '\0') {
+                _data->hash |= isFragment;
             } else {
-                if (hashes[_sel] == 0) {
-                    hashes[_sel] = ++currentHash;
+                if (hashes[_data->sel] == 0) {
+                    hashes[_data->sel] = ++currentHash;
                 }
 
-                _hash |= (hashes[_sel] << 13) | isElement;
+                _data->hash |= (hashes[_data->sel] << 13) | isElement;
 
-                if ((_hash & hasCallbacks) && _data.callbacks.count("ref")) {
-                    _hash |= hasRef;
+                if ((_data->hash & hasCallbacks) && _data->data.callbacks.count("ref")) {
+                    _data->hash |= hasRef;
                 }
             }
         }
 
-        _hash |= isNormalized;
+        _data->hash |= isNormalized;
     }
 }
 
-wasmdom::VNode::~VNode()
+wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
-    if (_hash & hasText) {
-        Children::size_type i = _children.size();
-        while (i--)
-            delete _children[i];
-    }
-}
-
-wasmdom::VNode* wasmdom::VNode::toVNode(const emscripten::val& node)
-{
-    VNode* vnode;
+    VNode vnode = nullptr;
     int nodeType = node["nodeType"].as<int>();
     // isElement
     if (nodeType == 1) {
@@ -105,10 +97,7 @@ wasmdom::VNode* wasmdom::VNode::toVNode(const emscripten::val& node)
         Data data;
         int i = node["attributes"]["length"].as<int>();
         while (i--) {
-            data.attrs.insert(
-                std::make_pair(
-                    node["attributes"][i]["nodeName"].as<std::string>(),
-                    node["attributes"][i]["nodeValue"].as<std::string>()));
+            data.attrs.emplace(node["attributes"][i]["nodeName"].as<std::string>(), node["attributes"][i]["nodeValue"].as<std::string>());
         }
 
         Children children;
@@ -117,17 +106,17 @@ wasmdom::VNode* wasmdom::VNode::toVNode(const emscripten::val& node)
             children.push_back(toVNode(node["childNodes"][i]));
         }
 
-        vnode = new VNode(sel, data, children);
+        vnode = VNode(sel, data, children);
         // isText
     } else if (nodeType == 3) {
-        vnode = new VNode(node["textContent"].as<std::string>(), true);
+        vnode = VNode(node["textContent"].as<std::string>(), true);
         // isComment
     } else if (nodeType == 8) {
-        vnode = new VNode("!", node["textContent"].as<std::string>());
+        vnode = VNode("!", node["textContent"].as<std::string>());
     } else {
-        vnode = new VNode("");
+        vnode = VNode("");
     }
-    vnode->_elm = emscripten::val::module_property("addNode")(node).as<int>();
+    vnode._data->elm = emscripten::val::module_property("addNode")(node).as<int>();
     return vnode;
 }
 
@@ -240,14 +229,14 @@ namespace wasmdom
         return encoded;
     }
 
-    void appendAttributes(const VNode* vnode, std::string& html)
+    void appendAttributes(const VNode& vnode, std::string& html)
     {
-        for (const auto& [key, val] : vnode->attrs()) {
+        for (const auto& [key, val] : vnode.attrs()) {
             html.append(" " + key + "=\"" + encode(val) + "\"");
         }
 
         emscripten::val String = emscripten::val::global("String");
-        for (const auto& [key, val] : vnode->props()) {
+        for (const auto& [key, val] : vnode.props()) {
             if (!omitProps[key]) {
                 std::string lowerKey(key);
                 std::transform(key.begin(), key.end(), lowerKey.begin(), ::tolower);
@@ -256,24 +245,24 @@ namespace wasmdom
         }
     }
 
-    void toHTML(const VNode* vnode, std::string& html)
+    void toHTML(const VNode& vnode, std::string& html)
     {
         if (!vnode)
             return;
 
-        if (vnode->hash() & isText && !vnode->sel().empty()) {
-            html.append(encode(vnode->sel()));
-        } else if (vnode->hash() & isComment) {
-            html.append("<!--" + vnode->sel() + "-->");
-        } else if (vnode->hash() & isFragment) {
-            for (const VNode* child : vnode->children()) {
+        if (vnode.hash() & isText && !vnode.sel().empty()) {
+            html.append(encode(vnode.sel()));
+        } else if (vnode.hash() & isComment) {
+            html.append("<!--" + vnode.sel() + "-->");
+        } else if (vnode.hash() & isFragment) {
+            for (const VNode& child : vnode.children()) {
                 toHTML(child, html);
             }
         } else {
-            bool isSvg = (vnode->hash() & hasNS) && vnode->ns() == "http://www.w3.org/2000/svg";
-            bool isSvgContainerElement = isSvg && containerElements[vnode->sel()];
+            bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
+            bool isSvgContainerElement = isSvg && containerElements[vnode.sel()];
 
-            html.append("<" + vnode->sel());
+            html.append("<" + vnode.sel());
             appendAttributes(vnode, html);
             if (isSvg && !isSvgContainerElement) {
                 html.append(" /");
@@ -281,44 +270,47 @@ namespace wasmdom
             html.append(">");
 
             if (isSvgContainerElement ||
-                (!isSvg && !voidElements[vnode->sel()])) {
+                (!isSvg && !voidElements[vnode.sel()])) {
 
-                if (vnode->props().count("innerHTML") != 0) {
-                    html.append(vnode->props().at("innerHTML").as<std::string>());
+                if (vnode.props().count("innerHTML") != 0) {
+                    html.append(vnode.props().at("innerHTML").as<std::string>());
                 } else {
-                    for (const VNode* child : vnode->children()) {
+                    for (const VNode& child : vnode.children()) {
                         toHTML(child, html);
                     }
                 }
-                html.append("</" + vnode->sel() + ">");
+                html.append("</" + vnode.sel() + ">");
             }
         }
     }
 
 }
 
-std::string wasmdom::VNode::toHTML()
+std::string wasmdom::VNode::toHTML() const
 {
-    normalize();
+    VNode vnode = *this;
+
+    if (vnode)
+        vnode.normalize();
 
     std::string html;
-    wasmdom::toHTML(this, html);
+    wasmdom::toHTML(vnode, html);
     return html;
 }
 
 namespace wasmdom
 {
 
-    void diffAttrs(const VNode* oldVnode, const VNode* vnode)
+    void diffAttrs(const VNode& oldVnode, const VNode& vnode)
     {
-        const Attrs& oldAttrs = oldVnode->attrs();
-        const Attrs& attrs = vnode->attrs();
+        const Attrs& oldAttrs = oldVnode.attrs();
+        const Attrs& attrs = vnode.attrs();
 
         for (const auto& it : oldAttrs) {
             if (!attrs.count(it.first)) {
                 EM_ASM_({ Module.removeAttribute(
                               $0,
-                              Module['UTF8ToString']($1)); }, vnode->elm(), it.first.c_str());
+                              Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
             }
         }
 
@@ -327,19 +319,19 @@ namespace wasmdom
                 EM_ASM_({ Module.setAttribute(
                               $0,
                               Module['UTF8ToString']($1),
-                              Module['UTF8ToString']($2)); }, vnode->elm(), it.first.c_str(), it.second.c_str());
+                              Module['UTF8ToString']($2)); }, vnode.elm(), it.first.c_str(), it.second.c_str());
             }
         }
     }
 
-    void diffProps(const VNode* oldVnode, const VNode* vnode)
+    void diffProps(const VNode& oldVnode, const VNode& vnode)
     {
-        const Props& oldProps = oldVnode->props();
-        const Props& props = vnode->props();
+        const Props& oldProps = oldVnode.props();
+        const Props& props = vnode.props();
 
-        emscripten::val elm = emscripten::val::module_property("nodes")[vnode->elm()];
+        emscripten::val elm = emscripten::val::module_property("nodes")[vnode.elm()];
 
-        EM_ASM_({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode->elm());
+        EM_ASM_({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
 
         for (const auto& it : oldProps) {
             if (!props.count(it.first)) {
@@ -348,7 +340,7 @@ namespace wasmdom
         }
 
         for (const auto& it : props) {
-            EM_ASM_({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode->elm(), it.first.c_str());
+            EM_ASM_({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
 
             if (
                 !oldProps.count(it.first) ||
@@ -360,10 +352,10 @@ namespace wasmdom
         }
     }
 
-    void diffCallbacks(const VNode* oldVnode, const VNode* vnode)
+    void diffCallbacks(const VNode& oldVnode, const VNode& vnode)
     {
-        const Callbacks& oldCallbacks = oldVnode->callbacks();
-        const Callbacks& callbacks = vnode->callbacks();
+        const Callbacks& oldCallbacks = oldVnode.callbacks();
+        const Callbacks& callbacks = vnode.callbacks();
 
         for (const auto& it : oldCallbacks) {
             if (!callbacks.count(it.first) && it.first != "ref") {
@@ -375,7 +367,7 @@ namespace wasmdom
 						Module['eventProxy'],
 						false
 					);
-					delete elm['asmDomEvents'][key]; }, vnode->elm(), it.first.c_str());
+					delete elm['asmDomEvents'][key]; }, vnode.elm(), it.first.c_str());
             }
         }
 
@@ -384,7 +376,7 @@ namespace wasmdom
 			elm['asmDomVNode'] = $1;
 			if (elm['asmDomEvents'] === undefined) {
 				elm['asmDomEvents'] = {};
-			} }, vnode->elm(), reinterpret_cast<std::uintptr_t>(vnode));
+			} }, vnode.elm(), reinterpret_cast<std::uintptr_t>(vnode._data));
 
         for (const auto& it : callbacks) {
             if (!oldCallbacks.count(it.first) && it.first != "ref") {
@@ -396,44 +388,47 @@ namespace wasmdom
 						Module['eventProxy'],
 						false
 					);
-					elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode->elm(), it.first.c_str());
+					elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), it.first.c_str());
             }
         }
 
-        if (vnode->hash() & hasRef) {
+        if (vnode.hash() & hasRef) {
             bool (*const* callback)(emscripten::val) = callbacks.at("ref").target<bool (*)(emscripten::val)>();
-            bool (*const* oldCallback)(emscripten::val) = oldVnode->hash() & hasRef ? oldCallbacks.at("ref").target<bool (*)(emscripten::val)>() : nullptr;
+            bool (*const* oldCallback)(emscripten::val) = oldVnode.hash() & hasRef ? oldCallbacks.at("ref").target<bool (*)(emscripten::val)>() : nullptr;
             if (!callback || !oldCallback || *oldCallback != *callback) {
-                if (oldVnode->hash() & hasRef) {
+                if (oldVnode.hash() & hasRef) {
                     oldCallbacks.at("ref")(emscripten::val::null());
                 }
-                callbacks.at("ref")(emscripten::val::module_property("nodes")[vnode->elm()]);
+                callbacks.at("ref")(emscripten::val::module_property("nodes")[vnode.elm()]);
             }
-        } else if (oldVnode->hash() & hasRef) {
+        } else if (oldVnode.hash() & hasRef) {
             oldCallbacks.at("ref")(emscripten::val::null());
         }
     }
 
 }
 
-void wasmdom::VNode::diff(const VNode* oldVnode) const
+void wasmdom::VNode::diff(const VNode& oldVnode) const
 {
-    const unsigned int vnodes = _hash | oldVnode->_hash;
+    if (!*this || !oldVnode)
+        return;
+
+    const unsigned int vnodes = _data->hash | oldVnode._data->hash;
 
     if (vnodes & hasAttrs)
-        diffAttrs(oldVnode, this);
+        diffAttrs(oldVnode, *this);
     if (vnodes & hasProps)
-        diffProps(oldVnode, this);
+        diffProps(oldVnode, *this);
     if (vnodes & hasCallbacks)
-        diffCallbacks(oldVnode, this);
+        diffCallbacks(oldVnode, *this);
 }
 
 namespace wasmdom
 {
 
-    emscripten::val functionCallback(const std::uintptr_t& vnode, std::string callback, emscripten::val event)
+    emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event)
     {
-        const Callbacks& cbs = reinterpret_cast<VNode*>(vnode)->callbacks();
+        const Callbacks& cbs = reinterpret_cast<VNode::SharedData*>(sharedData)->data.callbacks;
         if (!cbs.count(callback)) {
             callback = "on" + callback;
         }
@@ -442,7 +437,7 @@ namespace wasmdom
 
 }
 
-EMSCRIPTEN_BINDINGS(function_callback)
+EMSCRIPTEN_BINDINGS(functionCallback)
 {
     emscripten::function("functionCallback", &wasmdom::functionCallback, emscripten::allow_raw_pointers());
 }

@@ -8,7 +8,7 @@ using namespace wasmdom;
 
 TEST_CASE("eventListeners", "[eventListeners]")
 {
-    std::vector<emscripten::val> result = std::vector<emscripten::val>();
+    std::vector<emscripten::val> result;
     auto callback = [&result](emscripten::val event) -> bool {
         std::string tagName = event["target"]["tagName"].as<std::string>();
         REQUIRE((tagName == "DIV" || tagName == "A"));
@@ -21,7 +21,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should attach a click event handler to element")
     {
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Callbacks{
@@ -42,7 +42,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should detach attached click event handler to element")
     {
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Callbacks{
@@ -60,7 +60,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(result.size() == 1);
 
-        VNode* vnode2{
+        VNode vnode2{
             h("div",
               Children{
                   h(std::string("a"), std::string("Click my parent")) })
@@ -77,7 +77,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should share handlers in parent and child nodes")
     {
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Callbacks{
@@ -108,7 +108,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         int count = 1;
 
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Callbacks{
@@ -132,7 +132,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         int count = 1;
 
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Callbacks{
@@ -151,7 +151,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(count == 2);
 
-        VNode* vnode2{
+        VNode vnode2{
             h("div",
               Data(
                   Callbacks{
@@ -172,7 +172,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         int count = 1;
 
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Callbacks{
@@ -191,7 +191,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(count == 2);
 
-        VNode* vnode2{
+        VNode vnode2{
             h("div",
               Data(
                   Callbacks{
@@ -210,7 +210,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should not attach ref event handler to element")
     {
-        VNode* vnode{
+        VNode vnode{
             h("div",
               Data(
                   Callbacks{
@@ -228,7 +228,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
 
-        VNode* vnode2{ h("div") };
+        VNode vnode2{ h("div") };
 
         vdom.patch(vnode2);
 

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "vnodeforward.hpp"
-
 #include <emscripten/val.h>
 
+#include <atomic>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -16,6 +15,9 @@ namespace wasmdom
     using Attrs = std::unordered_map<std::string, std::string>;
     using Props = std::unordered_map<std::string, emscripten::val>;
     using Callbacks = std::unordered_map<std::string, Callback>;
+
+    class VNode;
+    using Children = std::vector<VNode>;
 
     enum VNodeFlags
     {
@@ -80,119 +82,201 @@ namespace wasmdom
 
     class VNode
     {
-    public:
-        VNode(const std::string& nodeSel)
-            : _sel(nodeSel)
+        // SharedData and SharedDataPointer are inspired from QSharedData
+        // https://codebrowser.dev/qt6/qtbase/src/corelib/tools/qshareddata.h.html
+
+        struct SharedData
         {
+            std::atomic_int8_t ref = 0;
+
+            std::string sel;
+            std::string key;
+            std::string ns;
+            unsigned int hash = 0;
+            Data data;
+            int elm = 0;
+            Children children;
+        };
+
+        // https://codebrowser.dev/qt6/qtbase/src/corelib/thread/qatomic_cxx11.h.html#_ZN10QAtomicOps3refERSt6atomicITL0__E
+        template <typename T>
+        static inline bool ref(std::atomic<T>& ref)
+        {
+            /* Conceptually, we want to
+             *    return ++ref != 0;
+             * However, that would be sequentially consistent, and thus stronger
+             * than what we need. Based on
+             * http://eel.is/c++draft/atomics.types.memop#6, we know that
+             * pre-increment is equivalent to fetch_add(1) + 1. Unlike
+             * pre-increment, fetch_add takes a memory order argument, so we can get
+             * the desired acquire-release semantics.
+             * One last gotcha is that fetch_add(1) + 1 would need to be converted
+             * back to T, because it's susceptible to integer promotion. To sidestep
+             * this issue and to avoid UB on signed overflow, we rewrite the
+             * expression to:
+             */
+            return ref.fetch_add(1, std::memory_order_acq_rel) != T(-1);
+        }
+
+        template <typename T>
+        static inline bool deref(std::atomic<T>& ref)
+        {
+            // compare with ref
+            return ref.fetch_sub(1, std::memory_order_acq_rel) != T(1);
+        }
+
+    public:
+        VNode(std::nullptr_t) {}
+        VNode(const std::string& nodeSel)
+            : _data(new SharedData)
+        {
+            ref(_data->ref);
+            _data->sel = nodeSel;
         }
         VNode(const std::string& nodeSel,
               const std::string& nodeText)
-            : _sel(nodeSel)
+            : VNode(nodeSel)
         {
             normalize();
-            if (_hash & isComment) {
-                _sel = nodeText;
+            if (_data->hash & isComment) {
+                _data->sel = nodeText;
             } else {
-                _children.push_back(new VNode(nodeText, true));
-                _hash |= hasText;
+                _data->children.emplace_back(nodeText, true);
+                _data->hash |= hasText;
             }
         }
         VNode(const std::string& nodeText,
               bool textNode)
+            : _data(new SharedData)
         {
+            ref(_data->ref);
             if (textNode) {
                 normalize();
-                _sel = nodeText;
+                _data->sel = nodeText;
                 // replace current type with text type
-                _hash = (_hash & removeNodeType) | isText;
+                _data->hash = (_data->hash & removeNodeType) | isText;
             } else {
-                _sel = nodeText;
+                _data->sel = nodeText;
                 normalize();
             }
         }
         VNode(const std::string& nodeSel,
               const Data& nodeData)
-            : _sel(nodeSel)
-            , _data(nodeData)
+            : VNode(nodeSel)
         {
+            _data->data = nodeData;
         }
         VNode(const std::string& nodeSel,
               const Children& nodeChildren)
-            : _sel(nodeSel)
-            , _children(nodeChildren)
+            : VNode(nodeSel)
         {
+            _data->children = nodeChildren;
         }
         VNode(const std::string& nodeSel,
-              VNode* child)
-            : _sel(nodeSel)
-            , _children{ child }
+              const VNode& child)
+            : VNode(nodeSel)
         {
+            _data->children.push_back(child);
         }
         VNode(const std::string& nodeSel,
               const Data& nodeData,
               const std::string& nodeText)
-            : _sel(nodeSel)
-            , _data(nodeData)
+            : VNode(nodeSel, nodeData)
         {
             normalize();
-            if (_hash & isComment) {
-                _sel = nodeText;
+            if (_data->hash & isComment) {
+                _data->sel = nodeText;
             } else {
-                _children.push_back(new VNode(nodeText, true));
-                _hash |= hasText;
+                _data->children.emplace_back(nodeText, true);
+                _data->hash |= hasText;
             }
         }
         VNode(const std::string& nodeSel,
               const Data& nodeData,
               const Children& nodeChildren)
-            : _sel(nodeSel)
-            , _data(nodeData)
-            , _children(nodeChildren)
+            : VNode(nodeSel, nodeData)
         {
+            _data->children = nodeChildren;
         }
         VNode(const std::string& nodeSel,
               const Data& nodeData,
-              VNode* child)
-            : _sel(nodeSel)
-            , _data(nodeData)
-            , _children{ child }
+              const VNode& child)
+            : VNode(nodeSel, nodeData)
+        {
+            _data->children.push_back(child);
+        }
+
+        ~VNode()
+        {
+            if (_data && !deref(_data->ref))
+                delete _data;
+        }
+        [[nodiscard]] VNode(const VNode& other)
+            : _data(other._data)
+        {
+            if (_data)
+                ref(_data->ref);
+        }
+        VNode& operator=(const VNode& other)
+        {
+            if (other._data != _data) {
+                if (other._data)
+                    ref(other._data->ref);
+                SharedData* old = std::exchange(_data, other._data);
+                if (old && !deref(old->ref))
+                    delete old;
+            }
+            return *this;
+        }
+        [[nodiscard]] VNode(VNode&& other)
+            : _data(std::exchange(other._data, nullptr))
         {
         }
-        ~VNode();
+        VNode& operator=(VNode&& other)
+        {
+            VNode moved(std::move(other));
+            std::swap(_data, moved._data);
+            return *this;
+        }
 
-        const Attrs& attrs() const { return _data.attrs; }
-        const Props& props() const { return _data.props; }
-        const Callbacks& callbacks() const { return _data.callbacks; }
+        const Attrs& attrs() const { return _data->data.attrs; }
+        const Props& props() const { return _data->data.props; }
+        const Callbacks& callbacks() const { return _data->data.callbacks; }
 
-        const std::string& sel() const { return _sel; }
-        const std::string& key() const { return _key; }
-        const std::string& ns() const { return _ns; }
-        unsigned int hash() const { return _hash; }
-        int elm() const { return _elm; }
+        const std::string& sel() const { return _data->sel; }
+        const std::string& key() const { return _data->key; }
+        const std::string& ns() const { return _data->ns; }
+        unsigned int hash() const { return _data->hash; }
+        int elm() const { return _data->elm; }
 
-        void setElm(int nodeElm) { _elm = nodeElm; }
+        void setElm(int nodeElm) { _data->elm = nodeElm; }
 
-        const Children& children() const { return _children; }
+        const Children& children() const { return _data->children; }
 
         void normalize() { normalize(false); }
 
-        std::string toHTML();
+        std::string toHTML() const;
 
-        void diff(const VNode* other) const;
+        void diff(const VNode& other) const;
 
-        static VNode* toVNode(const emscripten::val& node);
+        operator bool() const { return _data != nullptr; }
+        bool operator!() const { return _data == nullptr; }
+        bool operator==(const VNode& other) const { return _data == other._data; }
+        bool operator==(std::nullptr_t) const { return _data == nullptr; }
+
+        static VNode toVNode(const emscripten::val& node);
 
     private:
         void normalize(bool injectSvgNamespace);
 
+        friend void diffCallbacks(const VNode& oldVnode, const VNode& vnode);
+        friend emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event);
+
+        friend int createElm(VNode& vnode);
+        friend void patchVNode(VNode& oldVnode, VNode& vnode, int parentElm);
+
         // contains selector for elements and fragments, text for comments and textNodes
-        std::string _sel;
-        std::string _key;
-        std::string _ns;
-        unsigned int _hash = 0;
-        Data _data;
-        int _elm = 0;
-        Children _children;
+        SharedData* _data = nullptr;
     };
 
 }

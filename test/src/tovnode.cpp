@@ -14,7 +14,7 @@ TEST_CASE("toVNode", "[toVNode]")
     {
         emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
 
-        VNode* vnode{ VNode::toVNode(node) };
+        VNode vnode{ VNode::toVNode(node) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -22,13 +22,13 @@ TEST_CASE("toVNode", "[toVNode]")
         emscripten::val elm = getBodyFirstChild();
 
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
-    };
+    }
 
     SECTION("should convert text node to vnode")
     {
         emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("Hello world!"));
 
-        VNode* vnode{ VNode::toVNode(node) };
+        VNode vnode{ VNode::toVNode(node) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -37,13 +37,13 @@ TEST_CASE("toVNode", "[toVNode]")
 
         REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("#text")));
         REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("Hello world!")));
-    };
+    }
 
     SECTION("should convert comment node to vnode")
     {
         emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createComment", emscripten::val("Hello world!"));
 
-        VNode* vnode{ VNode::toVNode(node) };
+        VNode vnode{ VNode::toVNode(node) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -52,7 +52,7 @@ TEST_CASE("toVNode", "[toVNode]")
 
         REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("#comment")));
         REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("Hello world!")));
-    };
+    }
 
     SECTION("should convert a node with attributes to vnode")
     {
@@ -61,7 +61,7 @@ TEST_CASE("toVNode", "[toVNode]")
         node.call<void>("setAttribute", emscripten::val("data-foo"), emscripten::val("bar"));
         node.call<void>("setAttribute", emscripten::val("data-bar"), emscripten::val("foo"));
 
-        VNode* vnode{ VNode::toVNode(node) };
+        VNode vnode{ VNode::toVNode(node) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -72,7 +72,7 @@ TEST_CASE("toVNode", "[toVNode]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("src")).strictlyEquals(emscripten::val("http://localhost/")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("bar")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("foo")));
-    };
+    }
 
     SECTION("should convert a node with children to vnode")
     {
@@ -87,7 +87,7 @@ TEST_CASE("toVNode", "[toVNode]")
         parent.call<void>("appendChild", p);
         parent.call<void>("appendChild", child);
 
-        VNode* vnode{ VNode::toVNode(parent) };
+        VNode vnode{ VNode::toVNode(parent) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -107,7 +107,7 @@ TEST_CASE("toVNode", "[toVNode]")
         REQUIRE(elm["childNodes"]["1"]["childNodes"]["1"]["nodeName"].strictlyEquals(emscripten::val("#comment")));
         REQUIRE(elm["childNodes"]["1"]["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
         REQUIRE(elm["childNodes"]["2"]["tagName"].strictlyEquals(emscripten::val("DIV")));
-    };
+    }
 
     SECTION("should convert a node with attributes and children to vnode")
     {
@@ -119,7 +119,7 @@ TEST_CASE("toVNode", "[toVNode]")
         parent.call<void>("appendChild", img);
         parent.call<void>("appendChild", div);
 
-        VNode* vnode{ VNode::toVNode(parent) };
+        VNode vnode{ VNode::toVNode(parent) };
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -132,7 +132,7 @@ TEST_CASE("toVNode", "[toVNode]")
         REQUIRE(elm["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("IMG")));
         REQUIRE(elm["childNodes"]["0"].call<emscripten::val>("getAttribute", emscripten::val("src")).strictlyEquals(emscripten::val("http://localhost/")));
         REQUIRE(elm["childNodes"]["1"]["tagName"].strictlyEquals(emscripten::val("DIV")));
-    };
+    }
 
     SECTION("should remove previous children of the root element")
     {
@@ -143,7 +143,7 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.set("className", emscripten::val("class"));
         prevElm.call<void>("appendChild", h2);
 
-        VNode* nextVNode{
+        VNode nextVNode{
             h("div",
               Data(
                   Attrs{
@@ -165,13 +165,13 @@ TEST_CASE("toVNode", "[toVNode]")
         REQUIRE(elm["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(elm["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
         REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Hi")));
-    };
+    }
 
     SECTION("should support patching in a DocumentFragment")
     {
         emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createDocumentFragment");
 
-        VNode* nextVNode{
+        VNode nextVNode{
             h("",
               Children{
                   h("div",
@@ -197,7 +197,7 @@ TEST_CASE("toVNode", "[toVNode]")
         REQUIRE(elm["childNodes"]["0"]["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(elm["childNodes"]["0"]["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
         REQUIRE(elm["childNodes"]["0"]["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Hi")));
-    };
+    }
 
     SECTION("should remove some children of the root element")
     {
@@ -211,7 +211,7 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.call<void>("appendChild", text);
         prevElm.call<void>("appendChild", h2);
 
-        VNode* nextVNode{
+        VNode nextVNode{
             h("div",
               Data(
                   Attrs{
@@ -234,7 +234,7 @@ TEST_CASE("toVNode", "[toVNode]")
         REQUIRE(elm["childNodes"]["0"]["nodeType"].strictlyEquals(emscripten::val(3)));
         REQUIRE(elm["childNodes"]["0"]["wholeText"].strictlyEquals(emscripten::val("Foobar")));
         REQUIRE(elm["childNodes"]["0"]["testProperty"].strictlyEquals(emscripten::val(123)));
-    };
+    }
 
     SECTION("should remove text elements")
     {
@@ -247,7 +247,7 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.call<void>("appendChild", text);
         prevElm.call<void>("appendChild", h2);
 
-        VNode* nextVNode{
+        VNode nextVNode{
             h("div",
               Data(
                   Attrs{

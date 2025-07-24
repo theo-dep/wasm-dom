@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vnode.hpp"
+
 #include <emscripten/val.h>
 
 namespace wasmdom
@@ -11,12 +13,11 @@ namespace wasmdom
     {
     public:
         VDom(const emscripten::val& element);
-        ~VDom();
 
-        VNode* patch(VNode* vnode);
+        const VNode& patch(const VNode& vnode);
 
     private:
-        VNode* _currentNode = nullptr;
+        VNode _currentNode;
     };
 
 }
