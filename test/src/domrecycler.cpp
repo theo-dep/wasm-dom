@@ -2,10 +2,14 @@
 
 #include "wasm-dom.hpp"
 
+#include "utils.hpp"
+
 #include <emscripten.h>
 
 TEST_CASE("domRecycler", "[domRecycler]")
 {
+    setupDom();
+
     EM_ASM({
         Module.recycler.nodes = {};
         globalThis.recycler = Module.recycler;
@@ -70,7 +74,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
         REQUIRE(recycler["nodes"]["DIV"]["length"].as<int>() == 0);
     }
 
-    SECTION("should create and nodes with namespace")
+    SECTION("should create nodes with namespace")
     {
         emscripten::val node = recycler.call<emscripten::val>("createNS", std::string("svg"), std::string("http://www.w3.org/2000/svg"));
         REQUIRE(node["nodeName"].as<std::string>() == "svg");
