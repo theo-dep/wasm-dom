@@ -31,8 +31,8 @@ TEST_CASE("benchmark")
                             h("div", Data(Attrs{ { "foo", "foo" } })) }) });
         });
 
-        for (const VNode* vnode : storage)
-            deleteVNode(vnode);
+        for (VNode* vnode : storage)
+            delete vnode;
     };
 
     BENCHMARK_ADVANCED("patch without changes")(Catch::Benchmark::Chronometer meter)
@@ -62,28 +62,17 @@ TEST_CASE("benchmark")
                      children);
         };
 
-        VDom vdom;
+        VDom vdom(getRoot());
+        vdom.patch(createVNode());
 
-        std::vector<std::pair<VNode*, VNode*>> storage(meter.runs());
+        std::vector<VNode*> storage(meter.runs());
         for (std::size_t i = 0; i < storage.size(); ++i) {
-            auto& [vnode1, vnode2] = storage[i];
-
-            if (i == 0) {
-                vnode1 = vdom.patch(getRoot(), createVNode());
-                vnode2 = createVNode();
-            } else {
-                vnode1 = storage[i - 1].second;
-                vnode2 = createVNode();
-            }
+            storage[i] = createVNode();
         }
 
         meter.measure([&](int i) {
-            const auto& [vnode1, vnode2] = storage[i];
-
-            vdom.patch(vnode1, vnode2);
+            vdom.patch(storage[i]);
         });
-
-        deleteVNode(storage[storage.size() - 1].second);
     };
 
     BENCHMARK_ADVANCED("patch with changes")(Catch::Benchmark::Chronometer meter)
@@ -135,28 +124,17 @@ TEST_CASE("benchmark")
                      children);
         };
 
-        VDom vdom;
+        VDom vdom(getRoot());
+        vdom.patch(createVNode2());
 
-        std::vector<std::pair<VNode*, VNode*>> storage(meter.runs());
+        std::vector<VNode*> storage(meter.runs());
         for (std::size_t i = 0; i < storage.size(); ++i) {
-            auto& [vnode1, vnode2] = storage[i];
-
-            if (i == 0) {
-                vnode1 = vdom.patch(getRoot(), createVNode1());
-                vnode2 = createVNode2();
-            } else {
-                vnode1 = storage[i - 1].second;
-                vnode2 = (i % 2 == 0 ? createVNode2() : createVNode1());
-            }
+            storage[i] = (i % 2 == 0 ? createVNode1() : createVNode2());
         }
 
         meter.measure([&](int i) {
-            const auto& [vnode1, vnode2] = storage[i];
-
-            vdom.patch(vnode1, vnode2);
+            vdom.patch(storage[i]);
         });
-
-        deleteVNode(storage[storage.size() - 1].second);
     };
 
     BENCHMARK_ADVANCED("patch with additions")(Catch::Benchmark::Chronometer meter)
@@ -188,27 +166,16 @@ TEST_CASE("benchmark")
                              { "baz", "baz" } }));
         };
 
-        VDom vdom;
+        VDom vdom(getRoot());
+        vdom.patch(createVNode2());
 
-        std::vector<std::pair<VNode*, VNode*>> storage(meter.runs());
+        std::vector<VNode*> storage(meter.runs());
         for (std::size_t i = 0; i < storage.size(); ++i) {
-            auto& [vnode1, vnode2] = storage[i];
-
-            if (i == 0) {
-                vnode1 = vdom.patch(getRoot(), createVNode1());
-                vnode2 = createVNode2();
-            } else {
-                vnode1 = storage[i - 1].second;
-                vnode2 = (i % 2 == 0 ? createVNode2() : createVNode1());
-            }
+            storage[i] = (i % 2 == 0 ? createVNode1() : createVNode2());
         }
 
         meter.measure([&](int i) {
-            const auto& [vnode1, vnode2] = storage[i];
-
-            vdom.patch(vnode1, vnode2);
+            vdom.patch(storage[i]);
         });
-
-        deleteVNode(storage[storage.size() - 1].second);
     };
 }

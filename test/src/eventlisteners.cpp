@@ -21,7 +21,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should attach a click event handler to element")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div",
               Data(
                   Callbacks{
@@ -30,8 +30,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                   h(std::string("a"), std::string("Click my parent")) })
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -42,7 +42,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should detach attached click event handler to element")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div",
               Data(
                   Callbacks{
@@ -51,8 +51,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                   h(std::string("a"), std::string("Click my parent")) })
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -60,13 +60,13 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(result.size() == 1);
 
-        ScopedVNode vnode2{
+        VNode* vnode2{
             h("div",
               Children{
                   h(std::string("a"), std::string("Click my parent")) })
         };
 
-        vdom.patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         elm = getBodyFirstChild();
 
@@ -77,7 +77,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should share handlers in parent and child nodes")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div",
               Data(
                   Callbacks{
@@ -90,8 +90,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                     std::string("Click my parent")) })
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -108,7 +108,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         int count = 1;
 
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div",
               Data(
                   Callbacks{
@@ -118,8 +118,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -132,7 +132,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         int count = 1;
 
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div",
               Data(
                   Callbacks{
@@ -142,8 +142,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -151,7 +151,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(count == 2);
 
-        ScopedVNode vnode2{
+        VNode* vnode2{
             h("div",
               Data(
                   Callbacks{
@@ -161,7 +161,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        vdom.patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         elm.call<void>("click");
 
@@ -172,7 +172,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         int count = 1;
 
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div",
               Data(
                   Callbacks{
@@ -182,8 +182,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -191,7 +191,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(count == 2);
 
-        ScopedVNode vnode2{
+        VNode* vnode2{
             h("div",
               Data(
                   Callbacks{
@@ -201,7 +201,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        vdom.patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         elm.call<void>("click");
 
@@ -210,7 +210,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
     SECTION("should not attach ref event handler to element")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div",
               Data(
                   Callbacks{
@@ -219,8 +219,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -228,9 +228,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
 
-        ScopedVNode vnode2{ h("div") };
+        VNode* vnode2{ h("div") };
 
-        vdom.patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
 

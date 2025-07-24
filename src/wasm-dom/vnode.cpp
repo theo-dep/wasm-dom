@@ -84,16 +84,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
     }
 }
 
-void wasmdom::deleteVNode(const VNode* vnode)
-{
-    if (!(vnode->hash() & hasText)) {
-        Children::size_type i = vnode->children().size();
-        while (i--)
-            deleteVNode(vnode->children()[i]);
-    }
-    delete vnode;
-}
-
 wasmdom::VNode::~VNode()
 {
     if (_hash & hasText) {

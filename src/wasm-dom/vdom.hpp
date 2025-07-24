@@ -10,9 +10,10 @@ namespace wasmdom
     class VDom
     {
     public:
-        VNode* patch(const emscripten::val& element, VNode* vnode);
+        VDom(const emscripten::val& element);
+        ~VDom();
 
-        VNode* patch(VNode* oldVnode, VNode* vnode);
+        VNode* patch(VNode* vnode);
 
     private:
         VNode* _currentNode = nullptr;

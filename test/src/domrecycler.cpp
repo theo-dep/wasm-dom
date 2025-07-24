@@ -10,6 +10,8 @@ TEST_CASE("domRecycler", "[domRecycler]")
 {
     setupDom();
 
+    wasmdom::VDom vdom(getRoot()); // init
+
     EM_ASM({
         Module.recycler.nodes = {};
         globalThis.recycler = Module.recycler;

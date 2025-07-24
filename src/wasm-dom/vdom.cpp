@@ -1,7 +1,5 @@
 #include "vdom.hpp"
 
-#include "configprivate.hpp"
-#include "h.hpp"
 #include "vnode.hpp"
 
 #include <emscripten.h>
@@ -12,12 +10,23 @@
 #include <unordered_map>
 #include <vector>
 
+wasmdom::VDom::VDom(const emscripten::val& element)
+    : _currentNode(VNode::toVNode(element))
+{
+    _currentNode->normalize();
+}
+
+wasmdom::VDom::~VDom()
+{
+    delete _currentNode;
+}
+
 namespace wasmdom
 {
 
     void patchVNode(const VNode* oldVnode, VNode* vnode, int parentElm);
 
-    VNode* const emptyNode = h("");
+    const VNode emptyNode = VNode("");
 
 }
 
@@ -65,7 +74,7 @@ namespace wasmdom
             EM_ASM_({ Module.appendChild($0, $1); }, vnode->elm(), elm);
         }
 
-        vnode->diff(emptyNode);
+        vnode->diff(&emptyNode);
 
         return vnode->elm();
     }
@@ -207,33 +216,15 @@ void wasmdom::patchVNode(const VNode* oldVnode, VNode* vnode, int parentElm)
     }
 }
 
-wasmdom::VNode* wasmdom::VDom::patch(const emscripten::val& element, VNode* vnode)
+wasmdom::VNode* wasmdom::VDom::patch(VNode* vnode)
 {
-    VNode* oldVnode = VNode::toVNode(element);
-    VNode* result = patch(oldVnode, vnode);
-    if (!config().clearMemory) {
-        deleteVNode(oldVnode);
-    }
-    return result;
-}
+    if (_currentNode == vnode)
+        return _currentNode;
 
-wasmdom::VNode* wasmdom::VDom::patch(VNode* oldVnode, VNode* vnode)
-{
-    if (!config().unsafePatch &&
-        _currentNode != oldVnode &&
-        _currentNode)
-        return nullptr;
-
-    if (oldVnode == vnode)
-        return vnode;
-
-    _currentNode = vnode;
-
-    oldVnode->normalize();
     vnode->normalize();
 
-    if (sameVNode(oldVnode, vnode)) {
-        patchVNode(oldVnode, vnode, oldVnode->elm());
+    if (sameVNode(_currentNode, vnode)) {
+        patchVNode(_currentNode, vnode, _currentNode->elm());
     } else {
         int elm = createElm(vnode);
         EM_ASM_({
@@ -245,12 +236,11 @@ wasmdom::VNode* wasmdom::VDom::patch(VNode* oldVnode, VNode* vnode)
 						Module.nextSibling($1)
 					);
 					Module.removeChild($1);
-				} }, elm, oldVnode->elm());
+				} }, elm, _currentNode->elm());
     }
 
-    if (config().clearMemory) {
-        deleteVNode(oldVnode);
-    }
+    delete _currentNode;
+    _currentNode = vnode;
 
     return vnode;
 }

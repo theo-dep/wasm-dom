@@ -1,8 +1,8 @@
 set(TARGET_NAME wasm-dom)
 
 add_library(${TARGET_NAME}
-    wasm-dom/config.cpp
     wasm-dom/h.cpp
+    wasm-dom/init.cpp
     wasm-dom/vdom.cpp
     wasm-dom/vnode.cpp
 )

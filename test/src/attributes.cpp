@@ -12,7 +12,7 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should have their provided values")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div", Data(
                          Attrs{
                              { "href", "/foo" },
@@ -20,8 +20,8 @@ TEST_CASE("attributes", "[attributes]")
                              { "value", "foo" } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -37,10 +37,10 @@ TEST_CASE("attributes", "[attributes]")
                 { "href", "/foo" },
                 { "minlength", "1" },
                 { "value", "foo" } });
-        ScopedVNode vnode{ h("div", data) };
+        VNode* vnode{ h("div", data) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -48,9 +48,9 @@ TEST_CASE("attributes", "[attributes]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
 
-        ScopedVNode vnode2{ h("div", data) };
+        VNode* vnode2{ h("div", data) };
 
-        vdom.patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         elm = getBodyFirstChild();
 
@@ -61,7 +61,7 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should be omitted when falsy values are provided")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div", Data(
                          Attrs{
                              { "href", "null" },
@@ -69,8 +69,8 @@ TEST_CASE("attributes", "[attributes]")
                              { "value", "false" } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -81,7 +81,7 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should set truthy values to empty string")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("input", Data(
                            Attrs{
                                { "href", "null" },
@@ -89,8 +89,8 @@ TEST_CASE("attributes", "[attributes]")
                                { "readonly", "true" } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -101,14 +101,14 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should be set correctly when namespaced")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div", Data(
                          Attrs{
                              { "xlink:href", "#foo" } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 

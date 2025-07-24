@@ -195,6 +195,4 @@ namespace wasmdom
         Children _children;
     };
 
-    void deleteVNode(const VNode* vnode);
-
 }

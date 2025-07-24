@@ -1,6 +1,5 @@
 #include "utils.hpp"
 
-#include "wasm-dom/configprivate.hpp"
 #include "wasm-dom/vnode.hpp"
 
 #include <emscripten.h>
@@ -15,7 +14,7 @@ emscripten::val getBodyFirstChild()
     return emscripten::val::global("document")["body"]["firstChild"];
 }
 
-emscripten::val getNode(wasmdom::VNode* vnode)
+emscripten::val getNode(const wasmdom::VNode* vnode)
 {
     return emscripten::val::module_property("nodes")[std::to_string(vnode->elm()).c_str()];
 }
@@ -43,11 +42,6 @@ void setupDom()
 
     // document.body.appendChild(root);
     body.call<void>("appendChild", root);
-}
-
-void reset()
-{
-    wasmdom::config() = wasmdom::Config{};
 }
 
 bool onClick(emscripten::val /*event*/)

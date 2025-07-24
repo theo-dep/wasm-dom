@@ -4,8 +4,7 @@
 
 int main()
 {
-    wasmdom::Config config;
-    wasmdom::init(config);
+    wasmdom::init();
 
     // Create the view
     using namespace wasmdom;
@@ -24,10 +23,8 @@ int main()
     };
 
     // Patch into empty DOM element – this modifies the DOM as a side effect
-    wasmdom::VDom vdom;
-    vdom.patch(
-        emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root")),
-        vnode);
+    wasmdom::VDom vdom(emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root")));
+    vdom.patch(vnode);
 
     return 0;
 }

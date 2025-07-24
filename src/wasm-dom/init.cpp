@@ -1,13 +1,9 @@
-#include "config.hpp"
-
-#include "configprivate.hpp"
+#include "init.hpp"
 
 #include "emscripten.h"
 
-void wasmdom::init(const Config& config)
+void wasmdom::init()
 {
-    wasmdom::config() = config;
-
     EM_ASM(
         Module['eventProxy'] = function(e) { return Module['functionCallback'](this['asmDomVNode'], e.type, e); };
 
@@ -44,7 +40,6 @@ void wasmdom::init(const Config& config)
 				// clean
 				var i;
 
-				// eslint-disable-next-line
 				while (i = node.lastChild) {
 					node.removeChild(i);
 					recycler['collect'](i);

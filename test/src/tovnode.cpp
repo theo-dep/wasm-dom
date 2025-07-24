@@ -14,10 +14,10 @@ TEST_CASE("toVNode", "[toVNode]")
     {
         emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
 
-        ScopedVNode vnode{ VNode::toVNode(node) };
+        VNode* vnode{ VNode::toVNode(node) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -28,10 +28,10 @@ TEST_CASE("toVNode", "[toVNode]")
     {
         emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("Hello world!"));
 
-        ScopedVNode vnode{ VNode::toVNode(node) };
+        VNode* vnode{ VNode::toVNode(node) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -43,10 +43,10 @@ TEST_CASE("toVNode", "[toVNode]")
     {
         emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createComment", emscripten::val("Hello world!"));
 
-        ScopedVNode vnode{ VNode::toVNode(node) };
+        VNode* vnode{ VNode::toVNode(node) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -61,10 +61,10 @@ TEST_CASE("toVNode", "[toVNode]")
         node.call<void>("setAttribute", emscripten::val("data-foo"), emscripten::val("bar"));
         node.call<void>("setAttribute", emscripten::val("data-bar"), emscripten::val("foo"));
 
-        ScopedVNode vnode{ VNode::toVNode(node) };
+        VNode* vnode{ VNode::toVNode(node) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -87,10 +87,10 @@ TEST_CASE("toVNode", "[toVNode]")
         parent.call<void>("appendChild", p);
         parent.call<void>("appendChild", child);
 
-        ScopedVNode vnode{ VNode::toVNode(parent) };
+        VNode* vnode{ VNode::toVNode(parent) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -119,10 +119,10 @@ TEST_CASE("toVNode", "[toVNode]")
         parent.call<void>("appendChild", img);
         parent.call<void>("appendChild", div);
 
-        ScopedVNode vnode{ VNode::toVNode(parent) };
+        VNode* vnode{ VNode::toVNode(parent) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -143,7 +143,7 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.set("className", emscripten::val("class"));
         prevElm.call<void>("appendChild", h2);
 
-        ScopedVNode nextVNode{
+        VNode* nextVNode{
             h("div",
               Data(
                   Attrs{
@@ -153,10 +153,10 @@ TEST_CASE("toVNode", "[toVNode]")
                   h("span", std::string("Hi")) })
         };
 
-        VDom vdom;
-        vdom.patch(VNode::toVNode(prevElm), nextVNode.get());
+        VDom vdom(prevElm);
+        vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode.get());
+        emscripten::val elm = getNode(nextVNode);
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
@@ -171,7 +171,7 @@ TEST_CASE("toVNode", "[toVNode]")
     {
         emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createDocumentFragment");
 
-        ScopedVNode nextVNode{
+        VNode* nextVNode{
             h("",
               Children{
                   h("div",
@@ -183,10 +183,10 @@ TEST_CASE("toVNode", "[toVNode]")
                         h("span", std::string("Hi")) }) })
         };
 
-        VDom vdom;
-        vdom.patch(VNode::toVNode(prevElm), nextVNode.get());
+        VDom vdom(prevElm);
+        vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode.get());
+        emscripten::val elm = getNode(nextVNode);
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["nodeType"].strictlyEquals(emscripten::val(11)));
@@ -211,7 +211,7 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.call<void>("appendChild", text);
         prevElm.call<void>("appendChild", h2);
 
-        ScopedVNode nextVNode{
+        VNode* nextVNode{
             h("div",
               Data(
                   Attrs{
@@ -221,10 +221,10 @@ TEST_CASE("toVNode", "[toVNode]")
                   h("Foobar", true) })
         };
 
-        VDom vdom;
-        vdom.patch(VNode::toVNode(prevElm), nextVNode.get());
+        VDom vdom(prevElm);
+        vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode.get());
+        emscripten::val elm = getNode(nextVNode);
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
@@ -247,7 +247,7 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.call<void>("appendChild", text);
         prevElm.call<void>("appendChild", h2);
 
-        ScopedVNode nextVNode{
+        VNode* nextVNode{
             h("div",
               Data(
                   Attrs{
@@ -257,10 +257,10 @@ TEST_CASE("toVNode", "[toVNode]")
                   h("h2", std::string("Hello")) })
         };
 
-        VDom vdom;
-        vdom.patch(VNode::toVNode(prevElm), nextVNode.get());
+        VDom vdom(prevElm);
+        vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode.get());
+        emscripten::val elm = getNode(nextVNode);
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));

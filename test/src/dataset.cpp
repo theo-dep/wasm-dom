@@ -12,14 +12,14 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("should set on initial element creation")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div", Data(
                          Attrs{
                              { "data-foo", "foo" } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -32,19 +32,19 @@ TEST_CASE("dataset", "[dataset]")
             Attrs{
                 { "data-foo", "foo" },
                 { "data-bar", "bar" } });
-        ScopedVNode vnode{ h("i", data) };
+        VNode* vnode{ h("i", data) };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
-        ScopedVNode vnode2{ h("i", data) };
+        VNode* vnode2{ h("i", data) };
 
-        vdom.patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         elm = getBodyFirstChild();
 
@@ -54,28 +54,28 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("can be memorized")
     {
-        ScopedVNode vnode{
+        VNode* vnode{
             h("div", Data(
                          Attrs{
                              { "data-foo", "foo" },
                              { "data-bar", "bar" } }))
         };
 
-        VDom vdom;
-        vdom.patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
-        ScopedVNode vnode2{
+        VNode* vnode2{
             h("div", Data(
                          Attrs{
                              { "data-baz", "baz" } }))
         };
 
-        vdom.patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         elm = getBodyFirstChild();
 
