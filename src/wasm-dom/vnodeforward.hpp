@@ -5,7 +5,7 @@
 namespace wasmdom
 {
 
-    struct VNode;
-    typedef std::vector<VNode*> Children;
+    class VNode;
+    using Children = std::vector<VNode*>;
 
 }

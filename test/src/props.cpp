@@ -19,7 +19,8 @@ TEST_CASE("props", "[props]")
                       { "src", emscripten::val("http://localhost/") } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
@@ -38,8 +39,9 @@ TEST_CASE("props", "[props]")
                       { "src", emscripten::val("http://localhost/") } }))
         };
 
-        patch(getRoot(), vnode);
-        patch(vnode, vnode2.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode);
+        vdom.patch(vnode, vnode2.get());
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
@@ -53,12 +55,13 @@ TEST_CASE("props", "[props]")
         ScopedVNode vnode{ h("a", data) };
         ScopedVNode vnode2{ h("a", data) };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
@@ -72,8 +75,9 @@ TEST_CASE("props", "[props]")
                                  { "src", emscripten::val("http://other/") } }));
         ScopedVNode vnode2{ h("a") };
 
-        patch(getRoot(), vnode);
-        patch(vnode, vnode2.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode);
+        vdom.patch(vnode, vnode2.get());
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val::undefined()));
@@ -94,7 +98,8 @@ TEST_CASE("props", "[props]")
                       { "value", emscripten::val("foo") } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["value"].strictlyEquals(emscripten::val("foo")));
@@ -102,7 +107,7 @@ TEST_CASE("props", "[props]")
         elm.set("value", emscripten::val("bar"));
         REQUIRE(elm["value"].strictlyEquals(emscripten::val("bar")));
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         REQUIRE(elm["value"].strictlyEquals(emscripten::val("foo")));
     }
@@ -126,7 +131,8 @@ TEST_CASE("props", "[props]")
                       { "checked", emscripten::val(true) } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["checked"].strictlyEquals(emscripten::val(true)));
@@ -134,7 +140,7 @@ TEST_CASE("props", "[props]")
         elm.set("checked", emscripten::val(false));
         REQUIRE(elm["checked"].strictlyEquals(emscripten::val(false)));
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         REQUIRE(elm["checked"].strictlyEquals(emscripten::val(true)));
     }

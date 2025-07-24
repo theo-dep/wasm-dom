@@ -18,7 +18,8 @@ TEST_CASE("dataset", "[dataset]")
                              { "data-foo", "foo" } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -33,7 +34,8 @@ TEST_CASE("dataset", "[dataset]")
                 { "data-bar", "bar" } });
         ScopedVNode vnode{ h("i", data) };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -42,7 +44,7 @@ TEST_CASE("dataset", "[dataset]")
 
         ScopedVNode vnode2{ h("i", data) };
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         elm = getBodyFirstChild();
 
@@ -59,7 +61,8 @@ TEST_CASE("dataset", "[dataset]")
                              { "data-bar", "bar" } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -72,7 +75,7 @@ TEST_CASE("dataset", "[dataset]")
                              { "data-baz", "baz" } }))
         };
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         elm = getBodyFirstChild();
 

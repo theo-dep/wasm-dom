@@ -2,12 +2,8 @@ set(TARGET_NAME wasm-dom)
 
 add_library(${TARGET_NAME}
     wasm-dom/config.cpp
-    wasm-dom/diff.cpp
     wasm-dom/h.cpp
-    wasm-dom/init.cpp
-    wasm-dom/patch.cpp
-    wasm-dom/tohtml.cpp
-    wasm-dom/tovnode.cpp
+    wasm-dom/vdom.cpp
     wasm-dom/vnode.cpp
 )
 

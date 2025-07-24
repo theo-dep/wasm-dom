@@ -62,12 +62,14 @@ TEST_CASE("benchmark")
                      children);
         };
 
+        VDom vdom;
+
         std::vector<std::pair<VNode*, VNode*>> storage(meter.runs());
         for (std::size_t i = 0; i < storage.size(); ++i) {
             auto& [vnode1, vnode2] = storage[i];
 
             if (i == 0) {
-                vnode1 = patch(getRoot(), createVNode());
+                vnode1 = vdom.patch(getRoot(), createVNode());
                 vnode2 = createVNode();
             } else {
                 vnode1 = storage[i - 1].second;
@@ -78,7 +80,7 @@ TEST_CASE("benchmark")
         meter.measure([&](int i) {
             const auto& [vnode1, vnode2] = storage[i];
 
-            patch(vnode1, vnode2);
+            vdom.patch(vnode1, vnode2);
         });
 
         deleteVNode(storage[storage.size() - 1].second);
@@ -133,12 +135,14 @@ TEST_CASE("benchmark")
                      children);
         };
 
+        VDom vdom;
+
         std::vector<std::pair<VNode*, VNode*>> storage(meter.runs());
         for (std::size_t i = 0; i < storage.size(); ++i) {
             auto& [vnode1, vnode2] = storage[i];
 
             if (i == 0) {
-                vnode1 = patch(getRoot(), createVNode1());
+                vnode1 = vdom.patch(getRoot(), createVNode1());
                 vnode2 = createVNode2();
             } else {
                 vnode1 = storage[i - 1].second;
@@ -149,7 +153,7 @@ TEST_CASE("benchmark")
         meter.measure([&](int i) {
             const auto& [vnode1, vnode2] = storage[i];
 
-            patch(vnode1, vnode2);
+            vdom.patch(vnode1, vnode2);
         });
 
         deleteVNode(storage[storage.size() - 1].second);
@@ -184,12 +188,14 @@ TEST_CASE("benchmark")
                              { "baz", "baz" } }));
         };
 
+        VDom vdom;
+
         std::vector<std::pair<VNode*, VNode*>> storage(meter.runs());
         for (std::size_t i = 0; i < storage.size(); ++i) {
             auto& [vnode1, vnode2] = storage[i];
 
             if (i == 0) {
-                vnode1 = patch(getRoot(), createVNode1());
+                vnode1 = vdom.patch(getRoot(), createVNode1());
                 vnode2 = createVNode2();
             } else {
                 vnode1 = storage[i - 1].second;
@@ -200,7 +206,7 @@ TEST_CASE("benchmark")
         meter.measure([&](int i) {
             const auto& [vnode1, vnode2] = storage[i];
 
-            patch(vnode1, vnode2);
+            vdom.patch(vnode1, vnode2);
         });
 
         deleteVNode(storage[storage.size() - 1].second);

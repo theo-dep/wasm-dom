@@ -1,7 +1,6 @@
 #include "utils.hpp"
 
-#include "wasm-dom/config.hpp"
-#include "wasm-dom/patch.hpp"
+#include "wasm-dom/configprivate.hpp"
 #include "wasm-dom/vnode.hpp"
 
 #include <emscripten.h>
@@ -18,7 +17,7 @@ emscripten::val getBodyFirstChild()
 
 emscripten::val getNode(wasmdom::VNode* vnode)
 {
-    return emscripten::val::module_property("nodes")[std::to_string(vnode->elm).c_str()];
+    return emscripten::val::module_property("nodes")[std::to_string(vnode->elm()).c_str()];
 }
 
 EM_JS(void, createDom, (), {
@@ -48,9 +47,7 @@ void setupDom()
 
 void reset()
 {
-    wasmdom::currentNode = nullptr;
-    wasmdom::CLEAR_MEMORY = true;
-    wasmdom::UNSAFE_PATCH = false;
+    wasmdom::config() = wasmdom::Config{};
 }
 
 bool onClick(emscripten::val /*event*/)

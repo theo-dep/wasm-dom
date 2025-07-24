@@ -2,10 +2,6 @@
 
 #include "vnode.hpp"
 
-#include <map>
-#include <string>
-#include <vector>
-
 wasmdom::VNode* wasmdom::h(const std::string& sel)
 {
     return new VNode(sel);

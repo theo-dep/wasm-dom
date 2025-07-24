@@ -10,7 +10,7 @@ namespace wasmdom
 {
 
     struct Data;
-    struct VNode;
+    class VNode;
 
     VNode* h(const std::string& sel);
     VNode* h(const std::string& sel, const std::string& text);

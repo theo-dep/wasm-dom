@@ -6,8 +6,8 @@
 
 namespace wasmdom
 {
-    struct VNode;
-    void deleteVNode(const VNode* const vnode);
+    class VNode;
+    void deleteVNode(const VNode* vnode);
 }
 
 emscripten::val getRoot();

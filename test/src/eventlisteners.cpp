@@ -30,7 +30,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                   h(std::string("a"), std::string("Click my parent")) })
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -50,7 +51,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                   h(std::string("a"), std::string("Click my parent")) })
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -64,7 +66,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
                   h(std::string("a"), std::string("Click my parent")) })
         };
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         elm = getBodyFirstChild();
 
@@ -88,7 +90,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                     std::string("Click my parent")) })
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -115,7 +118,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -138,7 +142,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -156,7 +161,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         elm.call<void>("click");
 
@@ -177,7 +182,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -195,7 +201,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         elm.call<void>("click");
 
@@ -213,7 +219,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
                        } } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -223,7 +230,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         ScopedVNode vnode2{ h("div") };
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
 

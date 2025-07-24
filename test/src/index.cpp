@@ -14,7 +14,7 @@ TEST_CASE("index", "[index]")
 
     SECTION("should automatically clear memory")
     {
-        Config config = Config();
+        Config config;
         init(config);
 
         VNode* vnode = h("div");
@@ -23,23 +23,17 @@ TEST_CASE("index", "[index]")
 
         VNode obj = *vnode;
 
-        patch(getRoot(), vnode);
-        patch(vnode, vnode1);
-        patch(vnode1, vnode2.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode);
+        vdom.patch(vnode, vnode1);
+        vdom.patch(vnode1, vnode2.get());
 
-        REQUIRE(vnode->sel != obj.sel);
-
-        vnode = h("div");
-        obj = *vnode;
-
-        toHTML(vnode);
-
-        REQUIRE(vnode->sel != obj.sel);
+        REQUIRE(vnode->sel() != obj.sel());
     }
 
     SECTION("should automatically clear memory (by config)")
     {
-        Config config = Config();
+        Config config;
         config.clearMemory = true;
         init(config);
 
@@ -49,23 +43,17 @@ TEST_CASE("index", "[index]")
 
         VNode obj = *vnode;
 
-        patch(getRoot(), vnode);
-        patch(vnode, vnode1);
-        patch(vnode1, vnode2.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode);
+        vdom.patch(vnode, vnode1);
+        vdom.patch(vnode1, vnode2.get());
 
-        REQUIRE(vnode->sel != obj.sel);
-
-        vnode = h("div");
-        obj = *vnode;
-
-        toHTML(vnode);
-
-        REQUIRE(vnode->sel != obj.sel);
+        REQUIRE(vnode->sel() != obj.sel());
     }
 
     SECTION("should not automatically clear memory (by config)")
     {
-        Config config = Config();
+        Config config;
         config.clearMemory = false;
         init(config);
 
@@ -75,36 +63,31 @@ TEST_CASE("index", "[index]")
 
         VNode obj = *vnode;
 
-        patch(getRoot(), vnode.get());
-        patch(vnode.get(), vnode1.get());
-        patch(vnode1.get(), vnode2.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
+        vdom.patch(vnode.get(), vnode1.get());
+        vdom.patch(vnode1.get(), vnode2.get());
 
-        REQUIRE(vnode->sel == obj.sel);
-
-        vnode.reset(h("div"));
-        obj = *vnode;
-
-        toHTML(vnode.get());
-
-        REQUIRE(vnode->sel == obj.sel);
+        REQUIRE(vnode->sel() == obj.sel());
     }
 
     SECTION("should use safe patch")
     {
-        Config config = Config();
+        Config config;
         init(config);
 
         ScopedVNode vnode{ h("div") };
         VNode* vnode1 = h("div");
         ScopedVNode vnode2{ h("div") };
 
-        REQUIRE(patch(getRoot(), vnode.get()) == vnode.get());
-        REQUIRE(patch(vnode1, vnode2.get()) == nullptr);
+        VDom vdom;
+        REQUIRE(vdom.patch(getRoot(), vnode.get()) == vnode.get());
+        REQUIRE(vdom.patch(vnode1, vnode2.get()) == nullptr);
     }
 
     SECTION("should use safe patch (by config)")
     {
-        Config config = Config();
+        Config config;
         config.unsafePatch = false;
         init(config);
 
@@ -112,13 +95,14 @@ TEST_CASE("index", "[index]")
         VNode* vnode1 = h("div");
         ScopedVNode vnode2{ h("div") };
 
-        REQUIRE(patch(getRoot(), vnode.get()) == vnode.get());
-        REQUIRE(patch(vnode1, vnode2.get()) == nullptr);
+        VDom vdom;
+        REQUIRE(vdom.patch(getRoot(), vnode.get()) == vnode.get());
+        REQUIRE(vdom.patch(vnode1, vnode2.get()) == nullptr);
     }
 
     SECTION("should not use safe patch (by config)")
     {
-        Config config = Config();
+        Config config;
         config.unsafePatch = true;
         init(config);
 
@@ -126,7 +110,8 @@ TEST_CASE("index", "[index]")
         VNode* vnode1 = h("div");
         ScopedVNode vnode2{ h("div") };
 
-        REQUIRE(patch(getRoot(), vnode.get()) == vnode.get());
-        REQUIRE(patch(vnode1, vnode2.get()) == vnode2.get());
+        VDom vdom;
+        REQUIRE(vdom.patch(getRoot(), vnode.get()) == vnode.get());
+        REQUIRE(vdom.patch(vnode1, vnode2.get()) == vnode2.get());
     }
 }

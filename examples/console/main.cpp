@@ -24,7 +24,8 @@ int main()
     };
 
     // Patch into empty DOM element – this modifies the DOM as a side effect
-    wasmdom::patch(
+    wasmdom::VDom vdom;
+    vdom.patch(
         emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root")),
         vnode);
 

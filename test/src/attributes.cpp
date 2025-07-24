@@ -20,7 +20,8 @@ TEST_CASE("attributes", "[attributes]")
                              { "value", "foo" } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -38,7 +39,8 @@ TEST_CASE("attributes", "[attributes]")
                 { "value", "foo" } });
         ScopedVNode vnode{ h("div", data) };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -48,7 +50,7 @@ TEST_CASE("attributes", "[attributes]")
 
         ScopedVNode vnode2{ h("div", data) };
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode.release(), vnode2.get());
 
         elm = getBodyFirstChild();
 
@@ -67,7 +69,8 @@ TEST_CASE("attributes", "[attributes]")
                              { "value", "false" } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -86,7 +89,8 @@ TEST_CASE("attributes", "[attributes]")
                                { "readonly", "true" } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
@@ -103,7 +107,8 @@ TEST_CASE("attributes", "[attributes]")
                              { "xlink:href", "#foo" } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom;
+        vdom.patch(getRoot(), vnode.get());
 
         emscripten::val elm = getBodyFirstChild();
 
