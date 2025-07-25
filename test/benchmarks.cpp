@@ -38,17 +38,17 @@ TEST_CASE("benchmark")
 
         const auto createVNode = [] {
             Children children;
-            children.reserve(100);
-            for (int i = 0; i < 100; ++i) {
-                children.push_back(h("span",
-                                     Data(
-                                         Attrs{
-                                             { "e", std::to_string(i) } }),
-                                     Children{
-                                         h("span",
-                                           Data(
-                                               Attrs{
-                                                   { "e", std::to_string(i - 3) } })) }));
+            children.resize(100, nullptr);
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                children[i] = h("span",
+                                Data(
+                                    Attrs{
+                                        { "e", std::to_string(i) } }),
+                                Children{
+                                    h("span",
+                                      Data(
+                                          Attrs{
+                                              { "e", std::to_string(i - 3) } })) });
             }
             return h("div",
                      Data(
@@ -78,17 +78,17 @@ TEST_CASE("benchmark")
 
         const auto createVNode1 = [] {
             Children children;
-            children.reserve(100);
-            for (int i = 0; i < 100; ++i) {
-                children.push_back(h("span",
-                                     Data(
-                                         Attrs{
-                                             { "e", std::to_string(i) } }),
-                                     Children{
-                                         h("span",
-                                           Data(
-                                               Attrs{
-                                                   { "e", std::to_string(i - 1) } })) }));
+            children.resize(100, nullptr);
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                children[i] = h("span",
+                                Data(
+                                    Attrs{
+                                        { "e", std::to_string(i) } }),
+                                Children{
+                                    h("span",
+                                      Data(
+                                          Attrs{
+                                              { "e", std::to_string(i - 1) } })) });
             }
             return h("div",
                      Data(
@@ -100,17 +100,17 @@ TEST_CASE("benchmark")
         };
         const auto createVNode2 = [] {
             Children children;
-            children.reserve(100);
-            for (int i = 0; i < 100; ++i) {
-                children.push_back(h("span",
-                                     Data(
-                                         Attrs{
-                                             { "e", "27" } }),
-                                     Children{
-                                         h("span",
-                                           Data(
-                                               Attrs{
-                                                   { "e", "27" } })) }));
+            children.resize(100, nullptr);
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                children[i] = h("span",
+                                Data(
+                                    Attrs{
+                                        { "e", "27" } }),
+                                Children{
+                                    h("span",
+                                      Data(
+                                          Attrs{
+                                              { "e", "27" } })) });
             }
             return h("div",
                      Data(
@@ -140,11 +140,11 @@ TEST_CASE("benchmark")
 
         const auto createVNode1 = [] {
             Children children;
-            children.reserve(100);
-            for (int i = 0; i < 100; ++i) {
-                children.push_back(h("span",
-                                     Children{
-                                         h("span") }));
+            children.resize(100, nullptr);
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                children[i] = h("span",
+                                Children{
+                                    h("span") });
             }
             return h("div",
                      Data(

@@ -64,7 +64,7 @@ VNode spanNumWithOpacity(int z, std::string o)
 std::vector<int> shuffle(std::vector<int>& arr, int elms)
 {
     std::vector<int> newArr;
-    newArr.reserve(elms);
+    newArr.resize(elms);
     for (int n = 0; n < elms; ++n) {
         newArr[n] = arr[n];
     }
@@ -867,12 +867,12 @@ TEST_CASE("patch", "[patch]")
         int elms = 14;
         int samples = 5;
 
-        arr.reserve(elms);
-        opacities.reserve(elms);
+        arr.resize(elms);
+        opacities.resize(elms);
         for (n = 0; n < elms; ++n) {
             arr[n] = n;
         }
-        VDom vdom(getRoot());
+
         for (n = 0; n < samples; ++n) {
             Children children;
             for (i = 0; i < elms; ++i) {
@@ -883,6 +883,7 @@ TEST_CASE("patch", "[patch]")
             std::vector<int> shufArr = shuffle(arr, elms);
 
             emscripten::val elm = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+            VDom vdom(elm);
             vdom.patch(vnode1);
             elm = getNode(vnode1);
             for (i = 0; i < elms; ++i) {
@@ -999,7 +1000,7 @@ TEST_CASE("patch", "[patch]")
         for (i = 0; i < samples; ++i) {
             len = rand() % (maxArrLen + 1);
             arr = std::vector<int>();
-            arr.reserve(len);
+            arr.resize(len);
             for (j = 0; j < len; ++j) {
                 r = rand() % 100;
                 if (r < 50)
