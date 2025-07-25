@@ -1,7 +1,5 @@
 #include "h.hpp"
 
-#include "vnode.hpp"
-
 wasmdom::VNode wasmdom::h(const std::string& sel)
 {
     return VNode(sel);

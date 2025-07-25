@@ -4,12 +4,6 @@
 
 #include <emscripten.h>
 
-#include <algorithm>
-#include <cstdint>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
 wasmdom::VDom::VDom(const emscripten::val& element)
     : _currentNode(VNode::toVNode(element))
 {
@@ -20,11 +14,6 @@ namespace wasmdom
 {
 
     void patchVNode(VNode& oldVnode, VNode& vnode, int parentElm);
-
-}
-
-namespace wasmdom
-{
 
     bool sameVNode(const VNode& vnode1, const VNode& vnode2)
     {
@@ -167,7 +156,7 @@ namespace wasmdom
                         ++beginIdx;
                     }
                 }
-                if (!oldKeyToIdx.count(newStartVnode.key())) {
+                if (!oldKeyToIdx.contains(newStartVnode.key())) {
                     int elm = createElm(newStartVnode);
                     EM_ASM_({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
                 } else {

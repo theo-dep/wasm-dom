@@ -1,8 +1,7 @@
 #pragma once
 
-#include <wasm-dom/vnode.hpp>
+#include "vnode.hpp"
 
-#include <map>
 #include <string>
 #include <vector>
 

@@ -3,21 +3,13 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
-namespace wasmdom
-{
-
-    unsigned int currentHash = 0;
-    std::unordered_map<std::string, unsigned int> hashes;
-
-}
-
 void wasmdom::VNode::normalize(bool injectSvgNamespace)
 {
     if (!_data)
         return;
 
     if (!(_data->hash & isNormalized)) {
-        if (_data->data.attrs.count("key")) {
+        if (_data->data.attrs.contains("key")) {
             _data->hash |= hasKey;
             _data->key = _data->data.attrs["key"];
             _data->data.attrs.erase("key");
@@ -69,13 +61,16 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             if (_data->sel[0] == '\0') {
                 _data->hash |= isFragment;
             } else {
+                static unsigned int currentHash = 0;
+                static std::unordered_map<std::string, unsigned int> hashes;
+
                 if (hashes[_data->sel] == 0) {
                     hashes[_data->sel] = ++currentHash;
                 }
 
                 _data->hash |= (hashes[_data->sel] << 13) | isElement;
 
-                if ((_data->hash & hasCallbacks) && _data->data.callbacks.count("ref")) {
+                if ((_data->hash & hasCallbacks) && _data->data.callbacks.contains("ref")) {
                     _data->hash |= hasRef;
                 }
             }
@@ -272,7 +267,7 @@ namespace wasmdom
             if (isSvgContainerElement ||
                 (!isSvg && !voidElements[vnode.sel()])) {
 
-                if (vnode.props().count("innerHTML") != 0) {
+                if (vnode.props().contains("innerHTML") != 0) {
                     html.append(vnode.props().at("innerHTML").as<std::string>());
                 } else {
                     for (const VNode& child : vnode.children()) {
@@ -307,7 +302,7 @@ namespace wasmdom
         const Attrs& attrs = vnode.attrs();
 
         for (const auto& it : oldAttrs) {
-            if (!attrs.count(it.first)) {
+            if (!attrs.contains(it.first)) {
                 EM_ASM_({ Module.removeAttribute(
                               $0,
                               Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
@@ -315,7 +310,7 @@ namespace wasmdom
         }
 
         for (const auto& it : attrs) {
-            if (!oldAttrs.count(it.first) || oldAttrs.at(it.first) != it.second) {
+            if (!oldAttrs.contains(it.first) || oldAttrs.at(it.first) != it.second) {
                 EM_ASM_({ Module.setAttribute(
                               $0,
                               Module['UTF8ToString']($1),
@@ -334,7 +329,7 @@ namespace wasmdom
         EM_ASM_({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
 
         for (const auto& it : oldProps) {
-            if (!props.count(it.first)) {
+            if (!props.contains(it.first)) {
                 elm.set(it.first.c_str(), emscripten::val::undefined());
             }
         }
@@ -343,7 +338,7 @@ namespace wasmdom
             EM_ASM_({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
 
             if (
-                !oldProps.count(it.first) ||
+                !oldProps.contains(it.first) ||
                 !it.second.strictlyEquals(oldProps.at(it.first)) ||
                 ((it.first == "value" || it.first == "checked") &&
                  !it.second.strictlyEquals(elm[it.first.c_str()]))) {
@@ -358,7 +353,7 @@ namespace wasmdom
         const Callbacks& callbacks = vnode.callbacks();
 
         for (const auto& it : oldCallbacks) {
-            if (!callbacks.count(it.first) && it.first != "ref") {
+            if (!callbacks.contains(it.first) && it.first != "ref") {
                 EM_ASM_({
 					var key = Module['UTF8ToString']($1).replace(/^on/, "");
 					var elm = Module['nodes'][$0];
@@ -379,7 +374,7 @@ namespace wasmdom
 			} }, vnode.elm(), reinterpret_cast<std::uintptr_t>(vnode._data));
 
         for (const auto& it : callbacks) {
-            if (!oldCallbacks.count(it.first) && it.first != "ref") {
+            if (!oldCallbacks.contains(it.first) && it.first != "ref") {
                 EM_ASM_({
 					var key = Module['UTF8ToString']($1).replace(/^on/, "");
 					var elm = Module['nodes'][$0];
@@ -429,7 +424,7 @@ namespace wasmdom
     emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event)
     {
         const Callbacks& cbs = reinterpret_cast<VNode::SharedData*>(sharedData)->data.callbacks;
-        if (!cbs.count(callback)) {
+        if (!cbs.contains(callback)) {
             callback = "on" + callback;
         }
         return emscripten::val(cbs.at(callback)(event));

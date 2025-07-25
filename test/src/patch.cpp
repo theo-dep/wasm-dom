@@ -4,11 +4,6 @@
 
 #include "utils.hpp"
 
-#include <algorithm>
-#include <codecvt>
-#include <locale>
-#include <stdlib.h>
-
 using namespace wasmdom;
 
 int refCount = 1;

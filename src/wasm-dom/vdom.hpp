@@ -2,7 +2,10 @@
 
 #include "vnode.hpp"
 
-#include <emscripten/val.h>
+namespace emscripten
+{
+    class val;
+}
 
 namespace wasmdom
 {
