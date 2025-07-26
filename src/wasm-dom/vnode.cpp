@@ -371,7 +371,7 @@ namespace wasmdom
 			elm['asmDomVNode'] = $1;
 			if (elm['asmDomEvents'] === undefined) {
 				elm['asmDomEvents'] = {};
-			} }, vnode.elm(), reinterpret_cast<std::uintptr_t>(vnode._data));
+			} }, vnode.elm(), reinterpret_cast<std::uintptr_t>(vnode._data.get()));
 
         for (const auto& it : callbacks) {
             if (!oldCallbacks.contains(it.first) && it.first != "ref") {

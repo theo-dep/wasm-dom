@@ -2,8 +2,8 @@
 
 #include <emscripten/val.h>
 
-#include <atomic>
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -82,13 +82,8 @@ namespace wasmdom
 
     class VNode
     {
-        // SharedData and SharedDataPointer are inspired from QSharedData
-        // https://codebrowser.dev/qt6/qtbase/src/corelib/tools/qshareddata.h.html
-
         struct SharedData
         {
-            std::atomic_int8_t ref = 0;
-
             std::string sel;
             std::string key;
             std::string ns;
@@ -98,39 +93,11 @@ namespace wasmdom
             Children children;
         };
 
-        // https://codebrowser.dev/qt6/qtbase/src/corelib/thread/qatomic_cxx11.h.html#_ZN10QAtomicOps3refERSt6atomicITL0__E
-        template <typename T>
-        static inline bool ref(std::atomic<T>& ref)
-        {
-            /* Conceptually, we want to
-             *    return ++ref != 0;
-             * However, that would be sequentially consistent, and thus stronger
-             * than what we need. Based on
-             * http://eel.is/c++draft/atomics.types.memop#6, we know that
-             * pre-increment is equivalent to fetch_add(1) + 1. Unlike
-             * pre-increment, fetch_add takes a memory order argument, so we can get
-             * the desired acquire-release semantics.
-             * One last gotcha is that fetch_add(1) + 1 would need to be converted
-             * back to T, because it's susceptible to integer promotion. To sidestep
-             * this issue and to avoid UB on signed overflow, we rewrite the
-             * expression to:
-             */
-            return ref.fetch_add(1, std::memory_order_acq_rel) != T(-1);
-        }
-
-        template <typename T>
-        static inline bool deref(std::atomic<T>& ref)
-        {
-            // compare with ref
-            return ref.fetch_sub(1, std::memory_order_acq_rel) != T(1);
-        }
-
     public:
         VNode(std::nullptr_t) {}
         VNode(const std::string& nodeSel)
-            : _data(new SharedData)
+            : _data(std::make_shared<SharedData>())
         {
-            ref(_data->ref);
             _data->sel = nodeSel;
         }
         VNode(const std::string& nodeSel,
@@ -147,9 +114,8 @@ namespace wasmdom
         }
         VNode(const std::string& nodeText,
               bool textNode)
-            : _data(new SharedData)
+            : _data(std::make_shared<SharedData>())
         {
-            ref(_data->ref);
             if (textNode) {
                 normalize();
                 _data->sel = nodeText;
@@ -206,39 +172,6 @@ namespace wasmdom
             _data->children.push_back(child);
         }
 
-        ~VNode()
-        {
-            if (_data && !deref(_data->ref))
-                delete _data;
-        }
-        [[nodiscard]] VNode(const VNode& other)
-            : _data(other._data)
-        {
-            if (_data)
-                ref(_data->ref);
-        }
-        VNode& operator=(const VNode& other)
-        {
-            if (other._data != _data) {
-                if (other._data)
-                    ref(other._data->ref);
-                SharedData* old = std::exchange(_data, other._data);
-                if (old && !deref(old->ref))
-                    delete old;
-            }
-            return *this;
-        }
-        [[nodiscard]] VNode(VNode&& other)
-            : _data(std::exchange(other._data, nullptr))
-        {
-        }
-        VNode& operator=(VNode&& other)
-        {
-            VNode moved(std::move(other));
-            std::swap(_data, moved._data);
-            return *this;
-        }
-
         const Attrs& attrs() const { return _data->data.attrs; }
         const Props& props() const { return _data->data.props; }
         const Callbacks& callbacks() const { return _data->data.callbacks; }
@@ -261,8 +194,7 @@ namespace wasmdom
 
         operator bool() const { return _data != nullptr; }
         bool operator!() const { return _data == nullptr; }
-        bool operator==(const VNode& other) const { return _data == other._data; }
-        bool operator==(std::nullptr_t) const { return _data == nullptr; }
+        std::strong_ordering operator<=>(const VNode& other) const = default;
 
         static VNode toVNode(const emscripten::val& node);
 
@@ -276,7 +208,7 @@ namespace wasmdom
         friend void patchVNode(VNode& oldVnode, VNode& vnode, int parentElm);
 
         // contains selector for elements and fragments, text for comments and textNodes
-        SharedData* _data = nullptr;
+        std::shared_ptr<SharedData> _data = nullptr;
     };
 
 }
