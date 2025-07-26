@@ -17,13 +17,17 @@ message(CHECK_START "Installing test dependencies")
 execute_process(COMMAND ${NPM_EXECUTABLE} install WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 message(CHECK_PASS "done")
 
+set(LINK_OPTIONS -sENVIRONMENT=node -sMODULARIZE -sEXPORT_NAME=Module -sEXIT_RUNTIME -sNO_DISABLE_EXCEPTION_CATCHING
+    $<$<CONFIG:Debug>:-gsource-map -fsanitize=address -sALLOW_MEMORY_GROWTH>
+)
+
 add_executable(tests main.cpp utils.cpp)
 
 target_include_directories(tests PRIVATE .)
 target_link_libraries(tests PRIVATE wasm-dom Catch2::Catch2)
-target_link_options(tests PRIVATE -sENVIRONMENT=node -sMODULARIZE=1 -sEXPORT_NAME=Module -sEXIT_RUNTIME=1 -sNO_DISABLE_EXCEPTION_CATCHING)
+target_link_options(tests PRIVATE ${LINK_OPTIONS})
 
-set(TEST_CASES attributes dataset domRecycler eventListeners h index patch props toHTML toVNode)
+set(TEST_CASES attributes dataset domRecycler eventListeners h patch props toHTML toVNode)
 
 foreach(test ${TEST_CASES})
     string(TOLOWER ${test} test_src)
@@ -36,7 +40,7 @@ endforeach()
 add_executable(benchmarks main.cpp utils.cpp benchmarks.cpp)
 
 target_link_libraries(benchmarks PRIVATE wasm-dom Catch2::Catch2)
-target_link_options(benchmarks PRIVATE -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH -sMODULARIZE=1 -sEXPORT_NAME=Module -sEXIT_RUNTIME=1 -sNO_DISABLE_EXCEPTION_CATCHING)
+target_link_options(benchmarks PRIVATE ${LINK_OPTIONS} -sALLOW_MEMORY_GROWTH)
 
 set(CMAKE_CTEST_ARGUMENTS "--verbose")
 add_test(NAME benchmarks

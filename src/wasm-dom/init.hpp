@@ -3,8 +3,6 @@
 namespace wasmdom
 {
 
-    struct Config;
-
-    void init(const Config& config);
+    void init();
 
 }

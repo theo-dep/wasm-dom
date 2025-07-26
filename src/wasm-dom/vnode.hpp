@@ -3,18 +3,21 @@
 #include <emscripten/val.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace wasmdom
 {
 
-    typedef std::function<bool(emscripten::val)> Callback;
-    typedef std::unordered_map<std::string, std::string> Attrs;
-    typedef std::unordered_map<std::string, emscripten::val> Props;
-    typedef std::unordered_map<std::string, Callback> Callbacks;
+    using Callback = std::function<bool(emscripten::val)>;
+    using Attrs = std::unordered_map<std::string, std::string>;
+    using Props = std::unordered_map<std::string, emscripten::val>;
+    using Callbacks = std::unordered_map<std::string, Callback>;
+
+    class VNode;
+    using Children = std::vector<VNode>;
 
     enum VNodeFlags
     {
@@ -46,127 +49,166 @@ namespace wasmdom
 
     struct Data
     {
-        Data() {};
-        Data(
-            const Attrs& dataAttrs,
-            const Props& dataProps = Props(),
-            const Callbacks& dataCallbacks = Callbacks())
+        Data() {}
+        Data(const Attrs& dataAttrs,
+             const Props& dataProps = Props(),
+             const Callbacks& dataCallbacks = Callbacks())
             : attrs(dataAttrs)
             , props(dataProps)
-            , callbacks(dataCallbacks) {};
-        Data(
-            const Attrs& dataAttrs,
-            const Callbacks& dataCallbacks)
+            , callbacks(dataCallbacks)
+        {
+        }
+        Data(const Attrs& dataAttrs,
+             const Callbacks& dataCallbacks)
             : attrs(dataAttrs)
-            , callbacks(dataCallbacks) {};
-        Data(
-            const Props& dataProps,
-            const Callbacks& dataCallbacks = Callbacks())
+            , callbacks(dataCallbacks)
+        {
+        }
+        Data(const Props& dataProps,
+             const Callbacks& dataCallbacks = Callbacks())
             : props(dataProps)
-            , callbacks(dataCallbacks) {};
-        Data(
-            const Callbacks& dataCallbacks)
-            : callbacks(dataCallbacks) {};
+            , callbacks(dataCallbacks)
+        {
+        }
+        Data(const Callbacks& dataCallbacks)
+            : callbacks(dataCallbacks)
+        {
+        }
 
         Attrs attrs;
         Props props;
         Callbacks callbacks;
     };
 
-    struct VNode
+    class VNode
     {
-    private:
-        void normalize(const bool injectSvgNamespace);
+        struct SharedData
+        {
+            std::string sel;
+            std::string key;
+            std::string ns;
+            unsigned int hash = 0;
+            Data data;
+            int elm = 0;
+            Children children;
+        };
 
     public:
-        VNode(
-            const std::string& nodeSel)
-            : sel(nodeSel) {};
-        VNode(
-            const std::string& nodeSel,
-            const std::string& nodeText)
-            : sel(nodeSel)
+        VNode(std::nullptr_t) {}
+        VNode(const std::string& nodeSel)
+            : _data(std::make_shared<SharedData>())
+        {
+            _data->sel = nodeSel;
+        }
+        VNode(const std::string& nodeSel,
+              const std::string& nodeText)
+            : VNode(nodeSel)
         {
             normalize();
-            if (hash & isComment) {
-                sel = nodeText;
+            if (_data->hash & isComment) {
+                _data->sel = nodeText;
             } else {
-                children.push_back(new VNode(nodeText, true));
-                hash |= hasText;
+                _data->children.emplace_back(nodeText, true);
+                _data->hash |= hasText;
             }
-        };
-        VNode(
-            const std::string& nodeText,
-            const bool textNode)
+        }
+        VNode(const std::string& nodeText,
+              bool textNode)
+            : _data(std::make_shared<SharedData>())
         {
             if (textNode) {
                 normalize();
-                sel = nodeText;
+                _data->sel = nodeText;
                 // replace current type with text type
-                hash = (hash & removeNodeType) | isText;
+                _data->hash = (_data->hash & removeNodeType) | isText;
             } else {
-                sel = nodeText;
+                _data->sel = nodeText;
                 normalize();
             }
-        };
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData)
-            : sel(nodeSel)
-            , data(nodeData) {};
-        VNode(
-            const std::string& nodeSel,
-            const std::vector<VNode*>& nodeChildren)
-            : sel(nodeSel)
-            , children(nodeChildren) {};
-        VNode(
-            const std::string& nodeSel,
-            VNode* child)
-            : sel(nodeSel)
-            , children{ child } {};
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData,
-            const std::string& nodeText)
-            : sel(nodeSel)
-            , data(nodeData)
+        }
+        VNode(const std::string& nodeSel,
+              const Data& nodeData)
+            : VNode(nodeSel)
+        {
+            _data->data = nodeData;
+        }
+        VNode(const std::string& nodeSel,
+              const Children& nodeChildren)
+            : VNode(nodeSel)
+        {
+            _data->children = nodeChildren;
+        }
+        VNode(const std::string& nodeSel,
+              const VNode& child)
+            : VNode(nodeSel)
+        {
+            _data->children.push_back(child);
+        }
+        VNode(const std::string& nodeSel,
+              const Data& nodeData,
+              const std::string& nodeText)
+            : VNode(nodeSel, nodeData)
         {
             normalize();
-            if (hash & isComment) {
-                sel = nodeText;
+            if (_data->hash & isComment) {
+                _data->sel = nodeText;
             } else {
-                children.push_back(new VNode(nodeText, true));
-                hash |= hasText;
+                _data->children.emplace_back(nodeText, true);
+                _data->hash |= hasText;
             }
-        };
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData,
-            const std::vector<VNode*>& nodeChildren)
-            : sel(nodeSel)
-            , data(nodeData)
-            , children(nodeChildren) {};
-        VNode(
-            const std::string& nodeSel,
-            const Data& nodeData,
-            VNode* child)
-            : sel(nodeSel)
-            , data(nodeData)
-            , children{ child } {};
-        ~VNode();
+        }
+        VNode(const std::string& nodeSel,
+              const Data& nodeData,
+              const Children& nodeChildren)
+            : VNode(nodeSel, nodeData)
+        {
+            _data->children = nodeChildren;
+        }
+        VNode(const std::string& nodeSel,
+              const Data& nodeData,
+              const VNode& child)
+            : VNode(nodeSel, nodeData)
+        {
+            _data->children.push_back(child);
+        }
 
-        void normalize() { normalize(false); };
+        const Attrs& attrs() const { return _data->data.attrs; }
+        const Props& props() const { return _data->data.props; }
+        const Callbacks& callbacks() const { return _data->data.callbacks; }
+
+        const std::string& sel() const { return _data->sel; }
+        const std::string& key() const { return _data->key; }
+        const std::string& ns() const { return _data->ns; }
+        unsigned int hash() const { return _data->hash; }
+        int elm() const { return _data->elm; }
+
+        void setElm(int nodeElm) { _data->elm = nodeElm; }
+
+        const Children& children() const { return _data->children; }
+
+        void normalize() { normalize(false); }
+
+        std::string toHTML() const;
+
+        void diff(const VNode& other) const;
+
+        operator bool() const { return _data != nullptr; }
+        bool operator!() const { return _data == nullptr; }
+        std::strong_ordering operator<=>(const VNode& other) const = default;
+
+        static VNode toVNode(const emscripten::val& node);
+
+    private:
+        void normalize(bool injectSvgNamespace);
+
+        friend void diffCallbacks(const VNode& oldVnode, const VNode& vnode);
+        friend emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event);
+
+        friend int createElm(VNode& vnode);
+        friend void patchVNode(VNode& oldVnode, VNode& vnode, int parentElm);
 
         // contains selector for elements and fragments, text for comments and textNodes
-        std::string sel;
-        std::string key;
-        std::string ns;
-        unsigned int hash = 0;
-        Data data;
-        int elm = 0;
-        std::vector<VNode*> children;
+        std::shared_ptr<SharedData> _data = nullptr;
     };
-
-    void deleteVNode(const VNode* const vnode);
 
 }

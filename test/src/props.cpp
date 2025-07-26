@@ -12,14 +12,15 @@ TEST_CASE("props", "[props]")
 
     SECTION("should create element with prop")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("div",
               Data(
                   Props{
                       { "src", emscripten::val("http://localhost/") } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
@@ -27,38 +28,40 @@ TEST_CASE("props", "[props]")
 
     SECTION("changes an elements props")
     {
-        VNode* vnode = h("a",
-                         Data(
-                             Props{
-                                 { "src", emscripten::val("http://other/") } }));
-        ScopedVNode vnode2{
+        VNode vnode = h("a",
+                        Data(
+                            Props{
+                                { "src", emscripten::val("http://other/") } }));
+        VNode vnode2{
             h("a",
               Data(
                   Props{
                       { "src", emscripten::val("http://localhost/") } }))
         };
 
-        patch(getRoot(), vnode);
-        patch(vnode, vnode2.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
+        vdom.patch(vnode2);
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
     }
 
-    SECTION("preserves memoized props")
+    SECTION("preserves memorized props")
     {
         Data data = Data(
             Props{
                 { "src", emscripten::val("http://other/") } });
-        ScopedVNode vnode{ h("a", data) };
-        ScopedVNode vnode2{ h("a", data) };
+        VNode vnode{ h("a", data) };
+        VNode vnode2{ h("a", data) };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
@@ -66,14 +69,15 @@ TEST_CASE("props", "[props]")
 
     SECTION("removes an elements props")
     {
-        VNode* vnode = h("a",
-                         Data(
-                             Props{
-                                 { "src", emscripten::val("http://other/") } }));
-        ScopedVNode vnode2{ h("a") };
+        VNode vnode = h("a",
+                        Data(
+                            Props{
+                                { "src", emscripten::val("http://other/") } }));
+        VNode vnode2{ h("a") };
 
-        patch(getRoot(), vnode);
-        patch(vnode, vnode2.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
+        vdom.patch(vnode2);
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val::undefined()));
@@ -81,20 +85,21 @@ TEST_CASE("props", "[props]")
 
     SECTION("should update value prop if user interacted with the element")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("input",
               Data(
                   Props{
                       { "value", emscripten::val("foo") } }))
         };
-        ScopedVNode vnode2{
+        VNode vnode2{
             h("input",
               Data(
                   Props{
                       { "value", emscripten::val("foo") } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["value"].strictlyEquals(emscripten::val("foo")));
@@ -102,14 +107,14 @@ TEST_CASE("props", "[props]")
         elm.set("value", emscripten::val("bar"));
         REQUIRE(elm["value"].strictlyEquals(emscripten::val("bar")));
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         REQUIRE(elm["value"].strictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should update checked prop if user interacted with the element")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("input",
               Data(
                   Attrs{
@@ -117,7 +122,7 @@ TEST_CASE("props", "[props]")
                   Props{
                       { "checked", emscripten::val(true) } }))
         };
-        ScopedVNode vnode2{
+        VNode vnode2{
             h("input",
               Data(
                   Attrs{
@@ -126,7 +131,8 @@ TEST_CASE("props", "[props]")
                       { "checked", emscripten::val(true) } }))
         };
 
-        patch(getRoot(), vnode.get());
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
 
         emscripten::val elm = getBodyFirstChild();
         REQUIRE(elm["checked"].strictlyEquals(emscripten::val(true)));
@@ -134,7 +140,7 @@ TEST_CASE("props", "[props]")
         elm.set("checked", emscripten::val(false));
         REQUIRE(elm["checked"].strictlyEquals(emscripten::val(false)));
 
-        patch(vnode.release(), vnode2.get());
+        vdom.patch(vnode2);
 
         REQUIRE(elm["checked"].strictlyEquals(emscripten::val(true)));
     }

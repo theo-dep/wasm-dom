@@ -4,10 +4,6 @@
 
 int main(int argc, char** argv)
 {
-    wasmdom::Config config;
-    config.unsafePatch = true;
-
-    wasmdom::init(config);
-
+    wasmdom::init();
     return Catch::Session().run(argc, argv);
 }

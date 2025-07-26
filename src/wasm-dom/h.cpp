@@ -1,52 +1,46 @@
 #include "h.hpp"
 
-#include "vnode.hpp"
-
-#include <map>
-#include <string>
-#include <vector>
-
-wasmdom::VNode* wasmdom::h(const std::string& sel)
+wasmdom::VNode wasmdom::h(const std::string& sel)
 {
-    return new VNode(sel);
+    return VNode(sel);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, const std::string& text)
+wasmdom::VNode wasmdom::h(const std::string& sel, const std::string& text)
 {
-    return new VNode(sel, text);
+    return VNode(sel, text);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, const bool text)
+wasmdom::VNode wasmdom::h(const std::string& sel, const bool text)
 {
-    return new VNode(sel, text);
+    return VNode(sel, text);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, const Data& data)
+wasmdom::VNode wasmdom::h(const std::string& sel, const Data& data)
 {
-    return new VNode(sel, data);
+    return VNode(sel, data);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, const Children& children)
+wasmdom::VNode wasmdom::h(const std::string& sel, const Children& children)
 {
-    return new VNode(sel, children);
+    return VNode(sel, children);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, VNode* child)
+wasmdom::VNode wasmdom::h(const std::string& sel, const VNode& child)
 {
-    return new VNode(sel, child);
+    return VNode(sel, child);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, const Data& data, const std::string& text)
+wasmdom::VNode wasmdom::h(const std::string& sel, const Data& data, const std::string& text)
 {
-    return new VNode(sel, data, text);
+    return VNode(sel, data, text);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, const Data& data, const Children& children)
+wasmdom::VNode wasmdom::h(const std::string& sel, const Data& data, const Children& children)
 {
-    return new VNode(sel, data, children);
+    return VNode(sel, data, children);
 }
 
-wasmdom::VNode* wasmdom::h(const std::string& sel, const Data& data, VNode* child)
+wasmdom::VNode wasmdom::h(const std::string& sel, const Data& data, const VNode& child)
 {
-    return new VNode(sel, data, child);
+    return VNode(sel, data, child);
 }

@@ -8,35 +8,24 @@ using namespace wasmdom;
 
 TEST_CASE("h", "[h]")
 {
-    SECTION("should delete a vnode")
-    {
-        VNode* vnode = h("div", Children{
-                                    h("span"),
-                                    h("div", Children{
-                                                 h("video"),
-                                             }),
-                                });
-        deleteVNode(vnode);
-    }
-
     SECTION("should create a vnode with a proper tag")
     {
-        ScopedVNode vnode{ h("div") };
+        VNode vnode{ h("div") };
     }
 
     SECTION("should create a vnode with children")
     {
-        ScopedVNode vnode{ h("div", Children{ h("span"), h("b") }) };
+        VNode vnode{ h("div", Children{ h("span"), h("b") }) };
     }
 
     SECTION("should create a vnode with one child")
     {
-        ScopedVNode vnode{ h("div", h("span")) };
+        VNode vnode{ h("div", h("span")) };
     }
 
     SECTION("should create a vnode with attrs and one child")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("div",
               Data(Attrs{
                   { "foo", "bar" } }),
@@ -46,27 +35,27 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with text content in string")
     {
-        ScopedVNode vnode{ h("div", "I am a string") };
+        VNode vnode{ h("div", "I am a string") };
     }
 
     SECTION("should create a vnode for comment")
     {
-        ScopedVNode vnode{ h("!", "test") };
+        VNode vnode{ h("!", "test") };
     }
 
     SECTION("should create a vnode for comment with attrs")
     {
-        ScopedVNode vnode{ h("!", Data(Attrs{ { "foo", "bar" } }), "test") };
+        VNode vnode{ h("!", Data(Attrs{ { "foo", "bar" } }), "test") };
     }
 
     SECTION("should create a vnode for fragment")
     {
-        ScopedVNode vnode{ h("") };
+        VNode vnode{ h("") };
     }
 
     SECTION("should create a vnode with attrs and text content in string")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("div",
               Data(Attrs{
                   { "foo", "bar" } }),
@@ -76,7 +65,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with attrs and children")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("div",
               Data(Attrs{
                   { "foo", "bar" } }),
@@ -86,17 +75,17 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with text")
     {
-        ScopedVNode vnode{ h("this is a text", true) };
+        VNode vnode{ h("this is a text", true) };
     }
 
     SECTION("should create a vnode with random text")
     {
-        ScopedVNode vnode{ h("fakeNode", false) };
+        VNode vnode{ h("fakeNode", false) };
     }
 
     SECTION("should create a vnode with attrs")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("i",
               Data(
                   Attrs{
@@ -111,7 +100,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with props")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("i",
               Data(
                   Props{
@@ -126,7 +115,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with callbacks")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("i",
               Data(
                   Callbacks{
@@ -137,7 +126,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with attrs and props")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("i",
               Data(
                   Attrs{
@@ -159,7 +148,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with attrs and callbacks")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("i",
               Data(
                   Attrs{
@@ -177,7 +166,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with props and callbacks")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("i",
               Data(
                   Props{
@@ -195,7 +184,7 @@ TEST_CASE("h", "[h]")
 
     SECTION("should create a vnode with attrs, props and callbacks")
     {
-        ScopedVNode vnode{
+        VNode vnode{
             h("i",
               Data(
                   Attrs{
