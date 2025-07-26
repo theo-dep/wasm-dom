@@ -6,6 +6,14 @@ using namespace wasmdom;
 
 TEST_CASE("toHTML", "[toHTML]")
 {
+    SECTION("should handle nullptr VNode")
+    {
+        VNode vnode(nullptr);
+        vnode.normalize();
+        vnode.diff(nullptr);
+        REQUIRE(vnode.toHTML() == "");
+    }
+
     SECTION("should parse elements")
     {
         VNode vnode = h("div");

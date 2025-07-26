@@ -77,6 +77,18 @@ TEST_CASE("patch", "[patch]")
 {
     setupDom();
 
+    SECTION("should handle nullptr VNode")
+    {
+        REQUIRE(emscripten::val::global("document")["body"]["children"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(emscripten::val::global("document")["body"]["firstChild"].strictlyEquals(emscripten::val(getRoot())));
+        VNode vnode = nullptr;
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
+        emscripten::val elm = getBodyFirstChild();
+        REQUIRE(emscripten::val::global("document")["body"]["children"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(emscripten::val::global("document")["body"]["firstChild"].strictlyEquals(emscripten::val(getRoot())));
+    }
+
     SECTION("should patch a node")
     {
         REQUIRE(emscripten::val::global("document")["body"]["children"]["length"].strictlyEquals(emscripten::val(1)));
