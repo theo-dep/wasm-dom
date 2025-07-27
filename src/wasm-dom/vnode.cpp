@@ -347,6 +347,23 @@ namespace wasmdom
         }
     }
 
+    // store callbacks addresses to be called in functionCallback
+    Callbacks* storeCallbacks(const VNode& oldVnode, const VNode& vnode)
+    {
+        static std::unordered_map<int, Callbacks> vnodeCallbacks;
+
+        if (vnodeCallbacks.contains(oldVnode.elm())) {
+            auto nodeHandle = vnodeCallbacks.extract(oldVnode.elm());
+            nodeHandle.key() = vnode.elm();
+            nodeHandle.mapped() = vnode.callbacks();
+            vnodeCallbacks.insert(std::move(nodeHandle));
+        } else {
+            vnodeCallbacks.emplace(vnode.elm(), vnode.callbacks());
+        }
+
+        return &vnodeCallbacks[vnode.elm()];
+    }
+
     void diffCallbacks(const VNode& oldVnode, const VNode& vnode)
     {
         const Callbacks& oldCallbacks = oldVnode.callbacks();
@@ -367,11 +384,11 @@ namespace wasmdom
         }
 
         EM_ASM_({
-			var elm = Module['nodes'][$0];
-			elm['asmDomVNode'] = $1;
-			if (elm['asmDomEvents'] === undefined) {
-				elm['asmDomEvents'] = {};
-			} }, vnode.elm(), reinterpret_cast<std::uintptr_t>(vnode._data.get()));
+            var elm = Module['nodes'][$0];
+            elm['asmDomVNodeCallbacks'] = $1;
+            if (elm['asmDomEvents'] === undefined) {
+                elm['asmDomEvents'] = {};
+            } }, vnode.elm(), storeCallbacks(oldVnode, vnode));
 
         for (const auto& it : callbacks) {
             if (!oldCallbacks.contains(it.first) && it.first != "ref") {
@@ -423,11 +440,11 @@ namespace wasmdom
 
     emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event)
     {
-        const Callbacks& cbs = reinterpret_cast<VNode::SharedData*>(sharedData)->data.callbacks;
-        if (!cbs.contains(callback)) {
+        Callbacks* cbs = reinterpret_cast<Callbacks*>(sharedData);
+        if (!cbs->contains(callback)) {
             callback = "on" + callback;
         }
-        return emscripten::val(cbs.at(callback)(event));
+        return emscripten::val((*cbs)[callback](event));
     }
 
 }

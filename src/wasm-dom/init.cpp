@@ -5,7 +5,7 @@
 void wasmdom::init()
 {
     EM_ASM(
-        Module['eventProxy'] = function(e) { return Module['functionCallback'](this['asmDomVNode'], e.type, e); };
+        Module['eventProxy'] = function(e) { return Module['functionCallback'](this['asmDomVNodeCallbacks'], e.type, e); };
 
         var recycler = Module['recycler'] = { 'nodes' : {} };
         recycler['create'] = function(name) {
@@ -46,7 +46,7 @@ void wasmdom::init()
 				}
 				i = node.attributes !== undefined ? node.attributes.length : 0;
 				while (i--) node.removeAttribute(node.attributes[i].name);
-				node['asmDomVNode'] = undefined;
+				node['asmDomVNodeCallbacks'] = undefined;
 				if (node['asmDomRaws'] !== undefined) {
 					node['asmDomRaws'].forEach(function(raw) {
 						node[raw] = undefined;
