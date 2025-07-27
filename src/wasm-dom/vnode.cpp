@@ -301,20 +301,20 @@ namespace wasmdom
         const Attrs& oldAttrs = oldVnode.attrs();
         const Attrs& attrs = vnode.attrs();
 
-        for (const auto& it : oldAttrs) {
-            if (!attrs.contains(it.first)) {
+        for (const auto& [key, _] : oldAttrs) {
+            if (!attrs.contains(key)) {
                 EM_ASM({ Module.removeAttribute(
                              $0,
-                             Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
+                             Module['UTF8ToString']($1)); }, vnode.elm(), key.c_str());
             }
         }
 
-        for (const auto& it : attrs) {
-            if (!oldAttrs.contains(it.first) || oldAttrs.at(it.first) != it.second) {
+        for (const auto& [key, val] : attrs) {
+            if (!oldAttrs.contains(key) || oldAttrs.at(key) != val) {
                 EM_ASM({ Module.setAttribute(
                              $0,
                              Module['UTF8ToString']($1),
-                             Module['UTF8ToString']($2)); }, vnode.elm(), it.first.c_str(), it.second.c_str());
+                             Module['UTF8ToString']($2)); }, vnode.elm(), key.c_str(), val.c_str());
             }
         }
     }
@@ -328,21 +328,21 @@ namespace wasmdom
 
         EM_ASM({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
 
-        for (const auto& it : oldProps) {
-            if (!props.contains(it.first)) {
-                elm.set(it.first.c_str(), emscripten::val::undefined());
+        for (const auto& [key, _] : oldProps) {
+            if (!props.contains(key)) {
+                elm.set(key.c_str(), emscripten::val::undefined());
             }
         }
 
-        for (const auto& it : props) {
-            EM_ASM({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
+        for (const auto& [key, val] : props) {
+            EM_ASM({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), key.c_str());
 
             if (
-                !oldProps.contains(it.first) ||
-                !it.second.strictlyEquals(oldProps.at(it.first)) ||
-                ((it.first == "value" || it.first == "checked") &&
-                 !it.second.strictlyEquals(elm[it.first.c_str()]))) {
-                elm.set(it.first.c_str(), it.second);
+                !oldProps.contains(key) ||
+                !val.strictlyEquals(oldProps.at(key)) ||
+                ((key == "value" || key == "checked") &&
+                 !val.strictlyEquals(elm[key.c_str()]))) {
+                elm.set(key.c_str(), val);
             }
         }
     }
@@ -369,8 +369,8 @@ namespace wasmdom
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        for (const auto& it : oldCallbacks) {
-            if (!callbacks.contains(it.first) && it.first != "ref") {
+        for (const auto& [key, _] : oldCallbacks) {
+            if (!callbacks.contains(key) && key != "ref") {
                 EM_ASM({
 					var key = Module['UTF8ToString']($1).replace(/^on/, "");
 					var elm = Module['nodes'][$0];
@@ -379,7 +379,7 @@ namespace wasmdom
 						Module['eventProxy'],
 						false
 					);
-					delete elm['asmDomEvents'][key]; }, vnode.elm(), it.first.c_str());
+					delete elm['asmDomEvents'][key]; }, vnode.elm(), key.c_str());
             }
         }
 
@@ -390,8 +390,8 @@ namespace wasmdom
                 elm['asmDomEvents'] = {};
             } }, vnode.elm(), storeCallbacks(oldVnode, vnode));
 
-        for (const auto& it : callbacks) {
-            if (!oldCallbacks.contains(it.first) && it.first != "ref") {
+        for (const auto& [key, _] : callbacks) {
+            if (!oldCallbacks.contains(key) && key != "ref") {
                 EM_ASM({
 					var key = Module['UTF8ToString']($1).replace(/^on/, "");
 					var elm = Module['nodes'][$0];
@@ -400,7 +400,7 @@ namespace wasmdom
 						Module['eventProxy'],
 						false
 					);
-					elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), it.first.c_str());
+					elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), key.c_str());
             }
         }
 
