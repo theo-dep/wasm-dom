@@ -1,20 +1,12 @@
 #pragma once
 
-#include <emscripten/val.h>
+#include "attribute.hpp"
 
-#include <functional>
 #include <memory>
-#include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace wasmdom
 {
-
-    using Callback = std::function<bool(emscripten::val)>;
-    using Attrs = std::unordered_map<std::string, std::string>;
-    using Props = std::unordered_map<std::string, emscripten::val>;
-    using Callbacks = std::unordered_map<std::string, Callback>;
 
     class VNode;
     using Children = std::vector<VNode>;
@@ -47,39 +39,10 @@ namespace wasmdom
         id = extractSel | hasKey | nodeType
     };
 
-    struct Data
+    struct text_tag_t
     {
-        Data() {}
-        Data(const Attrs& dataAttrs,
-             const Props& dataProps = Props(),
-             const Callbacks& dataCallbacks = Callbacks())
-            : attrs(dataAttrs)
-            , props(dataProps)
-            , callbacks(dataCallbacks)
-        {
-        }
-        Data(const Attrs& dataAttrs,
-             const Callbacks& dataCallbacks)
-            : attrs(dataAttrs)
-            , callbacks(dataCallbacks)
-        {
-        }
-        Data(const Props& dataProps,
-             const Callbacks& dataCallbacks = Callbacks())
-            : props(dataProps)
-            , callbacks(dataCallbacks)
-        {
-        }
-        Data(const Callbacks& dataCallbacks)
-            : callbacks(dataCallbacks)
-        {
-        }
-        ~Data();
-
-        Attrs attrs;
-        Props props;
-        Callbacks callbacks;
     };
+    static inline constexpr text_tag_t text{};
 
     class VNode
     {
@@ -89,7 +52,7 @@ namespace wasmdom
             std::string key;
             std::string ns;
             unsigned int hash = 0;
-            Data data;
+            VNodeAttributes data;
             int elm = 0;
             Children children;
         };
@@ -97,25 +60,16 @@ namespace wasmdom
     public:
         VNode(std::nullptr_t);
         VNode(const std::string& nodeSel);
-        VNode(const std::string& nodeSel,
-              const std::string& nodeText);
-        VNode(const std::string& nodeText,
-              bool textNode);
-        VNode(const std::string& nodeSel,
-              const Data& nodeData);
-        VNode(const std::string& nodeSel,
-              const Children& nodeChildren);
-        VNode(const std::string& nodeSel,
-              const VNode& child);
-        VNode(const std::string& nodeSel,
-              const Data& nodeData,
-              const std::string& nodeText);
-        VNode(const std::string& nodeSel,
-              const Data& nodeData,
-              const Children& nodeChildren);
-        VNode(const std::string& nodeSel,
-              const Data& nodeData,
-              const VNode& child);
+        VNode(text_tag_t, const std::string& nodeText);
+        template <Stringifiable... K, Attribute... V>
+        VNode(const std::string& nodeSel, Pair<K, V>&&... nodeData);
+        VNode(const std::string& nodeSel, const VNodeAttributes& nodeData);
+
+        VNode& operator()(const std::string& nodeText);
+
+        VNode& operator()(const Children::value_type& child);
+        VNode& operator()(const Children& nodeChildren);
+        VNode& operator()(std::initializer_list<Children::value_type> nodeChildren);
 
         VNode(const VNode& other);
         VNode(VNode&& other);
@@ -161,6 +115,13 @@ namespace wasmdom
         // contains selector for elements and fragments, text for comments and textNodes
         std::shared_ptr<SharedData> _data = nullptr;
     };
+}
+
+template <wasmdom::Stringifiable... K, wasmdom::Attribute... V>
+inline wasmdom::VNode::VNode(const std::string& nodeSel, Pair<K, V>&&... nodeData)
+    : VNode(nodeSel)
+{
+    _data->data = attributesToVNode(std::forward<Pair<K, V>>(nodeData)...);
 }
 
 #ifndef WASMDOM_COVERAGE

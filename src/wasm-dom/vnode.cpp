@@ -93,7 +93,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
         std::string sel = node["tagName"].as<std::string>();
         std::transform(sel.begin(), sel.end(), sel.begin(), ::tolower);
 
-        Data data;
+        VNodeAttributes data;
         int i = node["attributes"]["length"].as<int>();
         while (i--) {
             data.attrs.emplace(node["attributes"][i]["nodeName"].as<std::string>(), node["attributes"][i]["nodeValue"].as<std::string>());
@@ -105,13 +105,13 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
             children.push_back(toVNode(node["childNodes"][i]));
         }
 
-        vnode = VNode(sel, data, children);
+        vnode = VNode(sel, data)(children);
         // isText
     } else if (nodeType == 3) {
-        vnode = VNode(node["textContent"].as<std::string>(), true);
+        vnode = VNode(text, node["textContent"].as<std::string>());
         // isComment
     } else if (nodeType == 8) {
-        vnode = VNode("!", node["textContent"].as<std::string>());
+        vnode = VNode("!")(node["textContent"].as<std::string>());
     } else {
         vnode = VNode("");
     }
