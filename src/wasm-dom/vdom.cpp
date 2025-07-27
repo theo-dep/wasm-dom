@@ -219,15 +219,15 @@ const wasmdom::VNode& wasmdom::VDom::patch(const VNode& vnode)
     } else {
         int elm = createElm(newNode);
         EM_ASM({
-				var parent = Module.parentNode($1);
-				if (parent !== 0) {
-					Module.insertBefore(
-						parent,
-						$0,
-						Module.nextSibling($1)
-					);
-					Module.removeChild($1);
-				} }, elm, _currentNode.elm());
+                var parent = Module.parentNode($1);
+                if (parent !== 0) {
+                    Module.insertBefore(
+                        parent,
+                        $0,
+                        Module.nextSibling($1)
+                    );
+                    Module.removeChild($1);
+                } }, elm, _currentNode.elm());
     }
 
     _currentNode = newNode;

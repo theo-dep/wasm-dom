@@ -372,14 +372,14 @@ namespace wasmdom
         for (const auto& [key, _] : oldCallbacks) {
             if (!callbacks.contains(key) && key != "ref") {
                 EM_ASM({
-					var key = Module['UTF8ToString']($1).replace(/^on/, "");
-					var elm = Module['nodes'][$0];
-					elm.removeEventListener(
-						key,
-						Module['eventProxy'],
-						false
-					);
-					delete elm['asmDomEvents'][key]; }, vnode.elm(), key.c_str());
+                    var key = Module['UTF8ToString']($1).replace(/^on/, "");
+                    var elm = Module['nodes'][$0];
+                    elm.removeEventListener(
+                        key,
+                        Module['eventProxy'],
+                        false
+                    );
+                    delete elm['asmDomEvents'][key]; }, vnode.elm(), key.c_str());
             }
         }
 
@@ -393,14 +393,14 @@ namespace wasmdom
         for (const auto& [key, _] : callbacks) {
             if (!oldCallbacks.contains(key) && key != "ref") {
                 EM_ASM({
-					var key = Module['UTF8ToString']($1).replace(/^on/, "");
-					var elm = Module['nodes'][$0];
-					elm.addEventListener(
-						key,
-						Module['eventProxy'],
-						false
-					);
-					elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), key.c_str());
+                    var key = Module['UTF8ToString']($1).replace(/^on/, "");
+                    var elm = Module['nodes'][$0];
+                    elm.addEventListener(
+                        key,
+                        Module['eventProxy'],
+                        false
+                    );
+                    elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), key.c_str());
             }
         }
 
