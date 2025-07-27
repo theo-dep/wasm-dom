@@ -303,18 +303,18 @@ namespace wasmdom
 
         for (const auto& it : oldAttrs) {
             if (!attrs.contains(it.first)) {
-                EM_ASM_({ Module.removeAttribute(
-                              $0,
-                              Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
+                EM_ASM({ Module.removeAttribute(
+                             $0,
+                             Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
             }
         }
 
         for (const auto& it : attrs) {
             if (!oldAttrs.contains(it.first) || oldAttrs.at(it.first) != it.second) {
-                EM_ASM_({ Module.setAttribute(
-                              $0,
-                              Module['UTF8ToString']($1),
-                              Module['UTF8ToString']($2)); }, vnode.elm(), it.first.c_str(), it.second.c_str());
+                EM_ASM({ Module.setAttribute(
+                             $0,
+                             Module['UTF8ToString']($1),
+                             Module['UTF8ToString']($2)); }, vnode.elm(), it.first.c_str(), it.second.c_str());
             }
         }
     }
@@ -326,7 +326,7 @@ namespace wasmdom
 
         emscripten::val elm = emscripten::val::module_property("nodes")[vnode.elm()];
 
-        EM_ASM_({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
+        EM_ASM({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
 
         for (const auto& it : oldProps) {
             if (!props.contains(it.first)) {
@@ -335,7 +335,7 @@ namespace wasmdom
         }
 
         for (const auto& it : props) {
-            EM_ASM_({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
+            EM_ASM({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
 
             if (
                 !oldProps.contains(it.first) ||
@@ -371,7 +371,7 @@ namespace wasmdom
 
         for (const auto& it : oldCallbacks) {
             if (!callbacks.contains(it.first) && it.first != "ref") {
-                EM_ASM_({
+                EM_ASM({
 					var key = Module['UTF8ToString']($1).replace(/^on/, "");
 					var elm = Module['nodes'][$0];
 					elm.removeEventListener(
@@ -383,7 +383,7 @@ namespace wasmdom
             }
         }
 
-        EM_ASM_({
+        EM_ASM({
             var elm = Module['nodes'][$0];
             elm['asmDomVNodeCallbacks'] = $1;
             if (elm['asmDomEvents'] === undefined) {
@@ -392,7 +392,7 @@ namespace wasmdom
 
         for (const auto& it : callbacks) {
             if (!oldCallbacks.contains(it.first) && it.first != "ref") {
-                EM_ASM_({
+                EM_ASM({
 					var key = Module['UTF8ToString']($1).replace(/^on/, "");
 					var elm = Module['nodes'][$0];
 					elm.addEventListener(
