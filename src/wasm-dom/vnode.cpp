@@ -301,20 +301,20 @@ namespace wasmdom
         const Attrs& oldAttrs = oldVnode.attrs();
         const Attrs& attrs = vnode.attrs();
 
-        for (const auto& it : oldAttrs) {
-            if (!attrs.contains(it.first)) {
-                EM_ASM_({ Module.removeAttribute(
-                              $0,
-                              Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
+        for (const auto& [key, _] : oldAttrs) {
+            if (!attrs.contains(key)) {
+                EM_ASM({ Module.removeAttribute(
+                             $0,
+                             Module['UTF8ToString']($1)); }, vnode.elm(), key.c_str());
             }
         }
 
-        for (const auto& it : attrs) {
-            if (!oldAttrs.contains(it.first) || oldAttrs.at(it.first) != it.second) {
-                EM_ASM_({ Module.setAttribute(
-                              $0,
-                              Module['UTF8ToString']($1),
-                              Module['UTF8ToString']($2)); }, vnode.elm(), it.first.c_str(), it.second.c_str());
+        for (const auto& [key, val] : attrs) {
+            if (!oldAttrs.contains(key) || oldAttrs.at(key) != val) {
+                EM_ASM({ Module.setAttribute(
+                             $0,
+                             Module['UTF8ToString']($1),
+                             Module['UTF8ToString']($2)); }, vnode.elm(), key.c_str(), val.c_str());
             }
         }
     }
@@ -326,25 +326,42 @@ namespace wasmdom
 
         emscripten::val elm = emscripten::val::module_property("nodes")[vnode.elm()];
 
-        EM_ASM_({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
+        EM_ASM({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
 
-        for (const auto& it : oldProps) {
-            if (!props.contains(it.first)) {
-                elm.set(it.first.c_str(), emscripten::val::undefined());
+        for (const auto& [key, _] : oldProps) {
+            if (!props.contains(key)) {
+                elm.set(key.c_str(), emscripten::val::undefined());
             }
         }
 
-        for (const auto& it : props) {
-            EM_ASM_({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), it.first.c_str());
+        for (const auto& [key, val] : props) {
+            EM_ASM({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), key.c_str());
 
             if (
-                !oldProps.contains(it.first) ||
-                !it.second.strictlyEquals(oldProps.at(it.first)) ||
-                ((it.first == "value" || it.first == "checked") &&
-                 !it.second.strictlyEquals(elm[it.first.c_str()]))) {
-                elm.set(it.first.c_str(), it.second);
+                !oldProps.contains(key) ||
+                !val.strictlyEquals(oldProps.at(key)) ||
+                ((key == "value" || key == "checked") &&
+                 !val.strictlyEquals(elm[key.c_str()]))) {
+                elm.set(key.c_str(), val);
             }
         }
+    }
+
+    // store callbacks addresses to be called in functionCallback
+    Callbacks* storeCallbacks(const VNode& oldVnode, const VNode& vnode)
+    {
+        static std::unordered_map<int, Callbacks> vnodeCallbacks;
+
+        if (vnodeCallbacks.contains(oldVnode.elm())) {
+            auto nodeHandle = vnodeCallbacks.extract(oldVnode.elm());
+            nodeHandle.key() = vnode.elm();
+            nodeHandle.mapped() = vnode.callbacks();
+            vnodeCallbacks.insert(std::move(nodeHandle));
+        } else {
+            vnodeCallbacks.emplace(vnode.elm(), vnode.callbacks());
+        }
+
+        return &vnodeCallbacks[vnode.elm()];
     }
 
     void diffCallbacks(const VNode& oldVnode, const VNode& vnode)
@@ -352,38 +369,38 @@ namespace wasmdom
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        for (const auto& it : oldCallbacks) {
-            if (!callbacks.contains(it.first) && it.first != "ref") {
-                EM_ASM_({
-					var key = Module['UTF8ToString']($1).replace(/^on/, "");
-					var elm = Module['nodes'][$0];
-					elm.removeEventListener(
-						key,
-						Module['eventProxy'],
-						false
-					);
-					delete elm['asmDomEvents'][key]; }, vnode.elm(), it.first.c_str());
+        for (const auto& [key, _] : oldCallbacks) {
+            if (!callbacks.contains(key) && key != "ref") {
+                EM_ASM({
+                    var key = Module['UTF8ToString']($1).replace(/^on/, "");
+                    var elm = Module['nodes'][$0];
+                    elm.removeEventListener(
+                        key,
+                        Module['eventProxy'],
+                        false
+                    );
+                    delete elm['asmDomEvents'][key]; }, vnode.elm(), key.c_str());
             }
         }
 
-        EM_ASM_({
-			var elm = Module['nodes'][$0];
-			elm['asmDomVNode'] = $1;
-			if (elm['asmDomEvents'] === undefined) {
-				elm['asmDomEvents'] = {};
-			} }, vnode.elm(), reinterpret_cast<std::uintptr_t>(vnode._data.get()));
+        EM_ASM({
+            var elm = Module['nodes'][$0];
+            elm['asmDomVNodeCallbacks'] = $1;
+            if (elm['asmDomEvents'] === undefined) {
+                elm['asmDomEvents'] = {};
+            } }, vnode.elm(), storeCallbacks(oldVnode, vnode));
 
-        for (const auto& it : callbacks) {
-            if (!oldCallbacks.contains(it.first) && it.first != "ref") {
-                EM_ASM_({
-					var key = Module['UTF8ToString']($1).replace(/^on/, "");
-					var elm = Module['nodes'][$0];
-					elm.addEventListener(
-						key,
-						Module['eventProxy'],
-						false
-					);
-					elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), it.first.c_str());
+        for (const auto& [key, _] : callbacks) {
+            if (!oldCallbacks.contains(key) && key != "ref") {
+                EM_ASM({
+                    var key = Module['UTF8ToString']($1).replace(/^on/, "");
+                    var elm = Module['nodes'][$0];
+                    elm.addEventListener(
+                        key,
+                        Module['eventProxy'],
+                        false
+                    );
+                    elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), key.c_str());
             }
         }
 
@@ -423,11 +440,11 @@ namespace wasmdom
 
     emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event)
     {
-        const Callbacks& cbs = reinterpret_cast<VNode::SharedData*>(sharedData)->data.callbacks;
-        if (!cbs.contains(callback)) {
+        Callbacks* cbs = reinterpret_cast<Callbacks*>(sharedData);
+        if (!cbs->contains(callback)) {
             callback = "on" + callback;
         }
-        return emscripten::val(cbs.at(callback)(event));
+        return emscripten::val((*cbs)[callback](event));
     }
 
 }

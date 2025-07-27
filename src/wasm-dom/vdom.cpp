@@ -53,7 +53,7 @@ namespace wasmdom
 
         for (VNode& child : vnode._data->children) {
             int elm = createElm(child);
-            EM_ASM_({ Module.appendChild($0, $1); }, vnode.elm(), elm);
+            EM_ASM({ Module.appendChild($0, $1); }, vnode.elm(), elm);
         }
 
         static const VNode emptyNode("");
@@ -70,7 +70,7 @@ namespace wasmdom
     {
         while (startIdx <= endIdx) {
             int elm = createElm(vnodes[startIdx++]);
-            EM_ASM_({ Module.insertBefore($0, $1, $2) }, parentElm, elm, before);
+            EM_ASM({ Module.insertBefore($0, $1, $2) }, parentElm, elm, before);
         }
     }
 
@@ -82,7 +82,7 @@ namespace wasmdom
             const VNode& vnode = vnodes[startIdx++];
 
             if (vnode) {
-                EM_ASM_({ Module.removeChild($0); }, vnode.elm());
+                EM_ASM({ Module.removeChild($0); }, vnode.elm());
 
                 if (vnode.hash() & hasRef) {
                     vnode.callbacks().at("ref")(emscripten::val::null());
@@ -132,17 +132,17 @@ namespace wasmdom
                 if (oldStartVnode != newEndVnode)
                     patchVNode(oldStartVnode, newEndVnode, parentElm);
 
-                EM_ASM_({ Module.insertBefore(
-                              $0,
-                              $1,
-                              Module.nextSibling($2)); }, parentElm, oldStartVnode.elm(), oldEndVnode.elm());
+                EM_ASM({ Module.insertBefore(
+                             $0,
+                             $1,
+                             Module.nextSibling($2)); }, parentElm, oldStartVnode.elm(), oldEndVnode.elm());
                 oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
                 newEndVnode = boundCheckVNode(newCh, --newEndIdx, newMaxIdx);
             } else if (sameVNode(oldEndVnode, newStartVnode)) {
                 if (oldEndVnode != newStartVnode)
                     patchVNode(oldEndVnode, newStartVnode, parentElm);
 
-                EM_ASM_({ Module.insertBefore($0, $1, $2); }, parentElm, oldEndVnode.elm(), oldStartVnode.elm());
+                EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, oldEndVnode.elm(), oldStartVnode.elm());
                 oldEndVnode = boundCheckVNode(oldCh, --oldEndIdx, oldMaxIdx);
                 newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
             } else {
@@ -158,17 +158,17 @@ namespace wasmdom
                 }
                 if (!oldKeyToIdx.contains(newStartVnode.key())) {
                     int elm = createElm(newStartVnode);
-                    EM_ASM_({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
+                    EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
                 } else {
                     VNode elmToMove = oldCh[oldKeyToIdx[newStartVnode.key()]];
                     if ((elmToMove.hash() & extractSel) != (newStartVnode.hash() & extractSel)) {
                         int elm = createElm(newStartVnode);
-                        EM_ASM_({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
+                        EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
                     } else {
                         if (elmToMove != newStartVnode)
                             patchVNode(elmToMove, newStartVnode, parentElm);
                         oldCh[oldKeyToIdx[newStartVnode.key()]] = nullptr;
-                        EM_ASM_({ Module.insertBefore($0, $1, $2); }, parentElm, elmToMove.elm(), oldStartVnode.elm());
+                        EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elmToMove.elm(), oldStartVnode.elm());
                     }
                 }
                 newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
@@ -200,9 +200,9 @@ void wasmdom::patchVNode(VNode& oldVnode, VNode& vnode, int parentElm)
         }
         vnode.diff(oldVnode);
     } else if (vnode.sel() != oldVnode.sel()) {
-        EM_ASM_({ Module.setNodeValue(
-                      $0,
-                      Module['UTF8ToString']($1)); }, vnode.elm(), vnode.sel().c_str());
+        EM_ASM({ Module.setNodeValue(
+                     $0,
+                     Module['UTF8ToString']($1)); }, vnode.elm(), vnode.sel().c_str());
     }
 }
 
@@ -218,16 +218,16 @@ const wasmdom::VNode& wasmdom::VDom::patch(const VNode& vnode)
         patchVNode(_currentNode, newNode, _currentNode.elm());
     } else {
         int elm = createElm(newNode);
-        EM_ASM_({
-				var parent = Module.parentNode($1);
-				if (parent !== 0) {
-					Module.insertBefore(
-						parent,
-						$0,
-						Module.nextSibling($1)
-					);
-					Module.removeChild($1);
-				} }, elm, _currentNode.elm());
+        EM_ASM({
+                var parent = Module.parentNode($1);
+                if (parent !== 0) {
+                    Module.insertBefore(
+                        parent,
+                        $0,
+                        Module.nextSibling($1)
+                    );
+                    Module.removeChild($1);
+                } }, elm, _currentNode.elm());
     }
 
     _currentNode = newNode;
