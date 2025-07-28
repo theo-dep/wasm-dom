@@ -3,6 +3,7 @@
 #include "wasm-dom.hpp"
 
 using namespace wasmdom;
+using namespace wasmdom::dsl;
 
 TEST_CASE("toHTML", "[toHTML]")
 {
@@ -16,184 +17,197 @@ TEST_CASE("toHTML", "[toHTML]")
 
     SECTION("should parse elements")
     {
-        VNode vnode = h("div");
+        VNode vnode = div();
         REQUIRE(vnode.toHTML() == "<div></div>");
     }
 
     SECTION("should parse comments")
     {
-        VNode vnode = h("!", std::string("comment"));
+        VNode vnode = comment(std::string("comment"));
         REQUIRE(vnode.toHTML() == "<!--comment-->");
     }
 
     SECTION("should parse fragments")
     {
-        VNode vnode = h("", Children{ h("span"), h("b") });
+        VNode vnode =
+            fragment()(
+                { span(),
+                  b() });
         REQUIRE(vnode.toHTML() == "<span></span><b></b>");
     }
 
     SECTION("should parse text")
     {
-        VNode vnode = h("a text 字à", true);
+        VNode vnode = t("a text 字à");
         REQUIRE(vnode.toHTML() == "a text 字à");
     }
 
     SECTION("should handle children")
     {
-        VNode vnode = h("div", Children{ h("span"), h("b") });
+        VNode vnode =
+            div()(
+                { span(),
+                  b() });
         REQUIRE(vnode.toHTML() == "<div><span></span><b></b></div>");
     }
 
     SECTION("should handle text content")
     {
-        VNode vnode = h("p", std::string("a text 字à"));
+        VNode vnode =
+            p()(
+                std::string("a text 字à"));
         REQUIRE(vnode.toHTML() == "<p>a text 字à</p>");
     }
 
     SECTION("should parse attributes")
     {
-        VNode vnode = h("div", Attrs{ { "data-foo", "bar 字à" } });
+        VNode vnode = div(("data-foo", "bar 字à"s));
         REQUIRE(vnode.toHTML() == "<div data-foo=\"bar 字à\"></div>");
     }
 
     SECTION("should omit falsy attributes")
     {
-        VNode vnode = h("div", Attrs{ { "readonly", "false" }, { "style", "width: 250px; height: 250px;" } });
+        VNode vnode =
+            div(("readonly", "false"s),
+                ("style", "width: 250px; height: 250px;"s));
         REQUIRE(vnode.toHTML() == "<div style=\"width: 250px; height: 250px;\"></div>");
     }
 
     SECTION("should set truthy attributes to empty string")
     {
-        VNode vnode = h("div", Attrs{ { "readonly", "true" } });
+        VNode vnode = div(("readonly", "true"s));
         REQUIRE(vnode.toHTML() == "<div readonly=\"\"></div>");
     }
 
     SECTION("should parse props")
     {
-        VNode vnode = h("div", Props{ { "readonly", emscripten::val(true) } });
+        VNode vnode = div(("readonly", emscripten::val(true)));
         REQUIRE(vnode.toHTML() == "<div readonly=\"true\"></div>");
     }
 
     SECTION("should omit props")
     {
-        VNode vnode = h("div",
-                        Props{
-                            { "attributes", emscripten::val("foo") },
-                            { "childElementCount", emscripten::val("foo") },
-                            { "children", emscripten::val("foo") },
-                            { "classList", emscripten::val("foo") },
-                            { "clientHeight", emscripten::val("foo") },
-                            { "clientLeft", emscripten::val("foo") },
-                            { "clientTop", emscripten::val("foo") },
-                            { "clientWidth", emscripten::val("foo") },
-                            { "currentStyle", emscripten::val("foo") },
-                            { "firstElementChild", emscripten::val("foo") },
-                            { "innerHTML", emscripten::val("foo") },
-                            { "lastElementChild", emscripten::val("foo") },
-                            { "nextElementSibling", emscripten::val("foo") },
-                            { "ongotpointercapture", emscripten::val("foo") },
-                            { "onlostpointercapture", emscripten::val("foo") },
-                            { "onwheel", emscripten::val("foo") },
-                            { "outerHTML", emscripten::val("foo") },
-                            { "previousElementSibling", emscripten::val("foo") },
-                            { "runtimeStyle", emscripten::val("foo") },
-                            { "scrollHeight", emscripten::val("foo") },
-                            { "scrollLeft", emscripten::val("foo") },
-                            { "scrollLeftMax", emscripten::val("foo") },
-                            { "scrollTop", emscripten::val("foo") },
-                            { "scrollTopMax", emscripten::val("foo") },
-                            { "scrollWidth", emscripten::val("foo") },
-                            { "tabStop", emscripten::val("foo") },
-                            { "tagName", emscripten::val("foo") } });
+        VNode vnode =
+            div(("attributes", emscripten::val("foo")),
+                ("childElementCount", emscripten::val("foo")),
+                ("children", emscripten::val("foo")),
+                ("classList", emscripten::val("foo")),
+                ("clientHeight", emscripten::val("foo")),
+                ("clientLeft", emscripten::val("foo")),
+                ("clientTop", emscripten::val("foo")),
+                ("clientWidth", emscripten::val("foo")),
+                ("currentStyle", emscripten::val("foo")),
+                ("firstElementChild", emscripten::val("foo")),
+                ("innerHTML", emscripten::val("foo")),
+                ("lastElementChild", emscripten::val("foo")),
+                ("nextElementSibling", emscripten::val("foo")),
+                ("ongotpointercapture", emscripten::val("foo")),
+                ("onlostpointercapture", emscripten::val("foo")),
+                ("onwheel", emscripten::val("foo")),
+                ("outerHTML", emscripten::val("foo")),
+                ("previousElementSibling", emscripten::val("foo")),
+                ("runtimeStyle", emscripten::val("foo")),
+                ("scrollHeight", emscripten::val("foo")),
+                ("scrollLeft", emscripten::val("foo")),
+                ("scrollLeftMax", emscripten::val("foo")),
+                ("scrollTop", emscripten::val("foo")),
+                ("scrollTopMax", emscripten::val("foo")),
+                ("scrollWidth", emscripten::val("foo")),
+                ("tabStop", emscripten::val("foo")),
+                ("tagName", emscripten::val("foo")));
         REQUIRE(vnode.toHTML() == "<div>foo</div>");
     }
 
     SECTION("should omit callbacks")
     {
-        VNode vnode = h("div", Data(Callbacks{
-                                   { "onclick", [](emscripten::val /*e*/) -> bool {
-                                        return true;
-                                    } } }));
+        VNode vnode =
+            div(("onclick", [](emscripten::val /*e*/) -> bool {
+                return true;
+            }));
         REQUIRE(vnode.toHTML() == "<div></div>");
     }
 
     SECTION("should handle innerHTML")
     {
-        VNode vnode = h("div", Props{ { "innerHTML", emscripten::val::u8string("<p>a text 字à</p>") } });
+        VNode vnode = div(("innerHTML", emscripten::val::u8string("<p>a text 字à</p>")));
         REQUIRE(vnode.toHTML() == "<div><p>a text 字à</p></div>");
     }
 
     SECTION("should handle svg container elements")
     {
-        VNode vnode = h("svg",
-                        Children{
-                            h("a"),
-                            h("defs"),
-                            h("glyph"),
-                            h("g"),
-                            h("marker"),
-                            h("mask"),
-                            h("missing-glyph"),
-                            h("pattern"),
-                            h("svg"),
-                            h("switch"),
-                            h("symbol"),
-                            h("text"),
-                            h("desc"),
-                            h("metadata"),
-                            h("title") });
+        VNode vnode =
+            svg()(
+                { a(),
+                  defs(),
+                  glyph(),
+                  g(),
+                  marker(),
+                  mask(),
+                  missing_glyph(),
+                  pattern(),
+                  svg(),
+                  hswitch(),
+                  symbol(),
+                  text(),
+                  desc(),
+                  metadata(),
+                  title() });
         REQUIRE(vnode.toHTML() == "<svg><a></a><defs></defs><glyph></glyph><g></g><marker></marker><mask></mask><missing-glyph></missing-glyph><pattern></pattern><svg></svg><switch></switch><symbol></symbol><text></text><desc></desc><metadata></metadata><title></title></svg>");
     }
 
     SECTION("should handle svg non container elements")
     {
-        VNode vnode = h("svg", Children{ h("rect") });
+        VNode vnode =
+            svg()(
+                { rect() });
         REQUIRE(vnode.toHTML() == "<svg><rect /></svg>");
     }
 
     SECTION("should handle void elements")
     {
-        VNode vnode = h("div",
-                        Children{
-                            h("area"),
-                            h("base"),
-                            h("br"),
-                            h("col"),
-                            h("embed"),
-                            h("hr"),
-                            h("img"),
-                            h("input"),
-                            h("keygen"),
-                            h("link"),
-                            h("meta"),
-                            h("param"),
-                            h("source"),
-                            h("track"),
-                            h("wbr") });
+        VNode vnode =
+            div()(
+                { area(),
+                  base(),
+                  br(),
+                  col(),
+                  embed(),
+                  hr(),
+                  img(),
+                  input(),
+                  keygen(),
+                  link(),
+                  meta(),
+                  param(),
+                  source(),
+                  track(),
+                  wbr() });
         REQUIRE(vnode.toHTML() == "<div><area><base><br><col><embed><hr><img><input><keygen><link><meta><param><source><track><wbr></div>");
     }
 
     SECTION("should escape text")
     {
-        VNode vnode = h("<>\"'&`text", true);
+        VNode vnode = t("<>\"'&`text");
         REQUIRE(vnode.toHTML() == "&lt;&gt;&quot;&apos;&amp;&#96;text");
     }
 
     SECTION("should escape text content")
     {
-        VNode vnode = h("p", std::string("<>\"'&`text"));
+        VNode vnode =
+            p()(
+                std::string("<>\"'&`text"));
         REQUIRE(vnode.toHTML() == "<p>&lt;&gt;&quot;&apos;&amp;&#96;text</p>");
     }
 
     SECTION("should escape attributes")
     {
-        VNode vnode = h("div", Attrs{ { "data-foo", "<>\"'&`text" } });
+        VNode vnode = div(("data-foo", "<>\"'&`text"s));
         REQUIRE(vnode.toHTML() == "<div data-foo=\"&lt;&gt;&quot;&apos;&amp;&#96;text\"></div>");
     }
 
     SECTION("should escape props")
     {
-        VNode vnode = h("div", Props{ { "data-foo", emscripten::val("<>\"'&`text") } });
+        VNode vnode = div(("data-foo", emscripten::val("<>\"'&`text")));
         REQUIRE(vnode.toHTML() == "<div data-foo=\"&lt;&gt;&quot;&apos;&amp;&#96;text\"></div>");
     }
 }

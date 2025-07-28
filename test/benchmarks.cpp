@@ -6,6 +6,7 @@
 #include "utils.hpp"
 
 using namespace wasmdom;
+using namespace wasmdom::dsl;
 
 TEST_CASE("benchmark")
 {
@@ -15,20 +16,15 @@ TEST_CASE("benchmark")
 
         meter.measure([&](int i) {
             storage[i] =
-                h("div",
-                  Data(
-                      Attrs{
-                          { "foo", "foo" },
-                          { "bar", "bar" },
-                          { "baz", "baz" } }),
-                  Children{
-                      h("div", Data(Attrs{ { "foo", "foo" } })),
-                      h("div", Data(Attrs{ { "foo", "foo" } })),
-                      h("div", Data(Attrs{ { "foo", "foo" } }),
-                        Children{
-                            h("div", Data(Attrs{ { "foo", "foo" } })),
-                            h("div", Data(Attrs{ { "foo", "foo" } })),
-                            h("div", Data(Attrs{ { "foo", "foo" } })) }) });
+                div(("foo", "foo"s),
+                    ("bar", "bar"s),
+                    ("baz", "baz"s))(
+                    { div(("foo", "foo"s)),
+                      div(("foo", "foo"s)),
+                      div(("foo", "foo"s))(
+                          { div(("foo", "foo"s)),
+                            div(("foo", "foo"s)),
+                            div(("foo", "foo"s)) }) });
         });
     };
 
@@ -40,23 +36,13 @@ TEST_CASE("benchmark")
             Children children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
-                children[i] = h("span",
-                                Data(
-                                    Attrs{
-                                        { "e", std::to_string(i) } }),
-                                Children{
-                                    h("span",
-                                      Data(
-                                          Attrs{
-                                              { "e", std::to_string(i - 3) } })) });
+                children[i] =
+                    span(("e", std::to_string(i)))(
+                        { span(("e", std::to_string(i - 3))) });
             }
-            return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
-                     children);
+            return div(("foo", "foo"s),
+                       ("bar", "bar"s),
+                       ("baz", "baz"s))(children);
         };
 
         VDom vdom(getRoot());
@@ -80,45 +66,25 @@ TEST_CASE("benchmark")
             Children children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
-                children[i] = h("span",
-                                Data(
-                                    Attrs{
-                                        { "e", std::to_string(i) } }),
-                                Children{
-                                    h("span",
-                                      Data(
-                                          Attrs{
-                                              { "e", std::to_string(i - 1) } })) });
+                children[i] =
+                    span(("e", std::to_string(i)))(
+                        { span(("e", std::to_string(i - 1))) });
             }
-            return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
-                     children);
+            return div(("foo", "foo"s),
+                       ("bar", "bar"s),
+                       ("baz", "baz"s))(children);
         };
         const auto createVNode2 = [] {
             Children children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
-                children[i] = h("span",
-                                Data(
-                                    Attrs{
-                                        { "e", "27" } }),
-                                Children{
-                                    h("span",
-                                      Data(
-                                          Attrs{
-                                              { "e", "27" } })) });
+                children[i] =
+                    span(("e", "27"s))(
+                        { span(("e", "27"s)) });
             }
-            return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
-                     children);
+            return div(("foo", "foo"s),
+                       ("bar", "bar"s),
+                       ("baz", "baz"s))(children);
         };
 
         VDom vdom(getRoot());
@@ -142,25 +108,17 @@ TEST_CASE("benchmark")
             Children children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
-                children[i] = h("span",
-                                Children{
-                                    h("span") });
+                children[i] = span()(
+                    { span() });
             }
-            return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }),
-                     children);
+            return div(("foo", "foo"s),
+                       ("bar", "bar"s),
+                       ("baz", "baz"s))(children);
         };
         const auto createVNode2 = [] {
-            return h("div",
-                     Data(
-                         Attrs{
-                             { "foo", "foo" },
-                             { "bar", "bar" },
-                             { "baz", "baz" } }));
+            return div(("foo", "foo"s),
+                       ("bar", "bar"s),
+                       ("baz", "baz"s));
         };
 
         VDom vdom(getRoot());

@@ -5,6 +5,7 @@
 #include "utils.hpp"
 
 using namespace wasmdom;
+using namespace wasmdom::dsl;
 
 TEST_CASE("dataset", "[dataset]")
 {
@@ -12,11 +13,7 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("should set on initial element creation")
     {
-        VNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "data-foo", "foo" } }))
-        };
+        VNode vnode = div(("data-foo", "foo"s));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -28,11 +25,10 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("should update dataset")
     {
-        Data data = Data(
-            Attrs{
-                { "data-foo", "foo" },
-                { "data-bar", "bar" } });
-        VNode vnode{ h("i", data) };
+        VNodeAttributes data;
+        data.attrs = { { "data-foo", "foo" },
+                       { "data-bar", "bar" } };
+        VNode vnode = i(data);
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -42,7 +38,7 @@ TEST_CASE("dataset", "[dataset]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
-        VNode vnode2{ h("i", data) };
+        VNode vnode2 = i(data);
 
         vdom.patch(vnode2);
 
@@ -54,12 +50,9 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("can be memorized")
     {
-        VNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "data-foo", "foo" },
-                             { "data-bar", "bar" } }))
-        };
+        VNode vnode =
+            div(("data-foo", "foo"s),
+                ("data-bar", "bar"s));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -69,11 +62,7 @@ TEST_CASE("dataset", "[dataset]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
-        VNode vnode2{
-            h("div", Data(
-                         Attrs{
-                             { "data-baz", "baz" } }))
-        };
+        VNode vnode2 = div(("data-baz", "baz"s));
 
         vdom.patch(vnode2);
 

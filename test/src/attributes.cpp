@@ -5,6 +5,7 @@
 #include "utils.hpp"
 
 using namespace wasmdom;
+using namespace wasmdom::dsl;
 
 TEST_CASE("attributes", "[attributes]")
 {
@@ -12,13 +13,10 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should have their provided values")
     {
-        VNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "href", "/foo" },
-                             { "minlength", "1" },
-                             { "value", "foo" } }))
-        };
+        VNode vnode =
+            div(("href", "/foo"s),
+                ("minlength", "1"s),
+                ("value", "foo"s));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -32,12 +30,13 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("can be memoized")
     {
-        Data data = Data(
-            Attrs{
-                { "href", "/foo" },
-                { "minlength", "1" },
-                { "value", "foo" } });
-        VNode vnode{ h("div", data) };
+        VNodeAttributes data;
+        data.attrs = {
+            { "href", "/foo" },
+            { "minlength", "1" },
+            { "value", "foo" }
+        };
+        VNode vnode = div(data);
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -48,7 +47,7 @@ TEST_CASE("attributes", "[attributes]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
 
-        VNode vnode2{ h("div", data) };
+        VNode vnode2 = div(data);
 
         vdom.patch(vnode2);
 
@@ -61,13 +60,10 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should be omitted when falsy values are provided")
     {
-        VNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "href", "null" },
-                             { "minlength", "0" },
-                             { "value", "false" } }))
-        };
+        VNode vnode =
+            div(("href", "null"s),
+                ("minlength", "0"s),
+                ("value", "false"s));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -81,13 +77,10 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should set truthy values to empty string")
     {
-        VNode vnode{
-            h("input", Data(
-                           Attrs{
-                               { "href", "null" },
-                               { "minlength", "0" },
-                               { "readonly", "true" } }))
-        };
+        VNode vnode =
+            input(("href", "null"s),
+                  ("minlength", "0"s),
+                  ("readonly", "true"s));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -101,11 +94,7 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("should be set correctly when namespaced")
     {
-        VNode vnode{
-            h("div", Data(
-                         Attrs{
-                             { "xlink:href", "#foo" } }))
-        };
+        VNode vnode = div(("xlink:href", "#foo"s));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
