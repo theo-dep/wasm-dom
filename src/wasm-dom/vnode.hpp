@@ -62,7 +62,7 @@ namespace wasmdom
         VNode(const std::string& nodeSel);
         VNode(text_tag_t, const std::string& nodeText);
         template <Stringifiable... K, Attribute... V>
-        VNode(const std::string& nodeSel, Pair<K, V>&&... nodeData);
+        VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData);
         VNode(const std::string& nodeSel, const VNodeAttributes& nodeData);
 
         VNode& operator()(const std::string& nodeText);
@@ -118,10 +118,10 @@ namespace wasmdom
 }
 
 template <wasmdom::Stringifiable... K, wasmdom::Attribute... V>
-inline wasmdom::VNode::VNode(const std::string& nodeSel, Pair<K, V>&&... nodeData)
+inline wasmdom::VNode::VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData)
     : VNode(nodeSel)
 {
-    _data->data = attributesToVNode(std::forward<Pair<K, V>>(nodeData)...);
+    _data->data = attributesToVNode(std::forward<std::pair<K, V>>(nodeData)...);
 }
 
 #ifndef WASMDOM_COVERAGE

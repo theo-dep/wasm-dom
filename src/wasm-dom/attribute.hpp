@@ -40,13 +40,10 @@ namespace wasmdom
         Callbacks callbacks;
     };
 
-    template <Stringifiable K, Attribute V>
-    using Pair = std::pair<K, V>;
-
     namespace detail
     {
         template <Stringifiable K, Attribute V>
-        inline void attributeToVNode(VNodeAttributes& attributes, Pair<K, V>&& attribute)
+        inline void attributeToVNode(VNodeAttributes& attributes, std::pair<K, V>&& attribute)
         {
             auto&& [key, value]{ attribute };
             if constexpr (StringAttribute<V>) {
@@ -62,10 +59,10 @@ namespace wasmdom
     }
 
     template <Stringifiable... K, Attribute... V>
-    inline VNodeAttributes attributesToVNode(Pair<K, V>&&... attributes)
+    inline VNodeAttributes attributesToVNode(std::pair<K, V>&&... attributes)
     {
         VNodeAttributes vnodeAttributes;
-        (detail::attributeToVNode(vnodeAttributes, std::forward<Pair<K, V>>(attributes)), ...);
+        (detail::attributeToVNode(vnodeAttributes, std::forward<std::pair<K, V>>(attributes)), ...);
         return vnodeAttributes;
     }
 
