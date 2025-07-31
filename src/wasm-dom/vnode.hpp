@@ -42,7 +42,7 @@ namespace wasmdom
     struct text_tag_t
     {
     };
-    static inline constexpr text_tag_t text{};
+    static inline constexpr text_tag_t text_tag{};
 
     class VNode
     {

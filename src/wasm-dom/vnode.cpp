@@ -108,7 +108,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
         vnode = VNode(sel, data)(children);
         // isText
     } else if (nodeType == 3) {
-        vnode = VNode(text, node["textContent"].as<std::string>());
+        vnode = VNode(text_tag, node["textContent"].as<std::string>());
         // isComment
     } else if (nodeType == 8) {
         vnode = VNode("!")(node["textContent"].as<std::string>());

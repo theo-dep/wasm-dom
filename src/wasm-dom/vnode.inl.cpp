@@ -38,7 +38,7 @@ wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
     if (_data->hash & isComment) {
         _data->sel = nodeText;
     } else {
-        _data->children.emplace_back(text, nodeText);
+        _data->children.emplace_back(text_tag, nodeText);
         _data->hash |= hasText;
     }
     return *this;
