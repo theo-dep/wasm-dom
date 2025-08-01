@@ -143,10 +143,10 @@ TEST_CASE("toHTML", "[toHTML]")
                   g(),
                   marker(),
                   mask(),
-                  missing_glyph(),
+                  missingGlyph(),
                   pattern(),
                   svg(),
-                  hswitch(),
+                  hSwitch(),
                   symbol(),
                   text(),
                   desc(),
@@ -175,14 +175,14 @@ TEST_CASE("toHTML", "[toHTML]")
                   hr(),
                   img(),
                   input(),
-                  keygen(),
+                  // keygen(),
                   link(),
                   meta(),
                   param(),
                   source(),
                   track(),
                   wbr() });
-        REQUIRE(vnode.toHTML() == "<div><area><base><br><col><embed><hr><img><input><keygen><link><meta><param><source><track><wbr></div>");
+        REQUIRE(vnode.toHTML() == "<div><area><base><br><col><embed><hr><img><input>" /*<keygen>*/ "<link><meta><param><source><track><wbr></div>");
     }
 
     SECTION("should escape text")

@@ -1379,7 +1379,7 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should patch a WebComponent")
     {
-        VNode vnode = web_component();
+        VNode vnode = webComponent();
         VDom vdom(getRoot());
         vdom.patch(vnode);
         emscripten::val elm = getBodyFirstChild();
@@ -1388,8 +1388,8 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should patch a WebComponent with attributes")
     {
-        VNode vnode = web_component(("foo", "bar"s),
-                                    ("bar", "42"s));
+        VNode vnode = webComponent(("foo", "bar"s),
+                                   ("bar", "42"s));
         VDom vdom(getRoot());
         vdom.patch(vnode);
         emscripten::val elm = getBodyFirstChild();
@@ -1401,8 +1401,8 @@ TEST_CASE("patch", "[patch]")
     SECTION("should patch a WebComponent with eventListeners")
     {
         VNode vnode =
-            web_component(("onclick", f(onClick)),
-                          ("onfoo-event", f(onClick)));
+            webComponent(("onclick", f(onClick)),
+                         ("onfoo-event", f(onClick)));
         VDom vdom(getRoot());
         vdom.patch(vnode);
         emscripten::val elm = getBodyFirstChild();
@@ -1412,7 +1412,7 @@ TEST_CASE("patch", "[patch]")
     SECTION("should create a template node")
     {
         VNode vnode =
-            htemplate(("id", "template-node"s))(
+            hTemplate(("id", "template-node"s))(
                 { style()(" p{ color : green;"),
                   p()(std::string("Hello world!")) });
         VDom vdom(getRoot());

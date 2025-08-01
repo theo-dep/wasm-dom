@@ -155,7 +155,7 @@ namespace wasmdom
         { "hr", true },
         { "img", true },
         { "input", true },
-        { "keygen", true },
+        //{ "keygen", true },
         { "link", true },
         { "meta", true },
         { "param", true },
