@@ -24,58 +24,70 @@ namespace wasmdom::dsl
     inline VNode comment() { return VNode("!"); }
     inline VNode comment(const std::string& text) { return comment()(text); }
 
-#define SEL(X)                                                                                                      \
+#define WASMDOM_DSL_SEL(X)                                                                                          \
     inline VNode X() { return VNode(#X); }                                                                          \
     template <Stringifiable... K, Attribute... V>                                                                   \
     inline VNode X(std::pair<K, V>&&... nodeData) { return VNode(#X, std::forward<std::pair<K, V>>(nodeData)...); } \
     inline VNode X(const VNodeAttributes& nodeData) { return VNode(#X, nodeData); }
 
-    SEL(a)
-    SEL(b)
-    SEL(div)
-    SEL(h2)
-    SEL(i)
-    SEL(input)
-    SEL(foreignObject)
-    SEL(p)
-    SEL(span)
-    SEL(style)
-    SEL(svg)
-    SEL(htemplate)
-    SEL(web_component)
+#define WASMDOM_DSL_PARENS ()
 
-    // void elements
-    SEL(area)
-    SEL(base)
-    SEL(br)
-    SEL(col)
-    SEL(embed)
-    SEL(hr)
-    SEL(img)
-    SEL(keygen)
-    SEL(link)
-    SEL(meta)
-    SEL(param)
-    SEL(source)
-    SEL(track)
-    SEL(wbr)
+#define WASMDOM_DSL_EXPAND(...) WASMDOM_DSL_EXPAND4(WASMDOM_DSL_EXPAND4(WASMDOM_DSL_EXPAND4(WASMDOM_DSL_EXPAND4(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND4(...) WASMDOM_DSL_EXPAND3(WASMDOM_DSL_EXPAND3(WASMDOM_DSL_EXPAND3(WASMDOM_DSL_EXPAND3(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND3(...) WASMDOM_DSL_EXPAND2(WASMDOM_DSL_EXPAND2(WASMDOM_DSL_EXPAND2(WASMDOM_DSL_EXPAND2(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND2(...) WASMDOM_DSL_EXPAND1(WASMDOM_DSL_EXPAND1(WASMDOM_DSL_EXPAND1(WASMDOM_DSL_EXPAND1(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND1(...) __VA_ARGS__
 
-    // svg elements
-    SEL(defs)
-    SEL(glyph)
-    SEL(g)
-    SEL(marker)
-    SEL(mask)
-    SEL(missing_glyph)
-    SEL(pattern)
-    SEL(rect)
-    SEL(hswitch)
-    SEL(symbol)
-    SEL(text)
-    SEL(desc)
-    SEL(metadata)
-    SEL(title)
+#define WASMDOM_DSL_FOR_EACH(macro, ...) \
+    __VA_OPT__(WASMDOM_DSL_EXPAND(WASMDOM_DSL_FOR_EACH_HELPER(macro, __VA_ARGS__)))
+#define WASMDOM_DSL_FOR_EACH_HELPER(macro, a1, ...) \
+    macro(a1)                                       \
+        __VA_OPT__(WASMDOM_DSL_FOR_EACH_AGAIN WASMDOM_DSL_PARENS(macro, __VA_ARGS__))
+#define WASMDOM_DSL_FOR_EACH_AGAIN() WASMDOM_DSL_FOR_EACH_HELPER
 
-#undef SEL
+#define WASMDOM_DSL_ELEMENTS      \
+    a,                            \
+        b,                        \
+        div,                      \
+        h2,                       \
+        i,                        \
+        input,                    \
+        foreignObject,            \
+        p,                        \
+        span,                     \
+        style,                    \
+        svg,                      \
+        htemplate,                \
+        web_component,            \
+        /* void elements */ area, \
+        base,                     \
+        br,                       \
+        col,                      \
+        embed,                    \
+        hr,                       \
+        img,                      \
+        keygen,                   \
+        link,                     \
+        meta,                     \
+        param,                    \
+        source,                   \
+        track,                    \
+        wbr,                      \
+        /* svg elements */ defs,  \
+        glyph,                    \
+        g,                        \
+        marker,                   \
+        mask,                     \
+        missing_glyph,            \
+        pattern,                  \
+        rect,                     \
+        hswitch,                  \
+        symbol,                   \
+        text,                     \
+        desc,                     \
+        metadata,                 \
+        title
+
+    WASMDOM_DSL_FOR_EACH(WASMDOM_DSL_SEL, WASMDOM_DSL_ELEMENTS)
 
 }
