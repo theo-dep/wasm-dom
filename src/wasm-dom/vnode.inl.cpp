@@ -66,35 +66,6 @@ wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<Children::value
 }
 
 WASMDOM_INLINE
-wasmdom::VNode::VNode(const VNode& other)
-    : _data(other._data)
-{
-}
-
-WASMDOM_INLINE
-wasmdom::VNode::VNode(VNode&& other)
-    : _data(std::exchange(other._data, nullptr))
-{
-}
-
-WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator=(const VNode& other)
-{
-    std::exchange(_data, other._data);
-    return *this;
-}
-
-WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other)
-{
-    std::swap(_data, other._data);
-    return *this;
-}
-
-WASMDOM_INLINE
-wasmdom::VNode::~VNode() {}
-
-WASMDOM_INLINE
 const wasmdom::Attrs& wasmdom::VNode::attrs() const { return _data->data.attrs; }
 
 WASMDOM_INLINE

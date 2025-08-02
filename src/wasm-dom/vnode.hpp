@@ -71,11 +71,13 @@ namespace wasmdom
         VNode& operator()(const Children& nodeChildren);
         VNode& operator()(std::initializer_list<Children::value_type> nodeChildren);
 
+#ifdef WASMDOM_COVERAGE
         VNode(const VNode& other);
         VNode(VNode&& other);
         VNode& operator=(const VNode& other);
         VNode& operator=(VNode&& other);
         ~VNode();
+#endif
 
         const Attrs& attrs() const;
         const Props& props() const;

@@ -38,6 +38,15 @@ namespace wasmdom
         Attrs attrs;
         Props props;
         Callbacks callbacks;
+
+#ifdef WASMDOM_COVERAGE
+        VNodeAttributes();
+        VNodeAttributes(const VNodeAttributes& other);
+        VNodeAttributes(VNodeAttributes&& other);
+        VNodeAttributes& operator=(const VNodeAttributes& other);
+        VNodeAttributes& operator=(VNodeAttributes&& other);
+        ~VNodeAttributes();
+#endif
     };
 
     namespace detail

@@ -11,6 +11,31 @@ TEST_CASE("attributes", "[attributes]")
 {
     setupDom();
 
+    SECTION("can be copied")
+    {
+        VNodeAttributes data;
+        data.attrs = {
+            { "href", "/foo" },
+            { "minlength", "1" },
+            { "value", "foo" }
+        };
+        VNodeAttributes other(data);
+        REQUIRE(data.attrs == other.attrs);
+    }
+
+    SECTION("can be moved")
+    {
+        VNodeAttributes data;
+        data.attrs = {
+            { "href", "/foo" },
+            { "minlength", "1" },
+            { "value", "foo" }
+        };
+        VNodeAttributes moved(data);
+        VNodeAttributes other(std::move(moved));
+        REQUIRE(data.attrs == other.attrs);
+    }
+
     SECTION("should have their provided values")
     {
         VNode vnode =

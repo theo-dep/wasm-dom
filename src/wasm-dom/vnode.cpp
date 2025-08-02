@@ -5,6 +5,19 @@
 
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
+
+wasmdom::VNodeAttributes::VNodeAttributes() = default;
+wasmdom::VNodeAttributes::VNodeAttributes(const VNodeAttributes& other) = default;
+wasmdom::VNodeAttributes::VNodeAttributes(VNodeAttributes&& other) = default;
+wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(const VNodeAttributes& other) = default;
+wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(VNodeAttributes&& other) = default;
+wasmdom::VNodeAttributes::~VNodeAttributes() = default;
+
+wasmdom::VNode::VNode(const VNode& other) = default;
+wasmdom::VNode::VNode(VNode&& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(const VNode& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other) = default;
+wasmdom::VNode::~VNode() = default;
 #endif
 
 void wasmdom::VNode::normalize(bool injectSvgNamespace)
