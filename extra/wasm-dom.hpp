@@ -2,7 +2,7 @@
 // Single Header Library
 // Auto-generated from multiple source files
 // Project: wasm-dom
-// Generated on: 2025-08-02 18:30:20
+// Generated on: 2025-08-02 18:58:15
 // =============================================================================
 #pragma once
 
