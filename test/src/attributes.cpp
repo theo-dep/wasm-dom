@@ -103,9 +103,11 @@ TEST_CASE("attributes", "[attributes]")
     SECTION("should set truthy values to empty string")
     {
         VNode vnode =
-            input(("href", "null"s),
-                  ("minlength", "0"s),
-                  ("readonly", "true"s));
+            input(
+                ("href", "null"s),
+                ("minlength", "0"s),
+                ("readonly", "true"s)
+            );
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -126,8 +128,12 @@ TEST_CASE("attributes", "[attributes]")
 
         emscripten::val elm = getBodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttributeNS",
-                                          emscripten::val("http://www.w3.org/1999/xlink"),
-                                          emscripten::val("href")) == emscripten::val("#foo"));
+        REQUIRE(
+            elm.call<emscripten::val>(
+                "getAttributeNS",
+                emscripten::val("http://www.w3.org/1999/xlink"),
+                emscripten::val("href")
+            ) == emscripten::val("#foo")
+        );
     }
 }

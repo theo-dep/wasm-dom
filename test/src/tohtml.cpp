@@ -32,7 +32,8 @@ TEST_CASE("toHTML", "[toHTML]")
         VNode vnode =
             fragment()(
                 { span(),
-                  b() });
+                  b() }
+            );
         REQUIRE(vnode.toHTML() == "<span></span><b></b>");
     }
 
@@ -47,7 +48,8 @@ TEST_CASE("toHTML", "[toHTML]")
         VNode vnode =
             div()(
                 { span(),
-                  b() });
+                  b() }
+            );
         REQUIRE(vnode.toHTML() == "<div><span></span><b></b></div>");
     }
 
@@ -55,7 +57,8 @@ TEST_CASE("toHTML", "[toHTML]")
     {
         VNode vnode =
             p()(
-                std::string("a text 字à"));
+                std::string("a text 字à")
+            );
         REQUIRE(vnode.toHTML() == "<p>a text 字à</p>");
     }
 
@@ -151,7 +154,8 @@ TEST_CASE("toHTML", "[toHTML]")
                   text(),
                   desc(),
                   metadata(),
-                  title() });
+                  title() }
+            );
         REQUIRE(vnode.toHTML() == "<svg><a></a><defs></defs><glyph></glyph><g></g><marker></marker><mask></mask><missing-glyph></missing-glyph><pattern></pattern><svg></svg><switch></switch><symbol></symbol><text></text><desc></desc><metadata></metadata><title></title></svg>");
     }
 
@@ -159,7 +163,8 @@ TEST_CASE("toHTML", "[toHTML]")
     {
         VNode vnode =
             svg()(
-                { rect() });
+                { rect() }
+            );
         REQUIRE(vnode.toHTML() == "<svg><rect /></svg>");
     }
 
@@ -181,7 +186,8 @@ TEST_CASE("toHTML", "[toHTML]")
                   param(),
                   source(),
                   track(),
-                  wbr() });
+                  wbr() }
+            );
         REQUIRE(vnode.toHTML() == "<div><area><base><br><col><embed><hr><img><input>" /*<keygen>*/ "<link><meta><param><source><track><wbr></div>");
     }
 
@@ -195,7 +201,8 @@ TEST_CASE("toHTML", "[toHTML]")
     {
         VNode vnode =
             p()(
-                std::string("<>\"'&`text"));
+                std::string("<>\"'&`text")
+            );
         REQUIRE(vnode.toHTML() == "<p>&lt;&gt;&quot;&apos;&amp;&#96;text</p>");
     }
 

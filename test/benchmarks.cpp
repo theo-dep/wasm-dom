@@ -24,7 +24,9 @@ TEST_CASE("benchmark")
                       div(("foo", "foo"s))(
                           { div(("foo", "foo"s)),
                             div(("foo", "foo"s)),
-                            div(("foo", "foo"s)) }) });
+                            div(("foo", "foo"s)) }
+                      ) }
+                );
         });
     };
 
@@ -38,11 +40,14 @@ TEST_CASE("benchmark")
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] =
                     span(("e", std::to_string(i)))(
-                        { span(("e", std::to_string(i - 3))) });
+                        { span(("e", std::to_string(i - 3))) }
+                    );
             }
-            return div(("foo", "foo"s),
-                       ("bar", "bar"s),
-                       ("baz", "baz"s))(children);
+            return div(
+                ("foo", "foo"s),
+                ("bar", "bar"s),
+                ("baz", "baz"s)
+            )(children);
         };
 
         VDom vdom(getRoot());
@@ -68,11 +73,14 @@ TEST_CASE("benchmark")
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] =
                     span(("e", std::to_string(i)))(
-                        { span(("e", std::to_string(i - 1))) });
+                        { span(("e", std::to_string(i - 1))) }
+                    );
             }
-            return div(("foo", "foo"s),
-                       ("bar", "bar"s),
-                       ("baz", "baz"s))(children);
+            return div(
+                ("foo", "foo"s),
+                ("bar", "bar"s),
+                ("baz", "baz"s)
+            )(children);
         };
         const auto createVNode2 = [] {
             Children children;
@@ -80,11 +88,14 @@ TEST_CASE("benchmark")
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] =
                     span(("e", "27"s))(
-                        { span(("e", "27"s)) });
+                        { span(("e", "27"s)) }
+                    );
             }
-            return div(("foo", "foo"s),
-                       ("bar", "bar"s),
-                       ("baz", "baz"s))(children);
+            return div(
+                ("foo", "foo"s),
+                ("bar", "bar"s),
+                ("baz", "baz"s)
+            )(children);
         };
 
         VDom vdom(getRoot());
@@ -109,16 +120,21 @@ TEST_CASE("benchmark")
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] = span()(
-                    { span() });
+                    { span() }
+                );
             }
-            return div(("foo", "foo"s),
-                       ("bar", "bar"s),
-                       ("baz", "baz"s))(children);
+            return div(
+                ("foo", "foo"s),
+                ("bar", "bar"s),
+                ("baz", "baz"s)
+            )(children);
         };
         const auto createVNode2 = [] {
-            return div(("foo", "foo"s),
-                       ("bar", "bar"s),
-                       ("baz", "baz"s));
+            return div(
+                ("foo", "foo"s),
+                ("bar", "bar"s),
+                ("baz", "baz"s)
+            );
         };
 
         VDom vdom(getRoot());
