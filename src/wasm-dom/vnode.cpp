@@ -3,6 +3,10 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#ifdef WASMDOM_COVERAGE
+#include "vnode.inl.cpp"
+#endif
+
 void wasmdom::VNode::normalize(bool injectSvgNamespace)
 {
     if (!_data)
