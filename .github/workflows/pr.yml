@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: emscripten/emsdk:latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
     - name: Checkout code
@@ -35,6 +37,17 @@ jobs:
     - name: Build project
       run: |
         cmake --build build --config Release -j$(nproc)
+
+    - name: Run tests
+      run: |
+        node test/runner.js build/test/Release/tests.js -r junit > tests.xml
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        file: tests.xml
+        fail_ci_if_error: true
 
   build-coverage:
     runs-on: ubuntu-latest
@@ -70,14 +83,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        node test/runner.js build/coverage/test/tests.js -r junit -o tests.xml
-
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
-      with:
-        file: tests.xml
-        fail_ci_if_error: true
+        node test/runner.js build/coverage/test/tests.js
 
     - name: Generate coverage data
       if: ${{ !cancelled() }}
