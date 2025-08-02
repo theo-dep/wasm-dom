@@ -43,7 +43,16 @@ From asm-dom author:
 
 ## Examples
 
-- [Console example](/examples/console/main.cpp)
+The library provides runnable example with a static file server, [emrun](https://emscripten.org/docs/compiling/Running-html-files-with-emrun.html) for example.
+
+```sh
+emrun build/examples/0-console/Debug
+```
+
+1. [Console example](/examples/0-console/main.cpp)
+2. [Counter example](/examples/1-counter/main.cpp)
+3. [Routing example](/examples/2-routing/main.cpp)
+4. [WebComponent example](/examples/3-webcomponent/main.cpp)
 
 ### HTML like syntax
 

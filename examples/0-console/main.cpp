@@ -15,15 +15,14 @@ int main()
     // Create the view
     wasmdom::VNode vnode =
         div(("onclick", onClickCallback))(
-            { span(("style", "font-weight: normal; font-style: italic"s))(
-                  "This is now italic type"
-              ),
-              t(" and this is just normal text"),
-              div()(
-                  a(("style", "cursor: pointer"s), ("href", "/"s))(
-                      "I'll take you places!"
-                  )
-              ) }
+            {
+                span(("style", "width: 50%; font-weight: normal; font-style: italic"s))("This is now italic type"),
+                t("and this is just normal text."),
+                hr(("style", "width: 100%;"s)),
+                div()(
+                    a(("style", "cursor: pointer"s), ("href", "/"s))("I'll take you places!")
+                ),
+            }
         );
 
     // Patch into empty DOM element – this modifies the DOM as a side effect

@@ -26,5 +26,5 @@ if(WASM_DOM_TESTS)
 endif()
 
 if(WASM_DOM_EXAMPLES)
-    add_subdirectory(examples/console)
+    add_subdirectory(examples)
 endif()
