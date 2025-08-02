@@ -148,7 +148,9 @@ TEST_CASE("toVNode", "[toVNode]")
             div(("id", "id"s),
                 ("class", "class"s))(
                 { span()(
-                    std::string("Hi")) });
+                    std::string("Hi")
+                ) }
+            );
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
@@ -170,10 +172,12 @@ TEST_CASE("toVNode", "[toVNode]")
 
         VNode nextVNode =
             fragment()(
-                { div(("id", "id"s),
-                      ("class", "class"s))(
+                { div(("id", "id"s), ("class", "class"s))(
                     { span()(
-                        std::string("Hi")) }) });
+                        std::string("Hi")
+                    ) }
+                ) }
+            );
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
@@ -206,7 +210,8 @@ TEST_CASE("toVNode", "[toVNode]")
         VNode nextVNode =
             div(("id", "id"s),
                 ("class", "class"s))(
-                { t("Foobar") });
+                { t("Foobar") }
+            );
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
@@ -238,7 +243,9 @@ TEST_CASE("toVNode", "[toVNode]")
             div(("id", "id"s),
                 ("class", "class"s))(
                 { h2()(
-                    std::string("Hello")) });
+                    std::string("Hello")
+                ) }
+            );
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
