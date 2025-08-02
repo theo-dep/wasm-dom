@@ -322,7 +322,8 @@ namespace wasmdom
             if (!attrs.contains(key)) {
                 EM_ASM({ Module.removeAttribute(
                              $0,
-                             Module['UTF8ToString']($1)); }, vnode.elm(), key.c_str());
+                             Module['UTF8ToString']($1)
+                         ); }, vnode.elm(), key.c_str());
             }
         }
 
@@ -331,7 +332,8 @@ namespace wasmdom
                 EM_ASM({ Module.setAttribute(
                              $0,
                              Module['UTF8ToString']($1),
-                             Module['UTF8ToString']($2)); }, vnode.elm(), key.c_str(), val.c_str());
+                             Module['UTF8ToString']($2)
+                         ); }, vnode.elm(), key.c_str(), val.c_str());
             }
         }
     }
@@ -354,8 +356,7 @@ namespace wasmdom
         for (const auto& [key, val] : props) {
             EM_ASM({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), key.c_str());
 
-            if (
-                !oldProps.contains(key) ||
+            if (!oldProps.contains(key) ||
                 !val.strictlyEquals(oldProps.at(key)) ||
                 ((key == "value" || key == "checked") &&
                  !val.strictlyEquals(elm[key.c_str()]))) {

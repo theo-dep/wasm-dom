@@ -103,7 +103,8 @@ void wasmdom::init()
         Module.createDocumentFragment = function() { return addPtr(document.createDocumentFragment()); };
         Module.insertBefore = function(parentNodePtr, newNodePtr, referenceNodePtr) { nodes[parentNodePtr].insertBefore(
                                                                                           nodes[newNodePtr],
-                                                                                          nodes[referenceNodePtr]); };
+                                                                                          nodes[referenceNodePtr]
+                                                                                      ); };
         Module.removeChild = function(childPtr) {
                 var node = nodes[childPtr];
                 if (node === null || node === undefined) return;
@@ -138,5 +139,6 @@ void wasmdom::init()
                     node !== null && node !== undefined &&
                     node.nextSibling !== null
                 ) ? node.nextSibling['asmDomPtr'] : 0; };
-        Module.setNodeValue = function(nodePtr, text) { nodes[nodePtr].nodeValue = text; };);
+        Module.setNodeValue = function(nodePtr, text) { nodes[nodePtr].nodeValue = text; };
+    );
 }

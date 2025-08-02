@@ -33,13 +33,17 @@ namespace wasmdom
                       $1 === 0
                                // clang-format on
                                ? Module.createElement(
-                                     Module['UTF8ToString']($0))
+                                     Module['UTF8ToString']($0)
+                                 )
                                : Module.createElementNS(
                                      Module['UTF8ToString']($1),
-                                     Module['UTF8ToString']($0)); }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0));
+                                     Module['UTF8ToString']($0)
+                                 ); }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0
+            ));
         } else if (vnode.hash() & isText) {
             vnode.setElm(EM_ASM_INT({ return Module.createTextNode(
-                                          Module['UTF8ToString']($0)); }, vnode.sel().c_str()));
+                                          Module['UTF8ToString']($0)
+                                      ); }, vnode.sel().c_str()));
             return vnode.elm();
         } else if (vnode.hash() & isFragment) {
             vnode.setElm(EM_ASM_INT({
@@ -47,7 +51,8 @@ namespace wasmdom
             }));
         } else if (vnode.hash() & isComment) {
             vnode.setElm(EM_ASM_INT({ return Module.createComment(
-                                          Module['UTF8ToString']($0)); }, vnode.sel().c_str()));
+                                          Module['UTF8ToString']($0)
+                                      ); }, vnode.sel().c_str()));
             return vnode.elm();
         }
 
@@ -62,11 +67,7 @@ namespace wasmdom
         return vnode.elm();
     }
 
-    void addVNodes(int parentElm,
-                   int before,
-                   Children& vnodes,
-                   Children::size_type startIdx,
-                   Children::size_type endIdx)
+    void addVNodes(int parentElm, int before, Children& vnodes, Children::size_type startIdx, Children::size_type endIdx)
     {
         while (startIdx <= endIdx) {
             int elm = createElm(vnodes[startIdx++]);
@@ -74,9 +75,7 @@ namespace wasmdom
         }
     }
 
-    void removeVNodes(const Children& vnodes,
-                      Children::size_type startIdx,
-                      Children::size_type endIdx)
+    void removeVNodes(const Children& vnodes, Children::size_type startIdx, Children::size_type endIdx)
     {
         while (startIdx <= endIdx) {
             const VNode& vnode = vnodes[startIdx++];
@@ -96,9 +95,7 @@ namespace wasmdom
         return (idx >= 0 && idx <= endIdx ? ch[idx] : nullptr);
     }
 
-    void updateChildren(int parentElm,
-                        Children& oldCh,
-                        Children& newCh)
+    void updateChildren(int parentElm, Children& oldCh, Children& newCh)
     {
         int oldStartIdx = 0;
         int newStartIdx = 0;
@@ -135,7 +132,8 @@ namespace wasmdom
                 EM_ASM({ Module.insertBefore(
                              $0,
                              $1,
-                             Module.nextSibling($2)); }, parentElm, oldStartVnode.elm(), oldEndVnode.elm());
+                             Module.nextSibling($2)
+                         ); }, parentElm, oldStartVnode.elm(), oldEndVnode.elm());
                 oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
                 newEndVnode = boundCheckVNode(newCh, --newEndIdx, newMaxIdx);
             } else if (sameVNode(oldEndVnode, newStartVnode)) {
@@ -202,7 +200,8 @@ void wasmdom::patchVNode(VNode& oldVnode, VNode& vnode, int parentElm)
     } else if (vnode.sel() != oldVnode.sel()) {
         EM_ASM({ Module.setNodeValue(
                      $0,
-                     Module['UTF8ToString']($1)); }, vnode.elm(), vnode.sel().c_str());
+                     Module['UTF8ToString']($1)
+                 ); }, vnode.elm(), vnode.sel().c_str());
     }
 }
 

@@ -89,11 +89,15 @@ TEST_CASE("props", "[props]")
     SECTION("should update checked prop if user interacted with the element")
     {
         VNode vnode =
-            input(("type", "checkbox"s),
-                  ("checked", emscripten::val(true)));
+            input(
+                ("type", "checkbox"s),
+                ("checked", emscripten::val(true))
+            );
         VNode vnode2 =
-            input(("type", "checkbox"s),
-                  ("checked", emscripten::val(true)));
+            input(
+                ("type", "checkbox"s),
+                ("checked", emscripten::val(true))
+            );
 
         VDom vdom(getRoot());
         vdom.patch(vnode);

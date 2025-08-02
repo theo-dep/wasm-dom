@@ -24,7 +24,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         VNode vnode =
             div(("onclick", callback))(
-                { a()("Click my parent") });
+                { a()("Click my parent") }
+            );
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -40,7 +41,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         VNode vnode =
             div(("onclick", callback))(
-                { a()("Click my parent") });
+                { a()("Click my parent") }
+            );
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -53,7 +55,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         VNode vnode2 =
             div()(
-                { a()("Click my parent") });
+                { a()("Click my parent") }
+            );
 
         vdom.patch(vnode2);
 
@@ -68,7 +71,8 @@ TEST_CASE("eventListeners", "[eventListeners]")
     {
         VNode vnode =
             div(("onclick", callback))(
-                { a(("onclick", callback))("Click my parent") });
+                { a(("onclick", callback))("Click my parent") }
+            );
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
