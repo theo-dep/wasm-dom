@@ -5,6 +5,19 @@
 
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
+
+wasmdom::VNodeAttributes::VNodeAttributes() = default;
+wasmdom::VNodeAttributes::VNodeAttributes(const VNodeAttributes& other) = default;
+wasmdom::VNodeAttributes::VNodeAttributes(VNodeAttributes&& other) = default;
+wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(const VNodeAttributes& other) = default;
+wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(VNodeAttributes&& other) = default;
+wasmdom::VNodeAttributes::~VNodeAttributes() = default;
+
+wasmdom::VNode::VNode(const VNode& other) = default;
+wasmdom::VNode::VNode(VNode&& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(const VNode& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other) = default;
+wasmdom::VNode::~VNode() = default;
 #endif
 
 void wasmdom::VNode::normalize(bool injectSvgNamespace)
@@ -93,7 +106,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
         std::string sel = node["tagName"].as<std::string>();
         std::transform(sel.begin(), sel.end(), sel.begin(), ::tolower);
 
-        Data data;
+        VNodeAttributes data;
         int i = node["attributes"]["length"].as<int>();
         while (i--) {
             data.attrs.emplace(node["attributes"][i]["nodeName"].as<std::string>(), node["attributes"][i]["nodeValue"].as<std::string>());
@@ -105,13 +118,13 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
             children.push_back(toVNode(node["childNodes"][i]));
         }
 
-        vnode = VNode(sel, data, children);
+        vnode = VNode(sel, data)(children);
         // isText
     } else if (nodeType == 3) {
-        vnode = VNode(node["textContent"].as<std::string>(), true);
+        vnode = VNode(text_tag, node["textContent"].as<std::string>());
         // isComment
     } else if (nodeType == 8) {
-        vnode = VNode("!", node["textContent"].as<std::string>());
+        vnode = VNode("!")(node["textContent"].as<std::string>());
     } else {
         vnode = VNode("");
     }
@@ -155,7 +168,7 @@ namespace wasmdom
         { "hr", true },
         { "img", true },
         { "input", true },
-        { "keygen", true },
+        //{ "keygen", true },
         { "link", true },
         { "meta", true },
         { "param", true },

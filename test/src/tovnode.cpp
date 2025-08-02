@@ -5,6 +5,7 @@
 #include "utils.hpp"
 
 using namespace wasmdom;
+using namespace wasmdom::dsl;
 
 TEST_CASE("toVNode", "[toVNode]")
 {
@@ -143,15 +144,11 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.set("className", emscripten::val("class"));
         prevElm.call<void>("appendChild", h2);
 
-        VNode nextVNode{
-            h("div",
-              Data(
-                  Attrs{
-                      { "id", "id" },
-                      { "class", "class" } }),
-              Children{
-                  h("span", std::string("Hi")) })
-        };
+        VNode nextVNode =
+            div(("id", "id"s),
+                ("class", "class"s))(
+                { span()(
+                    std::string("Hi")) });
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
@@ -171,17 +168,12 @@ TEST_CASE("toVNode", "[toVNode]")
     {
         emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createDocumentFragment");
 
-        VNode nextVNode{
-            h("",
-              Children{
-                  h("div",
-                    Data(
-                        Attrs{
-                            { "id", "id" },
-                            { "class", "class" } }),
-                    Children{
-                        h("span", std::string("Hi")) }) })
-        };
+        VNode nextVNode =
+            fragment()(
+                { div(("id", "id"s),
+                      ("class", "class"s))(
+                    { span()(
+                        std::string("Hi")) }) });
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
@@ -211,15 +203,10 @@ TEST_CASE("toVNode", "[toVNode]")
         prevElm.call<void>("appendChild", text);
         prevElm.call<void>("appendChild", h2);
 
-        VNode nextVNode{
-            h("div",
-              Data(
-                  Attrs{
-                      { "id", "id" },
-                      { "class", "class" } }),
-              Children{
-                  h("Foobar", true) })
-        };
+        VNode nextVNode =
+            div(("id", "id"s),
+                ("class", "class"s))(
+                { t("Foobar") });
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
@@ -238,24 +225,20 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should remove text elements")
     {
-        emscripten::val h2 = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("h2"));
-        h2.set("textContent", emscripten::val("Hello"));
+        emscripten::val valH2 = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("h2"));
+        valH2.set("textContent", emscripten::val("Hello"));
         emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
         prevElm.set("id", emscripten::val("id"));
         prevElm.set("className", emscripten::val("class"));
         emscripten::val text = emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("Foobar"));
         prevElm.call<void>("appendChild", text);
-        prevElm.call<void>("appendChild", h2);
+        prevElm.call<void>("appendChild", valH2);
 
-        VNode nextVNode{
-            h("div",
-              Data(
-                  Attrs{
-                      { "id", "id" },
-                      { "class", "class" } }),
-              Children{
-                  h("h2", std::string("Hello")) })
-        };
+        VNode nextVNode =
+            div(("id", "id"s),
+                ("class", "class"s))(
+                { h2()(
+                    std::string("Hello")) });
 
         VDom vdom(prevElm);
         vdom.patch(nextVNode);

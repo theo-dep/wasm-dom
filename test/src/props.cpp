@@ -5,6 +5,7 @@
 #include "utils.hpp"
 
 using namespace wasmdom;
+using namespace wasmdom::dsl;
 
 TEST_CASE("props", "[props]")
 {
@@ -12,12 +13,7 @@ TEST_CASE("props", "[props]")
 
     SECTION("should create element with prop")
     {
-        VNode vnode{
-            h("div",
-              Data(
-                  Props{
-                      { "src", emscripten::val("http://localhost/") } }))
-        };
+        VNode vnode = div(("src", emscripten::val("http://localhost/")));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -28,16 +24,8 @@ TEST_CASE("props", "[props]")
 
     SECTION("changes an elements props")
     {
-        VNode vnode = h("a",
-                        Data(
-                            Props{
-                                { "src", emscripten::val("http://other/") } }));
-        VNode vnode2{
-            h("a",
-              Data(
-                  Props{
-                      { "src", emscripten::val("http://localhost/") } }))
-        };
+        VNode vnode = a(("src", emscripten::val("http://other/")));
+        VNode vnode2 = a(("src", emscripten::val("http://localhost/")));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -49,11 +37,10 @@ TEST_CASE("props", "[props]")
 
     SECTION("preserves memorized props")
     {
-        Data data = Data(
-            Props{
-                { "src", emscripten::val("http://other/") } });
-        VNode vnode{ h("a", data) };
-        VNode vnode2{ h("a", data) };
+        VNodeAttributes data;
+        data.props = { { "src", emscripten::val("http://other/") } };
+        VNode vnode = a(data);
+        VNode vnode2 = a(data);
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -69,11 +56,8 @@ TEST_CASE("props", "[props]")
 
     SECTION("removes an elements props")
     {
-        VNode vnode = h("a",
-                        Data(
-                            Props{
-                                { "src", emscripten::val("http://other/") } }));
-        VNode vnode2{ h("a") };
+        VNode vnode = a(("src", emscripten::val("http://other/")));
+        VNode vnode2 = a();
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -85,18 +69,8 @@ TEST_CASE("props", "[props]")
 
     SECTION("should update value prop if user interacted with the element")
     {
-        VNode vnode{
-            h("input",
-              Data(
-                  Props{
-                      { "value", emscripten::val("foo") } }))
-        };
-        VNode vnode2{
-            h("input",
-              Data(
-                  Props{
-                      { "value", emscripten::val("foo") } }))
-        };
+        VNode vnode = input(("value", emscripten::val("foo")));
+        VNode vnode2 = input(("value", emscripten::val("foo")));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);
@@ -114,22 +88,12 @@ TEST_CASE("props", "[props]")
 
     SECTION("should update checked prop if user interacted with the element")
     {
-        VNode vnode{
-            h("input",
-              Data(
-                  Attrs{
-                      { "type", "checkbox" } },
-                  Props{
-                      { "checked", emscripten::val(true) } }))
-        };
-        VNode vnode2{
-            h("input",
-              Data(
-                  Attrs{
-                      { "type", "checkbox" } },
-                  Props{
-                      { "checked", emscripten::val(true) } }))
-        };
+        VNode vnode =
+            input(("type", "checkbox"s),
+                  ("checked", emscripten::val(true)));
+        VNode vnode2 =
+            input(("type", "checkbox"s),
+                  ("checked", emscripten::val(true)));
 
         VDom vdom(getRoot());
         vdom.patch(vnode);

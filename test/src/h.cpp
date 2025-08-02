@@ -5,205 +5,138 @@
 #include "utils.hpp"
 
 using namespace wasmdom;
+using namespace wasmdom::dsl;
 
 TEST_CASE("h", "[h]")
 {
-    SECTION("should create a vnode with a proper tag")
-    {
-        VNode vnode{ h("div") };
-    }
-
-    SECTION("should create a vnode with children")
-    {
-        VNode vnode{ h("div", Children{ h("span"), h("b") }) };
-    }
-
-    SECTION("should create a vnode with one child")
-    {
-        VNode vnode{ h("div", h("span")) };
-    }
-
-    SECTION("should create a vnode with attrs and one child")
-    {
-        VNode vnode{
-            h("div",
-              Data(Attrs{
-                  { "foo", "bar" } }),
-              h("span"))
-        };
-    }
-
-    SECTION("should create a vnode with text content in string")
-    {
-        VNode vnode{ h("div", "I am a string") };
-    }
-
     SECTION("should create a vnode for comment")
     {
-        VNode vnode{ h("!", "test") };
-    }
-
-    SECTION("should create a vnode for comment with attrs")
-    {
-        VNode vnode{ h("!", Data(Attrs{ { "foo", "bar" } }), "test") };
+        VNode vnode = comment("test");
+        vnode = comment()("test");
     }
 
     SECTION("should create a vnode for fragment")
     {
-        VNode vnode{ h("") };
-    }
-
-    SECTION("should create a vnode with attrs and text content in string")
-    {
-        VNode vnode{
-            h("div",
-              Data(Attrs{
-                  { "foo", "bar" } }),
-              "I am a string")
-        };
-    }
-
-    SECTION("should create a vnode with attrs and children")
-    {
-        VNode vnode{
-            h("div",
-              Data(Attrs{
-                  { "foo", "bar" } }),
-              Children{ h("span"), h("i") })
-        };
+        VNode vnode = fragment();
     }
 
     SECTION("should create a vnode with text")
     {
-        VNode vnode{ h("this is a text", true) };
-    }
-
-    SECTION("should create a vnode with random text")
-    {
-        VNode vnode{ h("fakeNode", false) };
-    }
-
-    SECTION("should create a vnode with attrs")
-    {
-        VNode vnode{
-            h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } }))
-        };
-    }
-
-    SECTION("should create a vnode with props")
-    {
-        VNode vnode{
-            h("i",
-              Data(
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } }))
-        };
-    }
-
-    SECTION("should create a vnode with callbacks")
-    {
-        VNode vnode{
-            h("i",
-              Data(
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
-        };
-    }
-
-    SECTION("should create a vnode with attrs and props")
-    {
-        VNode vnode{
-            h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } },
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } }))
-        };
-    }
-
-    SECTION("should create a vnode with attrs and callbacks")
-    {
-        VNode vnode{
-            h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } },
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
-        };
-    }
-
-    SECTION("should create a vnode with props and callbacks")
-    {
-        VNode vnode{
-            h("i",
-              Data(
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } },
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
-        };
-    }
-
-    SECTION("should create a vnode with attrs, props and callbacks")
-    {
-        VNode vnode{
-            h("i",
-              Data(
-                  Attrs{
-                      { "data-empty", "" },
-                      { "data-dash", "-" },
-                      { "data-dashed", "foo-bar" },
-                      { "data-camel", "fooBar" },
-                      { "data-integer", "0" },
-                      { "data-float", "0.1" } },
-                  Props{
-                      { "data-empty", emscripten::val("") },
-                      { "data-dash", emscripten::val("") },
-                      { "data-dashed", emscripten::val("foo-bar") },
-                      { "data-camel", emscripten::val("fooBar") },
-                      { "data-integer", emscripten::val(0) },
-                      { "data-float", emscripten::val(0.1) } },
-                  Callbacks{
-                      { "onclick", onClick },
-                  }))
-        };
+        VNode vnode = t("this is a text");
     }
 }
+
+#define SEL_TEST_CASE(X)                                                       \
+    TEST_CASE(#X, "[h][" #X "]")                                               \
+    {                                                                          \
+        SECTION("should create a vnode with a proper tag")                     \
+        {                                                                      \
+            VNode vnode = X();                                                 \
+        }                                                                      \
+        SECTION("should create a vnode with children")                         \
+        {                                                                      \
+            VNode vnode = X()({ X(), X() });                                   \
+        }                                                                      \
+        SECTION("should create a vnode with one child")                        \
+        {                                                                      \
+            VNode vnode = X()(X());                                            \
+        }                                                                      \
+        SECTION("should create a vnode with attrs and one child")              \
+        {                                                                      \
+            VNode vnode = X(("foo", "bar"s))(X());                             \
+        }                                                                      \
+        SECTION("should create a vnode with text content in string")           \
+        {                                                                      \
+            VNode vnode = X()("I am a string");                                \
+        }                                                                      \
+        SECTION("should create a vnode with attrs and text content in string") \
+        {                                                                      \
+            VNode vnode = X(("foo", "bar"s))("I am a string");                 \
+        }                                                                      \
+        SECTION("should create a vnode with attrs and children")               \
+        {                                                                      \
+            VNode vnode = X(("foo", "bar"s))({ X(), X() });                    \
+        }                                                                      \
+        SECTION("should create a vnode with attrs")                            \
+        {                                                                      \
+            VNode vnode =                                                      \
+                X(("data-empty", ""s),                                         \
+                  ("data-dash", "-"s),                                         \
+                  ("data-dashed", "foo-bar"s),                                 \
+                  ("data-camel", "fooBar"s),                                   \
+                  ("data-integer", "0"s),                                      \
+                  ("data-float", "0.1"s));                                     \
+        }                                                                      \
+        SECTION("should create a vnode with props")                            \
+        {                                                                      \
+            VNode vnode =                                                      \
+                X(("data-empty", emscripten::val("")),                         \
+                  ("data-dash", emscripten::val("")),                          \
+                  ("data-dashed", emscripten::val("foo-bar")),                 \
+                  ("data-camel", emscripten::val("fooBar")),                   \
+                  ("data-integer", emscripten::val(0)),                        \
+                  ("data-float", emscripten::val(0.1)));                       \
+        }                                                                      \
+        SECTION("should create a vnode with callbacks")                        \
+        {                                                                      \
+            VNode vnode = X(("onclick", f(onClick)));                          \
+        }                                                                      \
+        SECTION("should create a vnode with attrs and props")                  \
+        {                                                                      \
+            VNode vnode =                                                      \
+                X(("data-empty", ""s),                                         \
+                  ("data-dash", "-"s),                                         \
+                  ("data-dashed", "foo-bar"s),                                 \
+                  ("data-camel", "fooBar"s),                                   \
+                  ("data-integer", "0"s),                                      \
+                  ("data-float", "0.1"s),                                      \
+                  ("data-empty", emscripten::val("")),                         \
+                  ("data-dash", emscripten::val("")),                          \
+                  ("data-dashed", emscripten::val("foo-bar")),                 \
+                  ("data-camel", emscripten::val("fooBar")),                   \
+                  ("data-integer", emscripten::val(0)),                        \
+                  ("data-float", emscripten::val(0.1)));                       \
+        }                                                                      \
+        SECTION("should create a vnode with attrs and callbacks")              \
+        {                                                                      \
+            VNode vnode =                                                      \
+                X(("data-empty", ""s),                                         \
+                  ("data-dash", "-"s),                                         \
+                  ("data-dashed", "foo-bar"s),                                 \
+                  ("data-camel", "fooBar"s),                                   \
+                  ("data-integer", "0"s),                                      \
+                  ("data-float", "0.1"s),                                      \
+                  ("onclick", f(onClick)));                                    \
+        }                                                                      \
+        SECTION("should create a vnode with props and callbacks")              \
+        {                                                                      \
+            VNode vnode =                                                      \
+                X(("data-empty", emscripten::val("")),                         \
+                  ("data-dash", emscripten::val("")),                          \
+                  ("data-dashed", emscripten::val("foo-bar")),                 \
+                  ("data-camel", emscripten::val("fooBar")),                   \
+                  ("data-integer", emscripten::val(0)),                        \
+                  ("data-float", emscripten::val(0.1)),                        \
+                  ("onclick", f(onClick)));                                    \
+        }                                                                      \
+        SECTION("should create a vnode with attrs, props and callbacks")       \
+        {                                                                      \
+            VNode vnode =                                                      \
+                X(("data-empty", ""s),                                         \
+                  ("data-dash", "-"s),                                         \
+                  ("data-dashed", "foo-bar"s),                                 \
+                  ("data-camel", "fooBar"s),                                   \
+                  ("data-integer", "0"s),                                      \
+                  ("data-float", "0.1"s),                                      \
+                  ("data-empty", emscripten::val("")),                         \
+                  ("data-dash", emscripten::val("")),                          \
+                  ("data-dashed", emscripten::val("foo-bar")),                 \
+                  ("data-camel", emscripten::val("fooBar")),                   \
+                  ("data-integer", emscripten::val(0)),                        \
+                  ("data-float", emscripten::val(0.1)),                        \
+                  ("onclick", f(onClick)));                                    \
+        }                                                                      \
+    }
+
+WASMDOM_DSL_FOR_EACH(SEL_TEST_CASE, WASMDOM_DSL_ELEMENTS)
+WASMDOM_DSL_FOR_EACH(SEL_TEST_CASE, WASMDOM_DSL_CONFLICT_ELEMENTS)
