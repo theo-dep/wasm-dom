@@ -27,18 +27,13 @@ namespace wasmdom
     int createElm(VNode& vnode)
     {
         if (vnode.hash() & isElement) {
-            vnode.setElm(EM_ASM_INT(
-                { return
-                      // clang-format off
-                      $1 === 0
-                               // clang-format on
-                               ? Module.createElement(
-                                     Module['UTF8ToString']($0)
-                                 )
-                               : Module.createElementNS(
-                                     Module['UTF8ToString']($1),
-                                     Module['UTF8ToString']($0)
-                                 ); }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0
+            vnode.setElm(EM_ASM_INT({
+                    if ($1 === 0) {
+                        return Module.createElement(Module['UTF8ToString']($0))
+                    } else {
+                        return  Module.createElementNS(Module['UTF8ToString']($1), Module['UTF8ToString']($0));
+                    }
+                }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0
             ));
         } else if (vnode.hash() & isText) {
             vnode.setElm(EM_ASM_INT({ return Module.createTextNode(
@@ -46,9 +41,7 @@ namespace wasmdom
                                       ); }, vnode.sel().c_str()));
             return vnode.elm();
         } else if (vnode.hash() & isFragment) {
-            vnode.setElm(EM_ASM_INT({
-                return Module.createDocumentFragment();
-            }));
+            vnode.setElm(EM_ASM_INT({ return Module.createDocumentFragment(); }));
         } else if (vnode.hash() & isComment) {
             vnode.setElm(EM_ASM_INT({ return Module.createComment(
                                           Module['UTF8ToString']($0)

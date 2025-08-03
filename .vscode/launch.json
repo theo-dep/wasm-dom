@@ -18,6 +18,15 @@
             "type": "node",
             "preLaunchTask": "CMake: build",
             "console": "integratedTerminal"
+        },
+        {
+            "type": "chrome",
+            "runtimeExecutable": "/usr/bin/brave-browser",
+            "request": "launch",
+            "name": "Debug emrun",
+            "url": "http://localhost:6931",
+            "webRoot": "${workspaceFolder}",
+            "enableDWARF": true
         }
     ]
 }

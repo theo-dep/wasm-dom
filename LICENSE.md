@@ -1,6 +1,12 @@
 MIT License
 
+Copyright (c) 2016 Matteo Basso as part of [asm-dom](https://github.com/mbasso/asm-dom)<br/>
 Copyright (c) 2025 Théo Devaucoup
+
+Copyright for portions of project wasm-dom are held by:
+
+- Simon Friis Vindum, 2015 as part of project [snabbdom](https://github.com/snabbdom/snabbdom)
+- project [snabbdom-to-html](https://github.com/snabbdom/snabbdom-to-html)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

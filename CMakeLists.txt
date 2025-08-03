@@ -18,6 +18,7 @@ else()
 endif()
 
 add_subdirectory(src)
+add_subdirectory(extra)
 
 if(WASM_DOM_TESTS)
     include(CTest)
@@ -25,5 +26,5 @@ if(WASM_DOM_TESTS)
 endif()
 
 if(WASM_DOM_EXAMPLES)
-    add_subdirectory(examples/console)
+    add_subdirectory(examples)
 endif()
