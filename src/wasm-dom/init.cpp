@@ -4,7 +4,7 @@
 
 void wasmdom::init()
 {
-    EM_ASM(
+    EM_ASM({
         Module['eventProxy'] = function(e) { return Module['functionCallback'](this['asmDomVNodeCallbacks'], e.type, e); };
 
         var recycler = Module['recycler'] = { 'nodes' : {} };
@@ -82,12 +82,10 @@ void wasmdom::init()
         var lastPtr = 0;
 
         function addPtr(node) {
-            // clang-format off
             if (node === null)
                 return 0;
             if (node['asmDomPtr'] !== undefined)
                 return node['asmDomPtr'];
-            // clang-format on
             nodes[++lastPtr] = node;
             return node['asmDomPtr'] = lastPtr;
         };
@@ -101,10 +99,11 @@ void wasmdom::init()
         Module.createTextNode = function(text) { return addPtr(recycler['createText'](text)); };
         Module.createComment = function(text) { return addPtr(recycler['createComment'](text)); };
         Module.createDocumentFragment = function() { return addPtr(document.createDocumentFragment()); };
-        Module.insertBefore = function(parentNodePtr, newNodePtr, referenceNodePtr) { nodes[parentNodePtr].insertBefore(
-                                                                                          nodes[newNodePtr],
-                                                                                          nodes[referenceNodePtr]
-                                                                                      ); };
+        Module.insertBefore = function(parentNodePtr, newNodePtr, referenceNodePtr) {
+            nodes[parentNodePtr].insertBefore(
+                nodes[newNodePtr],
+                nodes[referenceNodePtr]
+            ); };
         Module.removeChild = function(childPtr) {
                 var node = nodes[childPtr];
                 if (node === null || node === undefined) return;
@@ -140,5 +139,5 @@ void wasmdom::init()
                     node.nextSibling !== null
                 ) ? node.nextSibling['asmDomPtr'] : 0; };
         Module.setNodeValue = function(nodePtr, text) { nodes[nodePtr].nodeValue = text; };
-    );
+    });
 }

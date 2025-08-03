@@ -236,7 +236,7 @@ namespace wasmdom
 // -----------------------------------------------------------------------------
 void wasmdom::init()
 {
-    EM_ASM(
+    EM_ASM({
         Module['eventProxy'] = function(e) { return Module['functionCallback'](this['asmDomVNodeCallbacks'], e.type, e); };
 
         var recycler = Module['recycler'] = { 'nodes' : {} };
@@ -314,12 +314,10 @@ void wasmdom::init()
         var lastPtr = 0;
 
         function addPtr(node) {
-            // clang-format off
             if (node === null)
                 return 0;
             if (node['asmDomPtr'] !== undefined)
                 return node['asmDomPtr'];
-            // clang-format on
             nodes[++lastPtr] = node;
             return node['asmDomPtr'] = lastPtr;
         };
@@ -333,10 +331,11 @@ void wasmdom::init()
         Module.createTextNode = function(text) { return addPtr(recycler['createText'](text)); };
         Module.createComment = function(text) { return addPtr(recycler['createComment'](text)); };
         Module.createDocumentFragment = function() { return addPtr(document.createDocumentFragment()); };
-        Module.insertBefore = function(parentNodePtr, newNodePtr, referenceNodePtr) { nodes[parentNodePtr].insertBefore(
-                                                                                          nodes[newNodePtr],
-                                                                                          nodes[referenceNodePtr]
-                                                                                      ); };
+        Module.insertBefore = function(parentNodePtr, newNodePtr, referenceNodePtr) {
+            nodes[parentNodePtr].insertBefore(
+                nodes[newNodePtr],
+                nodes[referenceNodePtr]
+            ); };
         Module.removeChild = function(childPtr) {
                 var node = nodes[childPtr];
                 if (node === null || node === undefined) return;
@@ -372,7 +371,7 @@ void wasmdom::init()
                     node.nextSibling !== null
                 ) ? node.nextSibling['asmDomPtr'] : 0; };
         Module.setNodeValue = function(nodePtr, text) { nodes[nodePtr].nodeValue = text; };
-    );
+    });
 }
 
 // -----------------------------------------------------------------------------
@@ -401,18 +400,13 @@ namespace wasmdom
     int createElm(VNode& vnode)
     {
         if (vnode.hash() & isElement) {
-            vnode.setElm(EM_ASM_INT(
-                { return
-                      // clang-format off
-                      $1 === 0
-                               // clang-format on
-                               ? Module.createElement(
-                                     Module['UTF8ToString']($0)
-                                 )
-                               : Module.createElementNS(
-                                     Module['UTF8ToString']($1),
-                                     Module['UTF8ToString']($0)
-                                 ); }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0
+            vnode.setElm(EM_ASM_INT({
+                    if ($1 === 0) {
+                        return Module.createElement(Module['UTF8ToString']($0))
+                    } else {
+                        return  Module.createElementNS(Module['UTF8ToString']($1), Module['UTF8ToString']($0));
+                    }
+                }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0
             ));
         } else if (vnode.hash() & isText) {
             vnode.setElm(EM_ASM_INT({ return Module.createTextNode(
@@ -420,9 +414,7 @@ namespace wasmdom
                                       ); }, vnode.sel().c_str()));
             return vnode.elm();
         } else if (vnode.hash() & isFragment) {
-            vnode.setElm(EM_ASM_INT({
-                return Module.createDocumentFragment();
-            }));
+            vnode.setElm(EM_ASM_INT({ return Module.createDocumentFragment(); }));
         } else if (vnode.hash() & isComment) {
             vnode.setElm(EM_ASM_INT({ return Module.createComment(
                                           Module['UTF8ToString']($0)
