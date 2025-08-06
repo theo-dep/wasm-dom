@@ -12,8 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: emscripten/emsdk:latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    permissions:
+      checks: write
+      id-token: write
 
     steps:
     - name: Checkout code
@@ -41,20 +42,32 @@ jobs:
     - name: Run tests
       run: |
         node test/runner.js build/test/Release/tests.js -r junit > tests.xml
+        node test/runner.js build/test/Release/benchmarks.js -r junit > benchmarks.xml
 
-    - name: Upload test results to Codecov
+    - name: Publish test results
+      uses: mikepenz/action-junit-report@v5
       if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
       with:
-        file: tests.xml
-        fail_ci_if_error: true
+        report_paths: tests.xml
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload test results
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: '*.xml'
+        retention-days: 7
 
   build-coverage:
     runs-on: ubuntu-latest
     container:
       image: emscripten/emsdk:latest
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    permissions:
+      pull-requests: write
+      id-token: write
+    outputs:
+      coverage: ${{ steps.coverage-report.outputs.total-coverage }}
 
     steps:
     - name: Checkout code
@@ -90,22 +103,42 @@ jobs:
       run: |
         lcov -b . -d build/coverage/src/CMakeFiles/wasm-dom.dir/wasm-dom/ -c -o lcov.info --gcov-tool `pwd`/coverage/llvm-gcov --no-external
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+    - name: Report code coverage
+      id: coverage-report
       if: ${{ !cancelled() }}
+      uses: zgosalvez/github-actions-report-lcov@v4
       with:
-        file: lcov.info
-        fail_ci_if_error: true
+        coverage-files: lcov.info
+        minimum-coverage: 100
+        artifact-name: code-coverage-report
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        update-comment: true
 
-    - name: Generate coverage report
-      if: ${{ !cancelled() }}
+  deploy-badges:
+    runs-on: ubuntu-latest
+    needs: build-coverage
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+    - name: Generate coverage badge
       run: |
-        genhtml lcov.info -o output
+        mkdir badges
+        echo "{ \"coverage\": \"${{ needs.build-coverage.outputs.coverage }}\" }" > badges/coverage-badge.json
 
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        name: coverage-report
-        path: output
-        retention-days: 3
+        path: badges/
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

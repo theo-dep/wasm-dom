@@ -1,9 +1,9 @@
 <a name="top"></a>
 # wasm-dom
 
-[![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-[![Build with Emscripten](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml/badge.svg)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
-[![codecov](https://codecov.io/github/theo-dep/wasm-dom/graph/badge.svg?token=Q96WRJMWUJ)](https://codecov.io/github/theo-dep/wasm-dom)
+![experimental](https://img.shields.io/badge/Stability-experimental-orange)
+[![Build with Emscripten](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/pr.yml?label=Build%20with%20Emscripten)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
+[![Code Coverage](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Ftheo-dep.github.io%2Fwasm-dom%2Fcoverage-badge.json&query=%24.coverage&label=Code%20Coverage&color=brightgreen)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
 
 A minimal C++23 WebAssembly virtual DOM to build SPA (Single page applications).
 
