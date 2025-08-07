@@ -1,5 +1,6 @@
 #include "vdom.hpp"
 
+#include "domapi.hpp"
 #include "vnode.hpp"
 
 #include <emscripten.h>
@@ -64,7 +65,7 @@ namespace wasmdom
     {
         while (startIdx <= endIdx) {
             int elm = createElm(vnodes[startIdx++]);
-            EM_ASM({ Module.insertBefore($0, $1, $2) }, parentElm, elm, before);
+            domapi::insertBefore(parentElm, elm, before);
         }
     }
 
@@ -121,19 +122,15 @@ namespace wasmdom
             } else if (sameVNode(oldStartVnode, newEndVnode)) {
                 if (oldStartVnode != newEndVnode)
                     patchVNode(oldStartVnode, newEndVnode, parentElm);
-
-                EM_ASM({ Module.insertBefore(
-                             $0,
-                             $1,
-                             Module.nextSibling($2)
-                         ); }, parentElm, oldStartVnode.elm(), oldEndVnode.elm());
+                int nextSiblingOldPtr = EM_ASM_INT({ return Module.nextSibling($0); },  oldEndVnode.elm());
+                domapi::insertBefore(parentElm, oldStartVnode.elm(), nextSiblingOldPtr);
                 oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
                 newEndVnode = boundCheckVNode(newCh, --newEndIdx, newMaxIdx);
             } else if (sameVNode(oldEndVnode, newStartVnode)) {
                 if (oldEndVnode != newStartVnode)
                     patchVNode(oldEndVnode, newStartVnode, parentElm);
 
-                EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, oldEndVnode.elm(), oldStartVnode.elm());
+                domapi::insertBefore(parentElm, oldEndVnode.elm(), oldStartVnode.elm());
                 oldEndVnode = boundCheckVNode(oldCh, --oldEndIdx, oldMaxIdx);
                 newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
             } else {
@@ -149,17 +146,17 @@ namespace wasmdom
                 }
                 if (!oldKeyToIdx.contains(newStartVnode.key())) {
                     int elm = createElm(newStartVnode);
-                    EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
+                    domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
                 } else {
                     VNode elmToMove = oldCh[oldKeyToIdx[newStartVnode.key()]];
                     if ((elmToMove.hash() & extractSel) != (newStartVnode.hash() & extractSel)) {
                         int elm = createElm(newStartVnode);
-                        EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
+                        domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
                     } else {
                         if (elmToMove != newStartVnode)
                             patchVNode(elmToMove, newStartVnode, parentElm);
                         oldCh[oldKeyToIdx[newStartVnode.key()]] = nullptr;
-                        EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elmToMove.elm(), oldStartVnode.elm());
+                        domapi::insertBefore(parentElm, elmToMove.elm(), oldStartVnode.elm());
                     }
                 }
                 newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
@@ -210,16 +207,10 @@ const wasmdom::VNode& wasmdom::VDom::patch(const VNode& vnode)
         patchVNode(_currentNode, newNode, _currentNode.elm());
     } else {
         int elm = createElm(newNode);
-        EM_ASM({
-                var parent = Module.parentNode($1);
-                if (parent !== 0) {
-                    Module.insertBefore(
-                        parent,
-                        $0,
-                        Module.nextSibling($1)
-                    );
-                    Module.removeChild($1);
-                } }, elm, _currentNode.elm());
+        int parentPtr = EM_ASM_INT({ return Module.parentNode($0); }, _currentNode.elm());
+        int nextSiblingElmPtr = EM_ASM_INT({ return Module.nextSibling($0); }, _currentNode.elm());
+        domapi::insertBefore(parentPtr, elm, nextSiblingElmPtr);
+        EM_ASM({ Module.removeChild($0); }, _currentNode.elm());
     }
 
     _currentNode = newNode;

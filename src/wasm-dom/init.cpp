@@ -96,11 +96,6 @@ void wasmdom::init()
         Module.createTextNode = function(text) { return addPtr(recycler['createText'](text)); };
         Module.createComment = function(text) { return addPtr(recycler['createComment'](text)); };
         Module.createDocumentFragment = function() { return addPtr(document.createDocumentFragment()); };
-        Module.insertBefore = function(parentNodePtr, newNodePtr, referenceNodePtr) {
-            Module['nodes'][parentNodePtr].insertBefore(
-                Module['nodes'][newNodePtr],
-                Module['nodes'][referenceNodePtr]
-            ); };
         Module.removeChild = function(childPtr) {
                 var node = Module['nodes'][childPtr];
                 if (node === null || node === undefined) return;

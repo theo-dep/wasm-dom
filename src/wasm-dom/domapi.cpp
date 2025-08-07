@@ -21,3 +21,19 @@ int wasmdom::domapi::addNode(const emscripten::val& node)
     addPtr(node["nextSibling"].as_handle());
     return addPtr(node.as_handle());
 }
+
+void wasmdom::domapi::insertBefore(const VNode& parentNode, const VNode& newNode, const VNode& referenceNode)
+{
+    insertBefore(parentNode.elm(), newNode.elm(), referenceNode.elm());
+}
+
+void wasmdom::domapi::insertBefore(int parentNodePtr, int newNodePtr, int referenceNodePtr)
+{
+    if (parentNodePtr == 0 /*|| newNodePtr == 0 || referenceNodePtr == 0*/)
+        return;
+
+    EM_ASM(
+        { Module['nodes'][$0].insertBefore(Module['nodes'][$1], Module['nodes'][$2]); },
+        parentNodePtr, newNodePtr, referenceNodePtr
+    );
+}
