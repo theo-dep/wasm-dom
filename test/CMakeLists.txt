@@ -33,7 +33,7 @@ foreach(test ${TEST_CASES})
     string(TOLOWER ${test} test_src)
     target_sources(tests PRIVATE src/${test_src}.cpp)
     add_test(NAME ${test}
-        COMMAND ${NODE_JS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/runner.js" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/tests.js" "[${test}]"
+        COMMAND ${NODE_JS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/runner.js" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/tests.js" "[${test}]" --colour-mode none
     )
 endforeach()
 
@@ -44,5 +44,5 @@ target_link_options(benchmarks PRIVATE ${LINK_OPTIONS} -sALLOW_MEMORY_GROWTH)
 
 set(CMAKE_CTEST_ARGUMENTS "--verbose")
 add_test(NAME benchmarks
-    COMMAND ${NODE_JS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/runner.js" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/benchmarks.js"
+    COMMAND ${NODE_JS_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/runner.js" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/benchmarks.js" --colour-mode none
 )

@@ -1,6 +1,7 @@
 set(TARGET_NAME wasm-dom)
 
 add_library(${TARGET_NAME}
+    wasm-dom/domapi.cpp
     wasm-dom/init.cpp
     wasm-dom/vdom.cpp
     wasm-dom/vnode.cpp

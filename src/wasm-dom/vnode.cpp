@@ -1,5 +1,7 @@
 #include "vnode.hpp"
 
+#include "domapi.hpp"
+
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
@@ -128,7 +130,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     } else {
         vnode = VNode("");
     }
-    vnode._data->elm = emscripten::val::module_property("addNode")(node).as<int>();
+    vnode._data->elm = domapi::addNode(node);
     return vnode;
 }
 
