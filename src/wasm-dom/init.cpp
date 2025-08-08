@@ -79,6 +79,5 @@ void wasmdom::init()
                 else recycler['nodes'][name] = [node]; };
 
         Module['nodes'] = { 0 : null };
-        Module['lastPtr'] = 0;
     });
 }

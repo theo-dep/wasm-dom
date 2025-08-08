@@ -4,47 +4,57 @@
 
 #include <emscripten.h>
 
-EM_JS(int, addPtr, (emscripten::EM_VAL nodeHandle), {
-    var node = Emval.toValue(nodeHandle);
-    if (node === null || node === undefined)
-        return 0;
-    if (node['asmDomPtr'] !== undefined)
-        return node['asmDomPtr'];
-    Module['lastPtr'] += 1;
-    Module['nodes'][Module['lastPtr']] = node;
-    return node['asmDomPtr'] = Module['lastPtr'];
-});
+namespace wasmdom::domapi
+{
+    int addPtr(const emscripten::val& node)
+    {
+        static int lastPtr = 0;
+
+        if (node == emscripten::val::null() || node == emscripten::val::undefined())
+            return 0;
+        if (node["asmDomPtr"] != emscripten::val::undefined())
+            return node["asmDomPtr"].as<int>();
+
+        emscripten::val nodes = emscripten::val::module_property("nodes");
+        emscripten::val newNode = node;
+
+        ++lastPtr;
+        newNode.set("asmDomPtr", lastPtr);
+        nodes.set(lastPtr, newNode);
+        return lastPtr;
+    }
+}
 
 int wasmdom::domapi::addNode(const emscripten::val& node)
 {
-    addPtr(node["parentNode"].as_handle());
-    addPtr(node["nextSibling"].as_handle());
-    return addPtr(node.as_handle());
+    addPtr(node["parentNode"]);
+    addPtr(node["nextSibling"]);
+    return addPtr(node);
 }
 
 int wasmdom::domapi::createElement(const std::string& tag)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("create", tag).as_handle());
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("create", tag));
 }
 
 int wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createNS", qualifiedName, namespaceURI).as_handle());
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createNS", qualifiedName, namespaceURI));
 }
 
 int wasmdom::domapi::createTextNode(const std::string& text)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createText", text).as_handle());
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createText", text));
 }
 
 int wasmdom::domapi::createComment(const std::string& text)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createComment", text).as_handle());
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createComment", text));
 }
 
 int wasmdom::domapi::createDocumentFragment()
 {
-    return addPtr(emscripten::val::global("document").call<emscripten::val>("createDocumentFragment").as_handle());
+    return addPtr(emscripten::val::global("document").call<emscripten::val>("createDocumentFragment"));
 }
 
 void wasmdom::domapi::insertBefore(int parentNodePtr, int newNodePtr, int referenceNodePtr)
