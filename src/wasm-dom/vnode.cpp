@@ -5,6 +5,8 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <regex>
+
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
 
@@ -339,42 +341,52 @@ namespace wasmdom
         const Props& props = vnode.props();
 
         emscripten::val elm = emscripten::val::module_property("nodes")[vnode.elm()];
-
-        EM_ASM({ Module['nodes'][$0]['asmDomRaws'] = []; }, vnode.elm());
+        elm.set("asmDomRaws", emscripten::val::array());
 
         for (const auto& [key, _] : oldProps) {
             if (!props.contains(key)) {
-                elm.set(key.c_str(), emscripten::val::undefined());
+                elm.set(key, emscripten::val::undefined());
             }
         }
 
         for (const auto& [key, val] : props) {
-            EM_ASM({ Module['nodes'][$0]['asmDomRaws'].push(Module['UTF8ToString']($1)); }, vnode.elm(), key.c_str());
+            elm["asmDomRaws"].call<void>("push", key);
 
             if (!oldProps.contains(key) ||
                 !val.strictlyEquals(oldProps.at(key)) ||
                 ((key == "value" || key == "checked") &&
-                 !val.strictlyEquals(elm[key.c_str()]))) {
-                elm.set(key.c_str(), val);
+                 !val.strictlyEquals(elm[key]))) {
+                elm.set(key, val);
             }
         }
     }
 
     // store callbacks addresses to be called in functionCallback
-    Callbacks* storeCallbacks(const VNode& oldVnode, const VNode& vnode)
+    std::unordered_map<int, Callbacks>& vnodeCallbacks()
     {
         static std::unordered_map<int, Callbacks> vnodeCallbacks;
-
-        if (vnodeCallbacks.contains(oldVnode.elm())) {
-            auto nodeHandle = vnodeCallbacks.extract(oldVnode.elm());
+        return vnodeCallbacks;
+    }
+    emscripten::val storeCallbacks(const VNode& oldVnode, const VNode& vnode)
+    {
+        if (vnodeCallbacks().contains(oldVnode.elm())) {
+            auto nodeHandle = vnodeCallbacks().extract(oldVnode.elm());
             nodeHandle.key() = vnode.elm();
             nodeHandle.mapped() = vnode.callbacks();
-            vnodeCallbacks.insert(std::move(nodeHandle));
+            vnodeCallbacks().insert(std::move(nodeHandle));
         } else {
-            vnodeCallbacks.emplace(vnode.elm(), vnode.callbacks());
+            vnodeCallbacks().emplace(vnode.elm(), vnode.callbacks());
         }
 
-        return &vnodeCallbacks[vnode.elm()];
+        return emscripten::val(vnode.elm());
+    }
+
+    std::string formatEventKey(const std::string& key)
+    {
+        static const std::regex eventPrefix("^on");
+        std::string eventKey;
+        std::regex_replace(std::back_inserter(eventKey), key.cbegin(), key.cend(), eventPrefix, "");
+        return eventKey;
     }
 
     void diffCallbacks(const VNode& oldVnode, const VNode& vnode)
@@ -382,38 +394,28 @@ namespace wasmdom
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
+        emscripten::val elm = emscripten::val::module_property("nodes")[vnode.elm()];
+
+        std::string eventKey;
+
         for (const auto& [key, _] : oldCallbacks) {
             if (!callbacks.contains(key) && key != "ref") {
-                EM_ASM({
-                    var key = Module['UTF8ToString']($1).replace(/^on/, "");
-                    var elm = Module['nodes'][$0];
-                    elm.removeEventListener(
-                        key,
-                        Module['eventProxy'],
-                        false
-                    );
-                    delete elm['asmDomEvents'][key]; }, vnode.elm(), key.c_str());
+                eventKey = formatEventKey(key);
+                elm.call<void>("removeEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                elm["asmDomEvents"].delete_(eventKey);
             }
         }
 
-        EM_ASM({
-            var elm = Module['nodes'][$0];
-            elm['asmDomVNodeCallbacks'] = $1;
-            if (elm['asmDomEvents'] === undefined) {
-                elm['asmDomEvents'] = {};
-            } }, vnode.elm(), storeCallbacks(oldVnode, vnode));
+        elm.set("asmDomVNodeCallbacks", storeCallbacks(oldVnode, vnode));
+        if (elm["asmDomEvents"] == emscripten::val::undefined()) {
+            elm.set("asmDomEvents", emscripten::val::object());
+        }
 
         for (const auto& [key, _] : callbacks) {
             if (!oldCallbacks.contains(key) && key != "ref") {
-                EM_ASM({
-                    var key = Module['UTF8ToString']($1).replace(/^on/, "");
-                    var elm = Module['nodes'][$0];
-                    elm.addEventListener(
-                        key,
-                        Module['eventProxy'],
-                        false
-                    );
-                    elm['asmDomEvents'][key] = Module['eventProxy']; }, vnode.elm(), key.c_str());
+                eventKey = formatEventKey(key);
+                elm.call<void>("addEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                elm["asmDomEvents"].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
         }
 
@@ -451,18 +453,18 @@ void wasmdom::VNode::diff(const VNode& oldVnode) const
 namespace wasmdom
 {
 
-    emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event)
+    emscripten::val functionCallback(int nodePtr, std::string callback, emscripten::val event)
     {
-        Callbacks* cbs = reinterpret_cast<Callbacks*>(sharedData);
-        if (!cbs->contains(callback)) {
+        const Callbacks& cbs = vnodeCallbacks()[nodePtr];
+        if (!cbs.contains(callback)) {
             callback = "on" + callback;
         }
-        return emscripten::val((*cbs)[callback](event));
+        return emscripten::val(cbs.at(callback)(event));
     }
 
 }
 
 EMSCRIPTEN_BINDINGS(functionCallback)
 {
-    emscripten::function("functionCallback", &wasmdom::functionCallback, emscripten::allow_raw_pointers());
+    emscripten::function("functionCallback", wasmdom::functionCallback);
 }
