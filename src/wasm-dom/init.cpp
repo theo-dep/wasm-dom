@@ -81,20 +81,6 @@ void wasmdom::init()
         Module['nodes'] = { 0 : null };
         Module['lastPtr'] = 0;
 
-        function addPtr(node) {
-            if (node === null)
-                return 0;
-            if (node['asmDomPtr'] !== undefined)
-                return node['asmDomPtr'];
-            Module['lastPtr'] += 1;
-            Module['nodes'][Module['lastPtr']] = node;
-            return node['asmDomPtr'] = Module['lastPtr'];
-        };
-
-        Module.createElement = function(tagName) { return addPtr(recycler['create'](tagName)); };
-        Module.createElementNS = function(namespaceURI, qualifiedName) { return addPtr(recycler['createNS'](qualifiedName, namespaceURI)); };
-        Module.createTextNode = function(text) { return addPtr(recycler['createText'](text)); };
-        Module.createComment = function(text) { return addPtr(recycler['createComment'](text)); };
         Module.removeChild = function(childPtr) {
                 var node = Module['nodes'][childPtr];
                 if (node === null || node === undefined) return;

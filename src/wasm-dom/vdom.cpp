@@ -28,25 +28,18 @@ namespace wasmdom
     int createElm(VNode& vnode)
     {
         if (vnode.hash() & isElement) {
-            vnode.setElm(EM_ASM_INT({
-                    if ($1 === 0) {
-                        return Module.createElement(Module['UTF8ToString']($0))
-                    } else {
-                        return  Module.createElementNS(Module['UTF8ToString']($1), Module['UTF8ToString']($0));
-                    }
-                }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0
-            ));
+            if (vnode.hash() & hasNS) {
+                vnode.setElm(domapi::createElementNS(vnode.ns(), vnode.sel()));
+            } else {
+                vnode.setElm(domapi::createElement(vnode.sel()));
+            }
         } else if (vnode.hash() & isText) {
-            vnode.setElm(EM_ASM_INT({ return Module.createTextNode(
-                                          Module['UTF8ToString']($0)
-                                      ); }, vnode.sel().c_str()));
+            vnode.setElm(domapi::createTextNode(vnode.sel()));
             return vnode.elm();
         } else if (vnode.hash() & isFragment) {
             vnode.setElm(domapi::createDocumentFragment());
         } else if (vnode.hash() & isComment) {
-            vnode.setElm(EM_ASM_INT({ return Module.createComment(
-                                          Module['UTF8ToString']($0)
-                                      ); }, vnode.sel().c_str()));
+            vnode.setElm(domapi::createComment(vnode.sel()));
             return vnode.elm();
         }
 

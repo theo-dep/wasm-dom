@@ -22,6 +22,26 @@ int wasmdom::domapi::addNode(const emscripten::val& node)
     return addPtr(node.as_handle());
 }
 
+int wasmdom::domapi::createElement(const std::string& tag)
+{
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("create", tag).as_handle());
+}
+
+int wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
+{
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createNS", qualifiedName, namespaceURI).as_handle());
+}
+
+int wasmdom::domapi::createTextNode(const std::string& text)
+{
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createText", text).as_handle());
+}
+
+int wasmdom::domapi::createComment(const std::string& text)
+{
+    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createComment", text).as_handle());
+}
+
 int wasmdom::domapi::createDocumentFragment()
 {
     return addPtr(emscripten::val::global("document").call<emscripten::val>("createDocumentFragment").as_handle());
