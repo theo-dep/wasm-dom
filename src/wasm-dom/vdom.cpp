@@ -42,7 +42,7 @@ namespace wasmdom
                                       ); }, vnode.sel().c_str()));
             return vnode.elm();
         } else if (vnode.hash() & isFragment) {
-            vnode.setElm(EM_ASM_INT({ return Module.createDocumentFragment(); }));
+            vnode.setElm(domapi::createDocumentFragment());
         } else if (vnode.hash() & isComment) {
             vnode.setElm(EM_ASM_INT({ return Module.createComment(
                                           Module['UTF8ToString']($0)

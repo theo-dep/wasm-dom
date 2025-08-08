@@ -95,7 +95,6 @@ void wasmdom::init()
         Module.createElementNS = function(namespaceURI, qualifiedName) { return addPtr(recycler['createNS'](qualifiedName, namespaceURI)); };
         Module.createTextNode = function(text) { return addPtr(recycler['createText'](text)); };
         Module.createComment = function(text) { return addPtr(recycler['createComment'](text)); };
-        Module.createDocumentFragment = function() { return addPtr(document.createDocumentFragment()); };
         Module.removeChild = function(childPtr) {
                 var node = Module['nodes'][childPtr];
                 if (node === null || node === undefined) return;

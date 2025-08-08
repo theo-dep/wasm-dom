@@ -22,6 +22,11 @@ int wasmdom::domapi::addNode(const emscripten::val& node)
     return addPtr(node.as_handle());
 }
 
+int wasmdom::domapi::createDocumentFragment()
+{
+    return addPtr(emscripten::val::global("document").call<emscripten::val>("createDocumentFragment").as_handle());
+}
+
 void wasmdom::domapi::insertBefore(const VNode& parentNode, const VNode& newNode, const VNode& referenceNode)
 {
     insertBefore(parentNode.elm(), newNode.elm(), referenceNode.elm());

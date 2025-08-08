@@ -12,6 +12,8 @@ namespace wasmdom
 
         int addNode(const emscripten::val& node);
 
+        int createDocumentFragment();
+
         void insertBefore(const VNode& parentNode, const VNode& newNode, const VNode& referenceNode);
         void insertBefore(int parentNodePtr, int newNodePtr, int referenceNodePtr);
 
