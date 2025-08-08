@@ -80,41 +80,5 @@ void wasmdom::init()
 
         Module['nodes'] = { 0 : null };
         Module['lastPtr'] = 0;
-
-        Module.removeChild = function(childPtr) {
-                var node = Module['nodes'][childPtr];
-                if (node === null || node === undefined) return;
-                var parent = node.parentNode;
-                if (parent !== null) parent.removeChild(node);
-                recycler['collect'](node); };
-        Module.appendChild = function(parentPtr, childPtr) { Module['nodes'][parentPtr].appendChild(Module['nodes'][childPtr]); };
-        Module.removeAttribute = function(nodePtr, attr) { Module['nodes'][nodePtr].removeAttribute(attr); };
-        Module.setAttribute = function(nodePtr, attr, value) {
-                // xChar = 120
-                // colonChar = 58
-                if (attr.charCodeAt(0) !== 120) {
-                    Module['nodes'][nodePtr].setAttribute(attr, value);
-                } else if (attr.charCodeAt(3) === 58) {
-                    // Assume xml namespace
-                    Module['nodes'][nodePtr].setAttributeNS('http://www.w3.org/XML/1998/namespace', attr, value);
-                } else if (attr.charCodeAt(5) === 58) {
-                    // Assume xlink namespace
-                    Module['nodes'][nodePtr].setAttributeNS('http://www.w3.org/1999/xlink', attr, value);
-                } else {
-                    Module['nodes'][nodePtr].setAttribute(attr, value);
-                } };
-        Module.parentNode = function(nodePtr) {
-                var node = Module['nodes'][nodePtr];
-                return (
-                    node !== null && node !== undefined &&
-                    node.parentNode !== null
-                ) ? node.parentNode['asmDomPtr'] : 0; };
-        Module.nextSibling = function(nodePtr) {
-                var node = Module['nodes'][nodePtr];
-                return (
-                    node !== null && node !== undefined &&
-                    node.nextSibling !== null
-                ) ? node.nextSibling['asmDomPtr'] : 0; };
-        Module.setNodeValue = function(nodePtr, text) { Module['nodes'][nodePtr].nodeValue = text; };
     });
 }

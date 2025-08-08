@@ -322,20 +322,13 @@ namespace wasmdom
 
         for (const auto& [key, _] : oldAttrs) {
             if (!attrs.contains(key)) {
-                EM_ASM({ Module.removeAttribute(
-                             $0,
-                             Module['UTF8ToString']($1)
-                         ); }, vnode.elm(), key.c_str());
+                domapi::removeAttribute(vnode.elm(), key);
             }
         }
 
         for (const auto& [key, val] : attrs) {
             if (!oldAttrs.contains(key) || oldAttrs.at(key) != val) {
-                EM_ASM({ Module.setAttribute(
-                             $0,
-                             Module['UTF8ToString']($1),
-                             Module['UTF8ToString']($2)
-                         ); }, vnode.elm(), key.c_str(), val.c_str());
+                domapi::setAttribute(vnode.elm(), key, val);
             }
         }
     }

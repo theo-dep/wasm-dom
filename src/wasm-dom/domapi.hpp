@@ -18,8 +18,14 @@ namespace wasmdom
         int createComment(const std::string& text);
         int createDocumentFragment();
 
-        void insertBefore(const VNode& parentNode, const VNode& newNode, const VNode& referenceNode);
         void insertBefore(int parentNodePtr, int newNodePtr, int referenceNodePtr);
+        void removeChild(int childPtr);
+        void appendChild(int parentPtr, int childPtr);
+        void removeAttribute(int nodePtr, const std::string& attribute);
+        void setAttribute(int nodePtr, const std::string& attribute, const std::string& value);
+        void setNodeValue(int nodePtr, const std::string& text);
 
+        int parentNode(int nodePtr);
+        int nextSibling(int nodePtr);
     }
 }
