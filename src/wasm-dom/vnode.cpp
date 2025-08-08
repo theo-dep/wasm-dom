@@ -5,6 +5,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <array>
 #include <regex>
 
 #ifdef WASMDOM_COVERAGE
@@ -141,75 +142,75 @@ namespace wasmdom
 
     // All SVG children elements, not in this list, should self-close
 
-    std::unordered_map<std::string, bool> containerElements{
+    static constexpr inline std::array containerElements{
         // http://www.w3.org/TR/SVG/intro.html#TermContainerElement
-        { "a", true },
-        { "defs", true },
-        { "glyph", true },
-        { "g", true },
-        { "marker", true },
-        { "mask", true },
-        { "missing-glyph", true },
-        { "pattern", true },
-        { "svg", true },
-        { "switch", true },
-        { "symbol", true },
-        { "text", true },
+        "a",
+        "defs",
+        "glyph",
+        "g",
+        "marker",
+        "mask",
+        "missing-glyph",
+        "pattern",
+        "svg",
+        "switch",
+        "symbol",
+        "text",
 
         // http://www.w3.org/TR/SVG/intro.html#TermDescriptiveElement
-        { "desc", true },
-        { "metadata", true },
-        { "title", true }
+        "desc",
+        "metadata",
+        "title"
     };
 
     // http://www.w3.org/html/wg/drafts/html/master/syntax.html#void-elements
-    std::unordered_map<std::string, bool> voidElements{
-        { "area", true },
-        { "base", true },
-        { "br", true },
-        { "col", true },
-        { "embed", true },
-        { "hr", true },
-        { "img", true },
-        { "input", true },
-        //{ "keygen", true },
-        { "link", true },
-        { "meta", true },
-        { "param", true },
-        { "source", true },
-        { "track", true },
-        { "wbr", true }
+    static constexpr inline std::array voidElements{
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        //"keygen",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr"
     };
 
     // https://developer.mozilla.org/en-US/docs/Web/API/element
-    std::unordered_map<std::string, bool> omitProps{
-        { "attributes", true },
-        { "childElementCount", true },
-        { "children", true },
-        { "classList", true },
-        { "clientHeight", true },
-        { "clientLeft", true },
-        { "clientTop", true },
-        { "clientWidth", true },
-        { "currentStyle", true },
-        { "firstElementChild", true },
-        { "innerHTML", true },
-        { "lastElementChild", true },
-        { "nextElementSibling", true },
-        { "ongotpointercapture", true },
-        { "onlostpointercapture", true },
-        { "onwheel", true },
-        { "outerHTML", true },
-        { "previousElementSibling", true },
-        { "runtimeStyle", true },
-        { "scrollHeight", true },
-        { "scrollLeft", true },
-        { "scrollLeftMax", true },
-        { "scrollTop", true },
-        { "scrollTopMax", true },
-        { "scrollWidth", true },
-        { "tabStop", true },
-        { "tagName", true }
+    static constexpr inline std::array omitProps{
+        "attributes",
+        "childElementCount",
+        "children",
+        "classList",
+        "clientHeight",
+        "clientLeft",
+        "clientTop",
+        "clientWidth",
+        "currentStyle",
+        "firstElementChild",
+        "innerHTML",
+        "lastElementChild",
+        "nextElementSibling",
+        "ongotpointercapture",
+        "onlostpointercapture",
+        "onwheel",
+        "outerHTML",
+        "previousElementSibling",
+        "runtimeStyle",
+        "scrollHeight",
+        "scrollLeft",
+        "scrollLeftMax",
+        "scrollTop",
+        "scrollTopMax",
+        "scrollWidth",
+        "tabStop",
+        "tagName"
     };
 
     std::string encode(const std::string& data)
@@ -253,7 +254,7 @@ namespace wasmdom
 
         emscripten::val String = emscripten::val::global("String");
         for (const auto& [key, val] : vnode.props()) {
-            if (!omitProps[key]) {
+            if (std::find(omitProps.cbegin(), omitProps.cend(), key) == omitProps.cend()) {
                 std::string lowerKey(key);
                 std::transform(key.begin(), key.end(), lowerKey.begin(), ::tolower);
                 html.append(" " + lowerKey + "=\"" + encode(String(val).as<std::string>()) + "\"");
@@ -276,7 +277,8 @@ namespace wasmdom
             }
         } else {
             bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
-            bool isSvgContainerElement = isSvg && containerElements[vnode.sel()];
+            bool isSvgContainerElement = isSvg &&
+                                         std::find(containerElements.cbegin(), containerElements.cend(), vnode.sel()) != containerElements.cend();
 
             html.append("<" + vnode.sel());
             appendAttributes(vnode, html);
@@ -286,7 +288,7 @@ namespace wasmdom
             html.append(">");
 
             if (isSvgContainerElement ||
-                (!isSvg && !voidElements[vnode.sel()])) {
+                (!isSvg && std::find(voidElements.cbegin(), voidElements.cend(), vnode.sel()) == voidElements.cend())) {
 
                 if (vnode.props().contains("innerHTML") != 0) {
                     html.append(vnode.props().at("innerHTML").as<std::string>());
