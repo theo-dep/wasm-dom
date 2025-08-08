@@ -408,7 +408,7 @@ namespace wasmdom
             }
         }
 
-        node.set("asmDomVNodeCallbacks", storeCallbacks(oldVnode, vnode));
+        node.set("asmDomVNodeCallbacksKey", storeCallbacks(oldVnode, vnode));
         if (node["asmDomEvents"] == emscripten::val::undefined()) {
             node.set("asmDomEvents", emscripten::val::object());
         }
@@ -455,18 +455,21 @@ void wasmdom::VNode::diff(const VNode& oldVnode) const
 namespace wasmdom
 {
 
-    emscripten::val functionCallback(int nodePtr, std::string callback, emscripten::val event)
+    bool eventProxy(emscripten::val event)
     {
-        const Callbacks& cbs = vnodeCallbacks()[nodePtr];
-        if (!cbs.contains(callback)) {
-            callback = "on" + callback;
+        int nodePtr = event["currentTarget"]["asmDomVNodeCallbacksKey"].as<int>();
+        std::string eventType = event["type"].as<std::string>();
+
+        const Callbacks& callbacks = vnodeCallbacks()[nodePtr];
+        if (!callbacks.contains(eventType)) {
+            eventType = "on" + eventType;
         }
-        return emscripten::val(cbs.at(callback)(event));
+        return callbacks.at(eventType)(event);
     }
 
 }
 
-EMSCRIPTEN_BINDINGS(functionCallback)
+EMSCRIPTEN_BINDINGS(wasmdomEventModule)
 {
-    emscripten::function("functionCallback", wasmdom::functionCallback);
+    emscripten::function("eventProxy", wasmdom::eventProxy);
 }

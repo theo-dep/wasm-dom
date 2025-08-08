@@ -5,8 +5,6 @@
 void wasmdom::init()
 {
     EM_ASM({
-        Module['eventProxy'] = function(e) { return Module['functionCallback'](this['asmDomVNodeCallbacks'], e.type, e); };
-
         var recycler = Module['recycler'] = { 'nodes' : {} };
         recycler['create'] = function(name) {
                 var list = recycler['nodes'][name.toUpperCase()];
