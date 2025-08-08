@@ -340,23 +340,23 @@ namespace wasmdom
         const Props& oldProps = oldVnode.props();
         const Props& props = vnode.props();
 
-        emscripten::val elm = emscripten::val::module_property("nodes")[vnode.elm()];
-        elm.set("asmDomRaws", emscripten::val::array());
+        emscripten::val node = domapi::node(vnode.elm());
+        node.set("asmDomRaws", emscripten::val::array());
 
         for (const auto& [key, _] : oldProps) {
             if (!props.contains(key)) {
-                elm.set(key, emscripten::val::undefined());
+                node.set(key, emscripten::val::undefined());
             }
         }
 
         for (const auto& [key, val] : props) {
-            elm["asmDomRaws"].call<void>("push", key);
+            node["asmDomRaws"].call<void>("push", key);
 
             if (!oldProps.contains(key) ||
                 !val.strictlyEquals(oldProps.at(key)) ||
                 ((key == "value" || key == "checked") &&
-                 !val.strictlyEquals(elm[key]))) {
-                elm.set(key, val);
+                 !val.strictlyEquals(node[key]))) {
+                node.set(key, val);
             }
         }
     }
@@ -394,28 +394,28 @@ namespace wasmdom
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        emscripten::val elm = emscripten::val::module_property("nodes")[vnode.elm()];
+        emscripten::val node = domapi::node(vnode.elm());
 
         std::string eventKey;
 
         for (const auto& [key, _] : oldCallbacks) {
             if (!callbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
-                elm.call<void>("removeEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
-                elm["asmDomEvents"].delete_(eventKey);
+                node.call<void>("removeEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                node["asmDomEvents"].delete_(eventKey);
             }
         }
 
-        elm.set("asmDomVNodeCallbacks", storeCallbacks(oldVnode, vnode));
-        if (elm["asmDomEvents"] == emscripten::val::undefined()) {
-            elm.set("asmDomEvents", emscripten::val::object());
+        node.set("asmDomVNodeCallbacks", storeCallbacks(oldVnode, vnode));
+        if (node["asmDomEvents"] == emscripten::val::undefined()) {
+            node.set("asmDomEvents", emscripten::val::object());
         }
 
         for (const auto& [key, _] : callbacks) {
             if (!oldCallbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
-                elm.call<void>("addEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
-                elm["asmDomEvents"].set(eventKey, emscripten::val::module_property("eventProxy"));
+                node.call<void>("addEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                node["asmDomEvents"].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
         }
 
@@ -426,7 +426,7 @@ namespace wasmdom
                 if (oldVnode.hash() & hasRef) {
                     oldCallbacks.at("ref")(emscripten::val::null());
                 }
-                callbacks.at("ref")(emscripten::val::module_property("nodes")[vnode.elm()]);
+                callbacks.at("ref")(node);
             }
         } else if (oldVnode.hash() & hasRef) {
             oldCallbacks.at("ref")(emscripten::val::null());

@@ -1,5 +1,6 @@
 #include "utils.hpp"
 
+#include "wasm-dom/domapi.hpp"
 #include "wasm-dom/vnode.hpp"
 
 #include <emscripten.h>
@@ -12,11 +13,6 @@ emscripten::val getRoot()
 emscripten::val getBodyFirstChild()
 {
     return emscripten::val::global("document")["body"]["firstChild"];
-}
-
-emscripten::val getNode(const wasmdom::VNode& vnode)
-{
-    return emscripten::val::module_property("nodes")[std::to_string(vnode.elm()).c_str()];
 }
 
 EM_JS(void, createDom, (), {

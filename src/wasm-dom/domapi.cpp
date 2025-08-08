@@ -4,8 +4,16 @@
 
 #include <emscripten.h>
 
+#include <unordered_map>
+
 namespace wasmdom::domapi
 {
+    std::unordered_map<int, emscripten::val>& nodes()
+    {
+        static std::unordered_map<int, emscripten::val> nodes{ { 0, emscripten::val::null() } };
+        return nodes;
+    }
+
     int addPtr(const emscripten::val& node)
     {
         static int lastPtr = 0;
@@ -15,14 +23,20 @@ namespace wasmdom::domapi
         if (node["asmDomPtr"] != emscripten::val::undefined())
             return node["asmDomPtr"].as<int>();
 
-        emscripten::val nodes = emscripten::val::module_property("nodes");
         emscripten::val newNode = node;
 
         ++lastPtr;
         newNode.set("asmDomPtr", lastPtr);
-        nodes.set(lastPtr, newNode);
+        nodes().emplace(lastPtr, newNode);
         return lastPtr;
     }
+}
+
+emscripten::val wasmdom::domapi::node(int nodePtr)
+{
+    if (nodes().contains(nodePtr))
+        return nodes()[nodePtr];
+    return emscripten::val::null();
 }
 
 int wasmdom::domapi::addNode(const emscripten::val& node)
@@ -62,14 +76,12 @@ void wasmdom::domapi::insertBefore(int parentNodePtr, int newNodePtr, int refere
     if (parentNodePtr == 0 /*|| newNodePtr == 0 || referenceNodePtr == 0*/)
         return;
 
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    nodes[parentNodePtr].call<void>("insertBefore", nodes[newNodePtr], nodes[referenceNodePtr]);
+    node(parentNodePtr).call<void>("insertBefore", node(newNodePtr), node(referenceNodePtr));
 }
 
 void wasmdom::domapi::removeChild(int childPtr)
 {
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    emscripten::val node = nodes[childPtr];
+    emscripten::val node = domapi::node(childPtr);
     if (node == emscripten::val::null() || node == emscripten::val::undefined())
         return;
 
@@ -82,21 +94,17 @@ void wasmdom::domapi::removeChild(int childPtr)
 
 void wasmdom::domapi::appendChild(int parentPtr, int childPtr)
 {
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    nodes[parentPtr].call<void>("appendChild", nodes[childPtr]);
+    node(parentPtr).call<void>("appendChild", node(childPtr));
 }
 
 void wasmdom::domapi::removeAttribute(int nodePtr, const std::string& attribute)
 {
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    nodes[nodePtr].call<void>("removeAttribute", attribute);
+    node(nodePtr).call<void>("removeAttribute", attribute);
 }
 
 void wasmdom::domapi::setAttribute(int nodePtr, const std::string& attribute, const std::string& value)
 {
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    emscripten::val node = nodes[nodePtr];
-
+    emscripten::val node = domapi::node(nodePtr);
     if (attribute[0] != 'x') {
         node.call<void>("setAttribute", attribute, value);
     } else if (attribute[3] == ':') {
@@ -112,15 +120,12 @@ void wasmdom::domapi::setAttribute(int nodePtr, const std::string& attribute, co
 
 void wasmdom::domapi::setNodeValue(int nodePtr, const std::string& text)
 {
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    nodes[nodePtr].set("nodeValue", text);
+    node(nodePtr).set("nodeValue", text);
 }
 
 int wasmdom::domapi::parentNode(int nodePtr)
 {
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    emscripten::val node = nodes[nodePtr];
-
+    emscripten::val node = domapi::node(nodePtr);
     if (node != emscripten::val::null() && node != emscripten::val::undefined() && node["parentNode"] != emscripten::val::null())
         return node["parentNode"]["asmDomPtr"].as<int>();
     return 0;
@@ -128,9 +133,7 @@ int wasmdom::domapi::parentNode(int nodePtr)
 
 int wasmdom::domapi::nextSibling(int nodePtr)
 {
-    emscripten::val nodes = emscripten::val::module_property("nodes");
-    emscripten::val node = nodes[nodePtr];
-
+    emscripten::val node = domapi::node(nodePtr);
     if (node != emscripten::val::null() && node != emscripten::val::undefined() && node["nextSibling"] != emscripten::val::null())
         return node["nextSibling"]["asmDomPtr"].as<int>();
     return 0;

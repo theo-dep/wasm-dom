@@ -77,7 +77,5 @@ void wasmdom::init()
                 var list = recycler['nodes'][name];
                 if (list !== undefined) list.push(node);
                 else recycler['nodes'][name] = [node]; };
-
-        Module['nodes'] = { 0 : null };
     });
 }

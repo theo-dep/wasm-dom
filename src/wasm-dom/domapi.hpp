@@ -9,6 +9,7 @@ namespace wasmdom
 
     namespace domapi
     {
+        emscripten::val node(int nodePtr);
 
         int addNode(const emscripten::val& node);
 
