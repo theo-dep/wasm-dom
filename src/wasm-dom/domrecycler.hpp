@@ -3,7 +3,6 @@
 #include <emscripten/val.h>
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace wasmdom
@@ -12,10 +11,8 @@ namespace wasmdom
     class DomRecycler
     {
     public:
-#ifdef WASMDOM_COVERAGE
-        DomRecycler();
+        DomRecycler(bool useWasmGC);
         ~DomRecycler();
-#endif
 
         emscripten::val create(const std::string& name);
         emscripten::val createNS(const std::string& name, const std::string& ns);
@@ -24,10 +21,13 @@ namespace wasmdom
 
         void collect(emscripten::val node);
 
+        // valid if no garbage collector
         std::vector<emscripten::val> nodes(const std::string& name) const;
 
     private:
-        std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
+        struct DomFactory;
+        struct DomRecyclerFactory;
+        DomFactory* _d_ptr;
     };
 
     DomRecycler& recycler();
