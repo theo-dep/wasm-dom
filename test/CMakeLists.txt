@@ -27,7 +27,7 @@ target_include_directories(tests PRIVATE .)
 target_link_libraries(tests PRIVATE wasm-dom Catch2::Catch2WithMain)
 target_link_options(tests PRIVATE ${LINK_OPTIONS})
 
-set(TEST_CASES attributes dataset domRecycler eventListeners h patch props toHTML toVNode)
+set(TEST_CASES attributes dataset domApi domRecycler eventListeners h patch props toHTML toVNode)
 
 foreach(test ${TEST_CASES})
     string(TOLOWER ${test} test_src)

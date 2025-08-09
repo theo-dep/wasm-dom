@@ -123,9 +123,6 @@ namespace wasmdom
 
     class DomRecycler
     {
-        DomRecycler() = default;
-        friend DomRecycler& recycler();
-
     public:
         emscripten::val create(const std::string& name);
         emscripten::val createNS(const std::string& name, const std::string& ns);
@@ -386,13 +383,9 @@ void wasmdom::domapi::removeAttribute(int nodePtr, const std::string& attribute)
 void wasmdom::domapi::setAttribute(int nodePtr, const std::string& attribute, const std::string& value)
 {
     emscripten::val node = domapi::node(nodePtr);
-    if (attribute[0] != 'x') {
-        node.call<void>("setAttribute", attribute, value);
-    } else if (attribute[3] == ':') {
-        // Assume xml namespace
+    if (attribute.starts_with("xml:")) {
         node.call<void>("setAttributeNS", std::string("http://www.w3.org/XML/1998/namespace"), attribute, value);
-    } else if (attribute[5] == ':') {
-        // Assume xlink namespace
+    } else if (attribute.starts_with("xlink:")) {
         node.call<void>("setAttributeNS", std::string("http://www.w3.org/1999/xlink"), attribute, value);
     } else {
         node.call<void>("setAttribute", attribute, value);
@@ -505,12 +498,12 @@ emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
 void wasmdom::DomRecycler::collect(emscripten::val node)
 {
     // clean
-    for (emscripten::val child = node["lastChild"]; child != emscripten::val::null(); child = node["lastChild"]) {
+    for (emscripten::val child = node["lastChild"]; !child.isNull(); child = node["lastChild"]) {
         node.call<void>("removeChild", child);
         collect(child);
     }
 
-    if (node["attributes"] != emscripten::val::undefined()) {
+    if (!node["attributes"].isUndefined()) {
         for (int i = node["attributes"]["length"].as<int>() - 1; i >= 0; --i) {
             node.call<void>("removeAttribute", node["attributes"][i]["name"]);
         }
@@ -518,14 +511,14 @@ void wasmdom::DomRecycler::collect(emscripten::val node)
 
     node.set("asmDomVNodeCallbacks", emscripten::val::undefined());
 
-    if (node["asmDomRaws"] != emscripten::val::undefined()) {
+    if (!node["asmDomRaws"].isUndefined()) {
         for (int i = 0; i < node["asmDomRaws"]["length"].as<int>(); ++i) {
             node.set(node["asmDomRaws"][i], emscripten::val::undefined());
         }
         node.set("asmDomRaws", emscripten::val::undefined());
     }
 
-    if (node["asmDomEvents"] != emscripten::val::undefined()) {
+    if (!node["asmDomEvents"].isUndefined()) {
         emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
         for (int i = 0; i < keys["length"].as<int>(); ++i) {
             emscripten::val event = keys[i];
@@ -534,7 +527,7 @@ void wasmdom::DomRecycler::collect(emscripten::val node)
         node.set("asmDomEvents", emscripten::val::undefined());
     }
 
-    if (node["nodeValue"] != emscripten::val::null() && !node["nodeValue"].as<std::string>().empty()) {
+    if (!node["nodeValue"].isNull() && !node["nodeValue"].as<std::string>().empty()) {
         node.set("nodeValue", std::string{});
     }
 
@@ -548,7 +541,7 @@ void wasmdom::DomRecycler::collect(emscripten::val node)
 
     // collect
     std::string nodeName = upper(node["nodeName"].as<std::string>());
-    if (node["asmDomNS"] != emscripten::val::undefined()) {
+    if (!node["asmDomNS"].isUndefined()) {
         nodeName += node["namespaceURI"].as<std::string>();
     }
 

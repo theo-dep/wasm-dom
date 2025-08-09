@@ -106,13 +106,9 @@ void wasmdom::domapi::removeAttribute(int nodePtr, const std::string& attribute)
 void wasmdom::domapi::setAttribute(int nodePtr, const std::string& attribute, const std::string& value)
 {
     emscripten::val node = domapi::node(nodePtr);
-    if (attribute[0] != 'x') {
-        node.call<void>("setAttribute", attribute, value);
-    } else if (attribute[3] == ':') {
-        // Assume xml namespace
+    if (attribute.starts_with("xml:")) {
         node.call<void>("setAttributeNS", std::string("http://www.w3.org/XML/1998/namespace"), attribute, value);
-    } else if (attribute[5] == ':') {
-        // Assume xlink namespace
+    } else if (attribute.starts_with("xlink:")) {
         node.call<void>("setAttributeNS", std::string("http://www.w3.org/1999/xlink"), attribute, value);
     } else {
         node.call<void>("setAttribute", attribute, value);

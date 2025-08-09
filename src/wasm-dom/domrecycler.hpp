@@ -11,10 +11,12 @@ namespace wasmdom
 
     class DomRecycler
     {
-        DomRecycler() = default;
-        friend DomRecycler& recycler();
-
     public:
+#ifdef WASMDOM_COVERAGE
+        DomRecycler();
+        ~DomRecycler();
+#endif
+
         emscripten::val create(const std::string& name);
         emscripten::val createNS(const std::string& name, const std::string& ns);
         emscripten::val createText(const std::string& text);

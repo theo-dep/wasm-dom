@@ -9,6 +9,11 @@ wasmdom::DomRecycler& wasmdom::recycler()
     return recycler;
 }
 
+#ifdef WASMDOM_COVERAGE
+wasmdom::DomRecycler::DomRecycler() = default;
+wasmdom::DomRecycler::~DomRecycler() = default;
+#endif
+
 namespace wasmdom
 {
     std::string upper(const std::string& str)
