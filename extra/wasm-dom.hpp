@@ -299,9 +299,9 @@ namespace wasmdom::domapi
     {
         static int lastPtr = 0;
 
-        if (node == emscripten::val::null() || node == emscripten::val::undefined())
+        if (node.isNull() || node.isUndefined())
             return 0;
-        if (node["asmDomPtr"] != emscripten::val::undefined())
+        if (!node["asmDomPtr"].isUndefined())
             return node["asmDomPtr"].as<int>();
 
         emscripten::val newNode = node;
@@ -363,11 +363,11 @@ void wasmdom::domapi::insertBefore(int parentNodePtr, int newNodePtr, int refere
 void wasmdom::domapi::removeChild(int childPtr)
 {
     emscripten::val node = domapi::node(childPtr);
-    if (node == emscripten::val::null() || node == emscripten::val::undefined())
+    if (node.isNull() || node.isUndefined())
         return;
 
     emscripten::val parentNode = node["parentNode"];
-    if (parentNode != emscripten::val::null())
+    if (!parentNode.isNull())
         parentNode.call<void>("removeChild", node);
 
     recycler().collect(node);
@@ -407,7 +407,7 @@ void wasmdom::domapi::setNodeValue(int nodePtr, const std::string& text)
 int wasmdom::domapi::parentNode(int nodePtr)
 {
     emscripten::val node = domapi::node(nodePtr);
-    if (node != emscripten::val::null() && node != emscripten::val::undefined() && node["parentNode"] != emscripten::val::null())
+    if (!node.isNull() && !node.isUndefined() && !node["parentNode"].isNull())
         return node["parentNode"]["asmDomPtr"].as<int>();
     return 0;
 }
@@ -415,7 +415,7 @@ int wasmdom::domapi::parentNode(int nodePtr)
 int wasmdom::domapi::nextSibling(int nodePtr)
 {
     emscripten::val node = domapi::node(nodePtr);
-    if (node != emscripten::val::null() && node != emscripten::val::undefined() && node["nextSibling"] != emscripten::val::null())
+    if (!node.isNull() && !node.isUndefined() && !node["nextSibling"].isNull())
         return node["nextSibling"]["asmDomPtr"].as<int>();
     return 0;
 }
@@ -1168,7 +1168,7 @@ namespace wasmdom
         }
 
         node.set("asmDomVNodeCallbacksKey", storeCallbacks(oldVnode, vnode));
-        if (node["asmDomEvents"] == emscripten::val::undefined()) {
+        if (node["asmDomEvents"].isUndefined()) {
             node.set("asmDomEvents", emscripten::val::object());
         }
 

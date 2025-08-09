@@ -23,9 +23,9 @@ bool refCallbackWithChecks(emscripten::val node)
 {
     ++refCount;
     if (refCount % 2 == 0) {
-        REQUIRE_FALSE(node == emscripten::val::null());
+        REQUIRE_FALSE(node.isNull());
     } else {
-        REQUIRE(node.strictlyEquals(emscripten::val::null()));
+        REQUIRE(node.isNull());
     }
     return true;
 }
@@ -1525,7 +1525,7 @@ TEST_CASE("patch", "[patch]")
                         if (refCount == 2) {
                             REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("bar")));
                         } else {
-                            REQUIRE(node.strictlyEquals(emscripten::val::null()));
+                            REQUIRE(node.isNull());
                         }
                         return true;
                     }))

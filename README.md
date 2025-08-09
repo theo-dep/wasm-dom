@@ -196,7 +196,7 @@ To access directly DOM nodes created by wasm-dom, for example to manage focus, t
 ```cpp
 bool refCallback(emscripten::val node) {
   // check if node === null
-  if (node.strictlyEquals(emscripten::val::null())) {
+  if (node.isNull()) {
     // node unmounted
     // do nothing
   } else {
@@ -253,7 +253,7 @@ Please note that if the project wants to use a lambda as a ref wasm-dom will cal
 VNode vnode1 =
   div()(
     input(("ref", [&](emscripten::val node) -> bool {
-        if (!node.strictlyEquals(emscripten::val::null())) {
+        if (!node.isNull()) {
           // node mounted
           // focus input
           node.call<void>("focus");

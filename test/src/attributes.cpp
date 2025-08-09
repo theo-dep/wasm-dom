@@ -97,7 +97,7 @@ TEST_CASE("attributes", "[attributes]")
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val::null()));
+        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).isNull());
     }
 
     SECTION("should set truthy values to empty string")

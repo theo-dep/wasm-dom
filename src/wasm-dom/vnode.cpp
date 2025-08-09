@@ -423,7 +423,7 @@ namespace wasmdom
         }
 
         node.set("asmDomVNodeCallbacksKey", storeCallbacks(oldVnode, vnode));
-        if (node["asmDomEvents"] == emscripten::val::undefined()) {
+        if (node["asmDomEvents"].isUndefined()) {
             node.set("asmDomEvents", emscripten::val::object());
         }
 

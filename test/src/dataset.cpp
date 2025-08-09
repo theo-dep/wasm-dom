@@ -69,6 +69,6 @@ TEST_CASE("dataset", "[dataset]")
         elm = getBodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-baz")).strictlyEquals(emscripten::val("baz")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val::null()));
+        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).isNull());
     }
 }
