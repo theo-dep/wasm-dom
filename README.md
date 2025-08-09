@@ -7,6 +7,9 @@
 
 A minimal C++23 WebAssembly virtual DOM to build SPA (Single page applications).
 
+> [!IMPORTANT]
+> This library is not thread safe.
+
 ## Table of Contents
 
 - [History](#history)
@@ -27,6 +30,7 @@ Initial version of wasm-dom is a fork of [asm-dom](https://github.com/mbasso/asm
 - Add a domain-specific language (DSL) with attributes in key-value pairs from namespace `wasmdom::dsl`. Text and children are now added with `operator()`. Remove `h` function.
 - A single header in [extra](/extra) folder.
 - Remove the `init` method and create DOM API functions and DomRecycler singleton class.
+- Add [WebAssembly Garbage Collector](https://github.com/WebAssembly/gc) support but keep DOM recycler for old browser ([very recent feature](https://webassembly.org/features/#table-row-gc)).
 
 ## Motivation
 
@@ -368,10 +372,6 @@ At the moment creating WebComponents from C++ is not so easy, mixing some C++ an
 
 ### API
 
-#### Init
-
-The `init` function has to be called before using wasm-dom, in the main function, to prepare its environment.
-
 #### Nodes
 
 Attributes can contain 2 special keys:
@@ -387,18 +387,19 @@ wasmdom::VNode vnode =
   });
 
 wasmdom::VNode vnode2 =
-  wasmdom::dsl::div(("id", "an-id"s), // node.setAttribute('id', 'an-id')
-                    ("key", "foo"s),
-                    ("class", "foo"s), // node.setAttribute('class', 'foo')
-                    ("data-foo", "bar"s), // a dataset attribute
-                    ("foo", emscripten::val(7)), // node.foo = 7
-                    // function pointer
-                    ("ondblclick", f(onDblClick)),
-                    // lambda
-                    ("onclick", [](emscripten::val e) -> bool {
-                      // do stuff...
-                      return true;
-                    })
+  wasmdom::dsl::div(
+    ("id", "an-id"s), // node.setAttribute('id', 'an-id')
+    ("key", "foo"s),
+    ("class", "foo"s), // node.setAttribute('class', 'foo')
+    ("data-foo", "bar"s), // a dataset attribute
+    ("foo", emscripten::val(7)), // node.foo = 7
+    // function pointer
+    ("ondblclick", f(onDblClick)),
+    // lambda
+    ("onclick", [](emscripten::val e) -> bool {
+      // do stuff...
+      return true;
+    })
   );
 ```
 

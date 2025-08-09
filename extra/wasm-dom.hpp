@@ -124,6 +124,9 @@ namespace wasmdom
     class DomRecycler
     {
     public:
+        DomRecycler(bool useWasmGC);
+        ~DomRecycler();
+
         emscripten::val create(const std::string& name);
         emscripten::val createNS(const std::string& name, const std::string& ns);
         emscripten::val createText(const std::string& text);
@@ -131,10 +134,13 @@ namespace wasmdom
 
         void collect(emscripten::val node);
 
+        // valid if no garbage collector
         std::vector<emscripten::val> nodes(const std::string& name) const;
 
     private:
-        std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
+        struct DomFactory;
+        struct DomRecyclerFactory;
+        DomFactory* _d_ptr;
     };
 
     DomRecycler& recycler();
@@ -418,12 +424,17 @@ int wasmdom::domapi::nextSibling(int nodePtr)
 // -----------------------------------------------------------------------------
 wasmdom::DomRecycler& wasmdom::recycler()
 {
-    static DomRecycler recycler;
+    static DomRecycler recycler(true);
     return recycler;
 }
 
 namespace wasmdom
 {
+    EM_JS(bool, testGC, (), {
+        // https://github.com/GoogleChromeLabs/wasm-feature-detect/blob/main/src/detectors/gc/index.js
+        return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]));
+    })
+
     std::string upper(const std::string& str)
     {
         static const auto toupper{
@@ -435,43 +446,90 @@ namespace wasmdom
         std::ranges::copy(std::views::transform(str, toupper), upperStr.begin());
         return upperStr;
     }
+
+    struct DomRecycler::DomFactory
+    {
+        virtual ~DomFactory() = default;
+
+        virtual emscripten::val create(const std::string& name)
+        {
+            return emscripten::val::global("document").call<emscripten::val>("createElement", name);
+        }
+        virtual emscripten::val createNS(const std::string& name, const std::string& ns)
+        {
+            emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
+            node.set("asmDomNS", ns);
+            return node;
+        }
+        virtual emscripten::val createText(const std::string& text)
+        {
+            return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
+        }
+        virtual emscripten::val createComment(const std::string& comment)
+        {
+            return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
+        }
+
+        virtual void collect(emscripten::val /*node*/) {}
+    };
+
+    struct DomRecycler::DomRecyclerFactory : DomRecycler::DomFactory
+    {
+        std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
+
+        emscripten::val create(const std::string& name) override;
+        emscripten::val createNS(const std::string& name, const std::string& ns) override;
+        emscripten::val createText(const std::string& text) override;
+        emscripten::val createComment(const std::string& comment) override;
+
+        void collect(emscripten::val node) override;
+    };
 }
 
-emscripten::val wasmdom::DomRecycler::create(const std::string& name)
+wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
+    : _d_ptr{ testGC() && useWasmGC ? new DomFactory : new DomRecyclerFactory }
+{
+}
+
+wasmdom::DomRecycler::~DomRecycler()
+{
+    delete _d_ptr;
+}
+
+emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::create(const std::string& name)
 {
     std::vector<emscripten::val>& list = _nodes[upper(name)];
 
     if (list.empty())
-        return emscripten::val::global("document").call<emscripten::val>("createElement", name);
+        return DomFactory::create(name);
 
     emscripten::val node = list.back();
     list.pop_back();
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
+emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createNS(const std::string& name, const std::string& ns)
 {
     std::vector<emscripten::val>& list = _nodes[upper(name) + ns];
 
     emscripten::val node;
     if (list.empty()) {
-        node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
+        node = DomFactory::createNS(name, ns);
     } else {
         node = list.back();
         list.pop_back();
     }
 
-    node.set("asmDomNS", ns);
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
+emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createText(const std::string& text)
 {
     constexpr const char* textKey = "#TEXT";
     std::vector<emscripten::val>& list = _nodes[textKey];
 
     if (list.empty())
-        return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
+        return DomFactory::createText(text);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -480,13 +538,13 @@ emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
+emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createComment(const std::string& comment)
 {
     constexpr const char* commentKey = "#COMMENT";
     std::vector<emscripten::val>& list = _nodes[commentKey];
 
     if (list.empty())
-        return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
+        return DomFactory::createComment(comment);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -495,7 +553,7 @@ emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
     return node;
 }
 
-void wasmdom::DomRecycler::collect(emscripten::val node)
+void wasmdom::DomRecycler::DomRecyclerFactory::collect(emscripten::val node)
 {
     // clean
     for (emscripten::val child = node["lastChild"]; !child.isNull(); child = node["lastChild"]) {
@@ -549,10 +607,36 @@ void wasmdom::DomRecycler::collect(emscripten::val node)
     list.push_back(node);
 }
 
+emscripten::val wasmdom::DomRecycler::create(const std::string& name)
+{
+    return _d_ptr->create(name);
+}
+
+emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
+{
+    return _d_ptr->createNS(name, ns);
+}
+
+emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
+{
+    return _d_ptr->createText(text);
+}
+
+emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
+{
+    return _d_ptr->createComment(comment);
+}
+
+void wasmdom::DomRecycler::collect(emscripten::val node)
+{
+    _d_ptr->collect(node);
+}
+
 std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
 {
-    if (_nodes.contains(name))
-        return _nodes.at(name);
+    DomRecyclerFactory* ptr{ dynamic_cast<DomRecyclerFactory*>(_d_ptr) };
+    if (ptr && ptr->_nodes.contains(name))
+        return ptr->_nodes.at(name);
     return {};
 }
 

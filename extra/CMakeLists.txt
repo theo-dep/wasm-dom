@@ -27,5 +27,5 @@ set(TEST_MAIN ${CMAKE_CURRENT_BINARY_DIR}/main.cpp)
 file(WRITE ${TEST_MAIN} "#include <${OUTPUT_FILE}>\n\nint main() {\n wasmdom::VNode vnode(nullptr);\n return 0;\n}\n")
 
 add_executable(single_header_test ${TEST_MAIN})
-target_link_options(single_header_test PRIVATE -lembind -sEXPORTED_RUNTIME_METHODS=['UTF8ToString'])
+target_link_options(single_header_test PRIVATE -lembind)
 add_dependencies(single_header_test single_header)
