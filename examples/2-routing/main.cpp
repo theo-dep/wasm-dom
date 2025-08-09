@@ -160,8 +160,6 @@ bool handleContactClick(const emscripten::val& e)
 
 int main()
 {
-    init();
-
     vdom = std::make_unique<wasmdom::VDom>(
         emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root"))
     );

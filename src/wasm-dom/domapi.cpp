@@ -1,5 +1,6 @@
 #include "domapi.hpp"
 
+#include "domrecycler.hpp"
 #include "vnode.hpp"
 
 #include <emscripten.h>
@@ -48,22 +49,22 @@ int wasmdom::domapi::addNode(const emscripten::val& node)
 
 int wasmdom::domapi::createElement(const std::string& tag)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("create", tag));
+    return addPtr(recycler().create(tag));
 }
 
 int wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createNS", qualifiedName, namespaceURI));
+    return addPtr(recycler().createNS(qualifiedName, namespaceURI));
 }
 
 int wasmdom::domapi::createTextNode(const std::string& text)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createText", text));
+    return addPtr(recycler().createText(text));
 }
 
-int wasmdom::domapi::createComment(const std::string& text)
+int wasmdom::domapi::createComment(const std::string& comment)
 {
-    return addPtr(emscripten::val::module_property("recycler").call<emscripten::val>("createComment", text));
+    return addPtr(recycler().createComment(comment));
 }
 
 int wasmdom::domapi::createDocumentFragment()
@@ -89,7 +90,7 @@ void wasmdom::domapi::removeChild(int childPtr)
     if (parentNode != emscripten::val::null())
         parentNode.call<void>("removeChild", node);
 
-    emscripten::val::module_property("recycler").call<void>("collect", node);
+    recycler().collect(node);
 }
 
 void wasmdom::domapi::appendChild(int parentPtr, int childPtr)

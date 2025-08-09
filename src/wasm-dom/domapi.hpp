@@ -16,7 +16,7 @@ namespace wasmdom
         int createElement(const std::string& tag);
         int createElementNS(const std::string& namespaceURI, const std::string& qualifiedName);
         int createTextNode(const std::string& text);
-        int createComment(const std::string& text);
+        int createComment(const std::string& comment);
         int createDocumentFragment();
 
         void insertBefore(int parentNodePtr, int newNodePtr, int referenceNodePtr);

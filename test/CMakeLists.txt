@@ -21,10 +21,10 @@ set(LINK_OPTIONS -sENVIRONMENT=node -sMODULARIZE -sEXPORT_NAME=Module -sEXIT_RUN
     $<$<CONFIG:Debug>:-gsource-map -fsanitize=address -sALLOW_MEMORY_GROWTH>
 )
 
-add_executable(tests main.cpp utils.cpp)
+add_executable(tests utils.cpp)
 
 target_include_directories(tests PRIVATE .)
-target_link_libraries(tests PRIVATE wasm-dom Catch2::Catch2)
+target_link_libraries(tests PRIVATE wasm-dom Catch2::Catch2WithMain)
 target_link_options(tests PRIVATE ${LINK_OPTIONS})
 
 set(TEST_CASES attributes dataset domRecycler eventListeners h patch props toHTML toVNode)
@@ -37,9 +37,9 @@ foreach(test ${TEST_CASES})
     )
 endforeach()
 
-add_executable(benchmarks main.cpp utils.cpp benchmarks.cpp)
+add_executable(benchmarks utils.cpp benchmarks.cpp)
 
-target_link_libraries(benchmarks PRIVATE wasm-dom Catch2::Catch2)
+target_link_libraries(benchmarks PRIVATE wasm-dom Catch2::Catch2WithMain)
 target_link_options(benchmarks PRIVATE ${LINK_OPTIONS} -sALLOW_MEMORY_GROWTH)
 
 set(CMAKE_CTEST_ARGUMENTS "--verbose")

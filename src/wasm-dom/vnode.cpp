@@ -5,7 +5,9 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <algorithm>
 #include <array>
+#include <ranges>
 #include <regex>
 
 #ifdef WASMDOM_COVERAGE
@@ -102,6 +104,19 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
     }
 }
 
+namespace wasmdom
+{
+    void lower(std::string& str)
+    {
+        static const auto tolower{
+            [](const std::string::value_type& c) -> std::string::value_type {
+                return static_cast<std::string::value_type>(std::tolower(c));
+            }
+        };
+        std::ranges::copy(std::views::transform(str, tolower), str.begin());
+    }
+}
+
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
     VNode vnode = nullptr;
@@ -109,7 +124,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     // isElement
     if (nodeType == 1) {
         std::string sel = node["tagName"].as<std::string>();
-        std::transform(sel.begin(), sel.end(), sel.begin(), ::tolower);
+        lower(sel);
 
         VNodeAttributes data;
         int i = node["attributes"]["length"].as<int>();
@@ -254,9 +269,9 @@ namespace wasmdom
 
         emscripten::val String = emscripten::val::global("String");
         for (const auto& [key, val] : vnode.props()) {
-            if (std::find(omitProps.cbegin(), omitProps.cend(), key) == omitProps.cend()) {
+            if (std::ranges::find(omitProps, key) == omitProps.cend()) {
                 std::string lowerKey(key);
-                std::transform(key.begin(), key.end(), lowerKey.begin(), ::tolower);
+                lower(lowerKey);
                 html.append(" " + lowerKey + "=\"" + encode(String(val).as<std::string>()) + "\"");
             }
         }
@@ -277,8 +292,7 @@ namespace wasmdom
             }
         } else {
             bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
-            bool isSvgContainerElement = isSvg &&
-                                         std::find(containerElements.cbegin(), containerElements.cend(), vnode.sel()) != containerElements.cend();
+            bool isSvgContainerElement = isSvg && std::ranges::find(containerElements, vnode.sel()) != containerElements.cend();
 
             html.append("<" + vnode.sel());
             appendAttributes(vnode, html);
@@ -288,7 +302,7 @@ namespace wasmdom
             html.append(">");
 
             if (isSvgContainerElement ||
-                (!isSvg && std::find(voidElements.cbegin(), voidElements.cend(), vnode.sel()) == voidElements.cend())) {
+                (!isSvg && std::ranges::find(voidElements, vnode.sel()) == voidElements.cend())) {
 
                 if (vnode.props().contains("innerHTML") != 0) {
                     html.append(vnode.props().at("innerHTML").as<std::string>());
