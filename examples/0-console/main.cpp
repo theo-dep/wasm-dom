@@ -5,8 +5,6 @@ using namespace wasmdom::dsl;
 
 int main()
 {
-    wasmdom::init();
-
     auto onClickCallback = [](emscripten::val /*e*/) -> bool {
         emscripten::val::global("console").call<void>("log", "another click"s);
         return true;

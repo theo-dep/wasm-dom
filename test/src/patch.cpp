@@ -23,9 +23,9 @@ bool refCallbackWithChecks(emscripten::val node)
 {
     ++refCount;
     if (refCount % 2 == 0) {
-        REQUIRE_FALSE(node == emscripten::val::null());
+        REQUIRE_FALSE(node.isNull());
     } else {
-        REQUIRE(node.strictlyEquals(emscripten::val::null()));
+        REQUIRE(node.isNull());
     }
     return true;
 }
@@ -202,7 +202,7 @@ TEST_CASE("patch", "[patch]")
 
         VDom vdom(elmWithIdAndClass);
         vdom.patch(vnode);
-        emscripten::val elm = getNode(vnode);
+        emscripten::val elm = domapi::node(vnode.elm());
         REQUIRE(elm.strictlyEquals(elmWithIdAndClass));
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
         REQUIRE(elm["id"].strictlyEquals(emscripten::val("id")));
@@ -920,7 +920,7 @@ TEST_CASE("patch", "[patch]")
             emscripten::val elm = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
             VDom vdom(elm);
             vdom.patch(vnode1);
-            elm = getNode(vnode1);
+            elm = domapi::node(vnode1.elm());
             for (i = 0; i < elms; ++i) {
                 REQUIRE(elm["children"][std::to_string(i)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(i))));
                 opacities[i] = std::string("0.");
@@ -933,7 +933,7 @@ TEST_CASE("patch", "[patch]")
             VNode vnode2 = span()(opacityChildren);
 
             vdom.patch(vnode2);
-            elm = getNode(vnode2);
+            elm = domapi::node(vnode2.elm());
             for (i = 0; i < elms; ++i) {
                 REQUIRE(elm["children"][std::to_string(i)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(shufArr[i]))));
                 REQUIRE(emscripten::val(opacities[i]).call<emscripten::val>("indexOf", elm["children"][std::to_string(i)]["style"]["opacity"]).strictlyEquals(emscripten::val(0)));
@@ -1060,7 +1060,7 @@ TEST_CASE("patch", "[patch]")
             }
             VNode vnode = div()(children);
             vdom.patch(vnode);
-            elm = getNode(vnode);
+            elm = domapi::node(vnode.elm());
             r = 0;
             for (j = 0; j < len; ++j) {
                 if (shufArr[j] != 0) {
@@ -1525,7 +1525,7 @@ TEST_CASE("patch", "[patch]")
                         if (refCount == 2) {
                             REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("bar")));
                         } else {
-                            REQUIRE(node.strictlyEquals(emscripten::val::null()));
+                            REQUIRE(node.isNull());
                         }
                         return true;
                     }))

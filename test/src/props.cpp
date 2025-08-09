@@ -64,7 +64,7 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode2);
 
         emscripten::val elm = getBodyFirstChild();
-        REQUIRE(elm["src"].strictlyEquals(emscripten::val::undefined()));
+        REQUIRE(elm["src"].isUndefined());
     }
 
     SECTION("should update value prop if user interacted with the element")

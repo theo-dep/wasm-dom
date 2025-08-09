@@ -155,7 +155,7 @@ TEST_CASE("toVNode", "[toVNode]")
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode);
+        emscripten::val elm = domapi::node(nextVNode.elm());
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
@@ -182,7 +182,7 @@ TEST_CASE("toVNode", "[toVNode]")
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode);
+        emscripten::val elm = domapi::node(nextVNode.elm());
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["nodeType"].strictlyEquals(emscripten::val(11)));
@@ -216,7 +216,7 @@ TEST_CASE("toVNode", "[toVNode]")
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode);
+        emscripten::val elm = domapi::node(nextVNode.elm());
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
@@ -250,7 +250,7 @@ TEST_CASE("toVNode", "[toVNode]")
         VDom vdom(prevElm);
         vdom.patch(nextVNode);
 
-        emscripten::val elm = getNode(nextVNode);
+        emscripten::val elm = domapi::node(nextVNode.elm());
 
         REQUIRE(elm.strictlyEquals(prevElm));
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));

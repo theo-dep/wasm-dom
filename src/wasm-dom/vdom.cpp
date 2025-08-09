@@ -1,5 +1,6 @@
 #include "vdom.hpp"
 
+#include "domapi.hpp"
 #include "vnode.hpp"
 
 #include <emscripten.h>
@@ -27,31 +28,24 @@ namespace wasmdom
     int createElm(VNode& vnode)
     {
         if (vnode.hash() & isElement) {
-            vnode.setElm(EM_ASM_INT({
-                    if ($1 === 0) {
-                        return Module.createElement(Module['UTF8ToString']($0))
-                    } else {
-                        return  Module.createElementNS(Module['UTF8ToString']($1), Module['UTF8ToString']($0));
-                    }
-                }, vnode.sel().c_str(), vnode.hash() & hasNS ? vnode.ns().c_str() : 0
-            ));
+            if (vnode.hash() & hasNS) {
+                vnode.setElm(domapi::createElementNS(vnode.ns(), vnode.sel()));
+            } else {
+                vnode.setElm(domapi::createElement(vnode.sel()));
+            }
         } else if (vnode.hash() & isText) {
-            vnode.setElm(EM_ASM_INT({ return Module.createTextNode(
-                                          Module['UTF8ToString']($0)
-                                      ); }, vnode.sel().c_str()));
+            vnode.setElm(domapi::createTextNode(vnode.sel()));
             return vnode.elm();
         } else if (vnode.hash() & isFragment) {
-            vnode.setElm(EM_ASM_INT({ return Module.createDocumentFragment(); }));
+            vnode.setElm(domapi::createDocumentFragment());
         } else if (vnode.hash() & isComment) {
-            vnode.setElm(EM_ASM_INT({ return Module.createComment(
-                                          Module['UTF8ToString']($0)
-                                      ); }, vnode.sel().c_str()));
+            vnode.setElm(domapi::createComment(vnode.sel()));
             return vnode.elm();
         }
 
         for (VNode& child : vnode._data->children) {
             int elm = createElm(child);
-            EM_ASM({ Module.appendChild($0, $1); }, vnode.elm(), elm);
+            domapi::appendChild(vnode.elm(), elm);
         }
 
         static const VNode emptyNode("");
@@ -64,7 +58,7 @@ namespace wasmdom
     {
         while (startIdx <= endIdx) {
             int elm = createElm(vnodes[startIdx++]);
-            EM_ASM({ Module.insertBefore($0, $1, $2) }, parentElm, elm, before);
+            domapi::insertBefore(parentElm, elm, before);
         }
     }
 
@@ -74,7 +68,7 @@ namespace wasmdom
             const VNode& vnode = vnodes[startIdx++];
 
             if (vnode) {
-                EM_ASM({ Module.removeChild($0); }, vnode.elm());
+                domapi::removeChild(vnode.elm());
 
                 if (vnode.hash() & hasRef) {
                     vnode.callbacks().at("ref")(emscripten::val::null());
@@ -121,19 +115,15 @@ namespace wasmdom
             } else if (sameVNode(oldStartVnode, newEndVnode)) {
                 if (oldStartVnode != newEndVnode)
                     patchVNode(oldStartVnode, newEndVnode, parentElm);
-
-                EM_ASM({ Module.insertBefore(
-                             $0,
-                             $1,
-                             Module.nextSibling($2)
-                         ); }, parentElm, oldStartVnode.elm(), oldEndVnode.elm());
+                int nextSiblingOldPtr = domapi::nextSibling(oldEndVnode.elm());
+                domapi::insertBefore(parentElm, oldStartVnode.elm(), nextSiblingOldPtr);
                 oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
                 newEndVnode = boundCheckVNode(newCh, --newEndIdx, newMaxIdx);
             } else if (sameVNode(oldEndVnode, newStartVnode)) {
                 if (oldEndVnode != newStartVnode)
                     patchVNode(oldEndVnode, newStartVnode, parentElm);
 
-                EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, oldEndVnode.elm(), oldStartVnode.elm());
+                domapi::insertBefore(parentElm, oldEndVnode.elm(), oldStartVnode.elm());
                 oldEndVnode = boundCheckVNode(oldCh, --oldEndIdx, oldMaxIdx);
                 newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
             } else {
@@ -149,17 +139,17 @@ namespace wasmdom
                 }
                 if (!oldKeyToIdx.contains(newStartVnode.key())) {
                     int elm = createElm(newStartVnode);
-                    EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
+                    domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
                 } else {
                     VNode elmToMove = oldCh[oldKeyToIdx[newStartVnode.key()]];
                     if ((elmToMove.hash() & extractSel) != (newStartVnode.hash() & extractSel)) {
                         int elm = createElm(newStartVnode);
-                        EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elm, oldStartVnode.elm());
+                        domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
                     } else {
                         if (elmToMove != newStartVnode)
                             patchVNode(elmToMove, newStartVnode, parentElm);
                         oldCh[oldKeyToIdx[newStartVnode.key()]] = nullptr;
-                        EM_ASM({ Module.insertBefore($0, $1, $2); }, parentElm, elmToMove.elm(), oldStartVnode.elm());
+                        domapi::insertBefore(parentElm, elmToMove.elm(), oldStartVnode.elm());
                     }
                 }
                 newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
@@ -191,10 +181,7 @@ void wasmdom::patchVNode(VNode& oldVnode, VNode& vnode, int parentElm)
         }
         vnode.diff(oldVnode);
     } else if (vnode.sel() != oldVnode.sel()) {
-        EM_ASM({ Module.setNodeValue(
-                     $0,
-                     Module['UTF8ToString']($1)
-                 ); }, vnode.elm(), vnode.sel().c_str());
+        domapi::setNodeValue(vnode.elm(), vnode.sel());
     }
 }
 
@@ -210,16 +197,10 @@ const wasmdom::VNode& wasmdom::VDom::patch(const VNode& vnode)
         patchVNode(_currentNode, newNode, _currentNode.elm());
     } else {
         int elm = createElm(newNode);
-        EM_ASM({
-                var parent = Module.parentNode($1);
-                if (parent !== 0) {
-                    Module.insertBefore(
-                        parent,
-                        $0,
-                        Module.nextSibling($1)
-                    );
-                    Module.removeChild($1);
-                } }, elm, _currentNode.elm());
+        int parentPtr = domapi::parentNode(_currentNode.elm());
+        int nextSiblingElmPtr = domapi::nextSibling(_currentNode.elm());
+        domapi::insertBefore(parentPtr, elm, nextSiblingElmPtr);
+        domapi::removeChild(_currentNode.elm());
     }
 
     _currentNode = newNode;

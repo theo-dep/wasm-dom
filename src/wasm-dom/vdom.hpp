@@ -10,8 +10,6 @@ namespace emscripten
 namespace wasmdom
 {
 
-    class VNode;
-
     class VDom
     {
     public:

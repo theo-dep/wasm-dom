@@ -97,7 +97,7 @@ TEST_CASE("attributes", "[attributes]")
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val::null()));
+        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).isNull());
     }
 
     SECTION("should set truthy values to empty string")
@@ -119,7 +119,7 @@ TEST_CASE("attributes", "[attributes]")
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("readonly")).strictlyEquals(emscripten::val("")));
     }
 
-    SECTION("should be set correctly when namespaced")
+    SECTION("should be set correctly when xlink namespaced")
     {
         VNode vnode = div(("xlink:href", "#foo"s));
 
@@ -133,6 +133,24 @@ TEST_CASE("attributes", "[attributes]")
                 "getAttributeNS",
                 emscripten::val("http://www.w3.org/1999/xlink"),
                 emscripten::val("href")
+            ) == emscripten::val("#foo")
+        );
+    }
+
+    SECTION("should be set correctly when xml namespaced")
+    {
+        VNode vnode = div(("xml:base", "#foo"s));
+
+        VDom vdom(getRoot());
+        vdom.patch(vnode);
+
+        emscripten::val elm = getBodyFirstChild();
+
+        REQUIRE(
+            elm.call<emscripten::val>(
+                "getAttributeNS",
+                emscripten::val("http://www.w3.org/XML/1998/namespace"),
+                emscripten::val("base")
             ) == emscripten::val("#foo")
         );
     }

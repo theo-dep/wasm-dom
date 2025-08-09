@@ -26,6 +26,7 @@ Initial version of wasm-dom is a fork of [asm-dom](https://github.com/mbasso/asm
   Less than 50% slower relative to initial code before [PR #3](https://github.com/theo-dep/wasm-dom/pull/3) for patch with addition. Other performances are stable.
 - Add a domain-specific language (DSL) with attributes in key-value pairs from namespace `wasmdom::dsl`. Text and children are now added with `operator()`. Remove `h` function.
 - A single header in [extra](/extra) folder.
+- Remove the `init` method and create DOM API functions and DomRecycler singleton class.
 
 ## Motivation
 
@@ -105,8 +106,6 @@ using namespace wasmdom;
 using namespace wasmdom::dsl;
 
 int main() {
-  init();
-
   VNode vnode =
     div(("onclick", [](emscripten::val e) -> bool {
           emscripten::val::global("console").call<void>("log", emscripten::val("clicked"));
@@ -197,7 +196,7 @@ To access directly DOM nodes created by wasm-dom, for example to manage focus, t
 ```cpp
 bool refCallback(emscripten::val node) {
   // check if node === null
-  if (node.strictlyEquals(emscripten::val::null())) {
+  if (node.isNull()) {
     // node unmounted
     // do nothing
   } else {
@@ -210,8 +209,6 @@ bool refCallback(emscripten::val node) {
 };
 
 int main() {
-  init();
-
   VNode vnode1 =
     div()(
       input(("ref", f(refCallback)))
@@ -256,7 +253,7 @@ Please note that if the project wants to use a lambda as a ref wasm-dom will cal
 VNode vnode1 =
   div()(
     input(("ref", [&](emscripten::val node) -> bool {
-        if (!node.strictlyEquals(emscripten::val::null())) {
+        if (!node.isNull()) {
           // node mounted
           // focus input
           node.call<void>("focus");

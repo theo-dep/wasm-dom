@@ -56,7 +56,6 @@ EM_JS(void, createHelloComponent, (), {
 int main()
 {
     createHelloComponent();
-    wasmdom::init();
 
     auto onChangeCallback = [](emscripten::val e) -> bool {
         emscripten::val::global("console").call<void>("log", emscripten::val("name changed:"), e["target"]["name"]);
