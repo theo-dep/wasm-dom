@@ -4,6 +4,8 @@ project(wasm-dom LANGUAGES CXX VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(FetchContent)
+
 option(WASM_DOM_TESTS "Build and add tests to test runner" ON)
 option(WASM_DOM_EXAMPLES "Build examples" ON)
 

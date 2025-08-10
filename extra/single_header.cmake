@@ -23,14 +23,26 @@ file(APPEND ${OUTPUT_FILE} "// Project: ${PROJECT_NAME}\n")
 file(APPEND ${OUTPUT_FILE} "// =============================================================================\n")
 file(APPEND ${OUTPUT_FILE} "#pragma once\n\n")
 
+set(SOURCE_BASENAMES "")
+foreach(FILE_PATH ${SOURCE_FILES})
+    get_filename_component(BASENAME ${FILE_PATH} NAME)
+    list(APPEND SOURCE_BASENAMES ${BASENAME})
+endforeach()
+
 set(ALL_INCLUDES "")
 
 foreach(FILE_PATH ${SOURCE_FILES})
     file(READ ${FILE_PATH} CONTENT)
 
-    string(REGEX MATCHALL "#include[ \t]*<[^>]*>" SYSTEM_INCLUDES "${CONTENT}")
-    foreach(INCLUDE ${SYSTEM_INCLUDES})
-         string(APPEND ALL_INCLUDES "${INCLUDE}\n")
+    string(REGEX MATCHALL "#include[ \t]*[<\"][^<>\"]*[>\"]" ALL_INCLUDES_IN_FILE "${CONTENT}")
+    foreach(INCLUDE ${ALL_INCLUDES_IN_FILE})
+        string(REGEX REPLACE "#include[ \t]*[<\"]([^<>\"]*)[>\"]" "\\1" INCLUDE_FILE "${INCLUDE}")
+        get_filename_component(INCLUDE_BASENAME ${INCLUDE_FILE} NAME)
+
+        list(FIND SOURCE_BASENAMES ${INCLUDE_BASENAME} FOUND_INDEX)
+        if(FOUND_INDEX EQUAL -1)
+            string(APPEND ALL_INCLUDES "${INCLUDE}\n")
+        endif()
     endforeach()
 endforeach()
 

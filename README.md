@@ -32,6 +32,10 @@ Initial version of wasm-dom is a fork of [asm-dom](https://github.com/mbasso/asm
 - Remove the `init` method and create DOM API functions and DomRecycler singleton class.
 - Add [WebAssembly Garbage Collector](https://github.com/WebAssembly/gc) support but keep DOM recycler for old browser ([very recent feature](https://webassembly.org/features/#table-row-gc)).
 
+### Third party
+
+To support browsers without WebAssembly garbage collection, a dynamic strategy using type erasure is implemented. Thanks to [Erased](https://github.com/qnope/Erased), the pattern is made easy. Headers are included in a single header.
+
 ## Motivation
 
 From asm-dom author:
@@ -427,6 +431,7 @@ vdom.patch(newVnode); // do nothing, return newVnode
 ## License
 
 Copyright (c) 2016 Matteo Basso as part of [asm-dom](https://github.com/mbasso/asm-dom)<br/>
+Copyright (c) 2024 Antoine MORRIER as part of [Erased](https://github.com/qnope/Erased)<br/>
 Copyright (c) 2025 Théo Devaucoup
 
 [Back to top](#top)

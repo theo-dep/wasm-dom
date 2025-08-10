@@ -31,77 +31,74 @@ namespace wasmdom
         return upperStr;
     }
 
-    struct DomRecycler::DomFactory
+    struct DomDocumentFactory
     {
-        DomFactory() = default;
-        virtual ~DomFactory() = default;
-
-        virtual emscripten::val create(const std::string& name)
+        static inline emscripten::val create(const std::string& name)
         {
             return emscripten::val::global("document").call<emscripten::val>("createElement", name);
         }
-        virtual emscripten::val createNS(const std::string& name, const std::string& ns)
+        static inline emscripten::val createNS(const std::string& name, const std::string& ns)
         {
             emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
             node.set("asmDomNS", ns);
             return node;
         }
-        virtual emscripten::val createText(const std::string& text)
+        static inline emscripten::val createText(const std::string& text)
         {
             return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
         }
-        virtual emscripten::val createComment(const std::string& comment)
+        static inline emscripten::val createComment(const std::string& comment)
         {
             return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
         }
 
-        virtual void collect(emscripten::val /*node*/) {} // // LCOV_EXCL_LINE
+        static inline void collect(emscripten::val /*node*/) {} // LCOV_EXCL_LINE
     };
 
-    struct DomRecycler::DomRecyclerFactory : DomRecycler::DomFactory
+    struct DomRecyclerFactory
     {
-        DomRecyclerFactory() = default;
-        ~DomRecyclerFactory() override = default;
+#ifdef WASMDOM_COVERAGE
+        ~DomRecyclerFactory() = default;
+#endif
 
         std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
 
-        emscripten::val create(const std::string& name) override;
-        emscripten::val createNS(const std::string& name, const std::string& ns) override;
-        emscripten::val createText(const std::string& text) override;
-        emscripten::val createComment(const std::string& comment) override;
+        emscripten::val create(const std::string& name);
+        emscripten::val createNS(const std::string& name, const std::string& ns);
+        emscripten::val createText(const std::string& text);
+        emscripten::val createComment(const std::string& comment);
 
-        void collect(emscripten::val node) override;
+        void collect(emscripten::val node);
     };
 }
 
 wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
-    : _d_ptr{ testGC() && useWasmGC ? new DomFactory : new DomRecyclerFactory }
+    : _factory{ testGC() && useWasmGC ? DomFactory(std::in_place_type<DomDocumentFactory>) : DomFactory(std::in_place_type<DomRecyclerFactory>) }
 {
 }
 
-wasmdom::DomRecycler::~DomRecycler()
-{
-    delete _d_ptr;
-}
+#ifdef WASMDOM_COVERAGE
+wasmdom::DomRecycler::~DomRecycler() = default;
+#endif
 
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::create(const std::string& name)
+emscripten::val wasmdom::DomRecyclerFactory::create(const std::string& name)
 {
     std::vector<emscripten::val>& list = _nodes[upper(name)];
 
     if (list.empty())
-        return DomFactory::create(name);
+        return DomDocumentFactory::create(name);
 
     emscripten::val node = list.back();
     list.pop_back();
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createNS(const std::string& name, const std::string& ns)
+emscripten::val wasmdom::DomRecyclerFactory::createNS(const std::string& name, const std::string& ns)
 {
     std::vector<emscripten::val>& list = _nodes[upper(name) + ns];
 
     if (list.empty())
-        return DomFactory::createNS(name, ns);
+        return DomDocumentFactory::createNS(name, ns);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -110,13 +107,13 @@ emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createNS(const std::st
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createText(const std::string& text)
+emscripten::val wasmdom::DomRecyclerFactory::createText(const std::string& text)
 {
     constexpr const char* textKey = "#TEXT";
     std::vector<emscripten::val>& list = _nodes[textKey];
 
     if (list.empty())
-        return DomFactory::createText(text);
+        return DomDocumentFactory::createText(text);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -125,13 +122,13 @@ emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createText(const std::
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createComment(const std::string& comment)
+emscripten::val wasmdom::DomRecyclerFactory::createComment(const std::string& comment)
 {
     constexpr const char* commentKey = "#COMMENT";
     std::vector<emscripten::val>& list = _nodes[commentKey];
 
     if (list.empty())
-        return DomFactory::createComment(comment);
+        return DomDocumentFactory::createComment(comment);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -140,7 +137,7 @@ emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createComment(const st
     return node;
 }
 
-void wasmdom::DomRecycler::DomRecyclerFactory::collect(emscripten::val node)
+void wasmdom::DomRecyclerFactory::collect(emscripten::val node)
 {
     // clean
     for (emscripten::val child = node["lastChild"]; !child.isNull(); child = node["lastChild"]) {
@@ -196,33 +193,33 @@ void wasmdom::DomRecycler::DomRecyclerFactory::collect(emscripten::val node)
 
 emscripten::val wasmdom::DomRecycler::create(const std::string& name)
 {
-    return _d_ptr->create(name);
+    return _factory.create(name);
 }
 
 emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
 {
-    return _d_ptr->createNS(name, ns);
+    return _factory.createNS(name, ns);
 }
 
 emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
 {
-    return _d_ptr->createText(text);
+    return _factory.createText(text);
 }
 
 emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
 {
-    return _d_ptr->createComment(comment);
+    return _factory.createComment(comment);
 }
 
 void wasmdom::DomRecycler::collect(emscripten::val node)
 {
-    _d_ptr->collect(node);
+    _factory.collect(node);
 }
 
 std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
 {
-    DomRecyclerFactory* ptr{ dynamic_cast<DomRecyclerFactory*>(_d_ptr) };
-    if (ptr && ptr->_nodes.contains(name))
-        return ptr->_nodes.at(name);
+    const DomRecyclerFactory* factory{ erased::any_cast<DomRecyclerFactory>(&_factory) };
+    if (factory && factory->_nodes.contains(name))
+        return factory->_nodes.at(name);
     return {};
 }

@@ -13,11 +13,400 @@
 #include <emscripten/val.h>
 #include <functional>
 #include <memory>
+#include <new>
 #include <ranges>
 #include <regex>
 #include <string>
+#include <tuple>
+#include <type_traits>
+#include <typeinfo>
 #include <unordered_map>
+#include <utility>
 #include <vector>
+
+// -----------------------------------------------------------------------------
+// build/_deps/erased-src/erased/include/erased/utils/utils.h
+// -----------------------------------------------------------------------------
+namespace erased::details
+{
+    struct erased_type_t
+    {
+    };
+
+    template <bool condition>
+    struct fast_conditional
+    {
+        template <typename T, typename F>
+        using apply = T;
+    };
+
+    template <>
+    struct fast_conditional<false>
+    {
+        template <typename T, typename F>
+        using apply = F;
+    };
+
+    template <typename Method, typename F>
+    struct method_to_trait;
+
+    template <typename Method, typename ErasedType, typename ReturnType, typename... Args>
+    struct method_to_trait<Method, ReturnType (*)(ErasedType&, Args...)>
+    {
+        static constexpr bool is_const = std::is_const_v<ErasedType>;
+
+        using first_argument =
+            typename fast_conditional<is_const>::template apply<const void*, void*>;
+
+        using type = ReturnType (*)(first_argument, Args...);
+
+        template <typename T>
+        static constexpr auto create_invoker_for()
+        {
+            return +[](first_argument first, Args... args) {
+                if constexpr (is_const) {
+                    return Method::invoker(*static_cast<const T*>(first), static_cast<Args&&>(args)...);
+                } else {
+                    return Method::invoker(*static_cast<T*>(first), static_cast<Args&&>(args)...);
+                }
+            };
+        }
+    };
+
+    template <typename Method>
+    using method_to_trait_t =
+        method_to_trait<Method, decltype(&Method::template invoker<erased_type_t>)>;
+
+    template <typename Method>
+    using method_ptr = typename method_to_trait_t<Method>::type;
+
+    template <typename Method, typename... Methods>
+    constexpr int index_in_list()
+    {
+        std::array array = { std::is_same_v<Method, Methods>... };
+        for (int i = 0; i < static_cast<int>(array.size()); ++i)
+            if (array[i])
+                return i;
+        return -1;
+    }
+
+    template <typename... Methods>
+    struct vtable
+    {
+        constexpr vtable(method_ptr<Methods>... ptrs)
+            : m_functions{ ptrs... }
+        {
+        }
+
+        template <typename T>
+        static constexpr const vtable* construct_for() noexcept
+        {
+            static constexpr vtable vtable(
+                method_to_trait_t<Methods>::template create_invoker_for<T>()...
+            );
+            return &vtable;
+        }
+
+        template <typename Method>
+        constexpr auto* get() const noexcept
+        {
+            constexpr int index = index_in_list<Method, Methods...>();
+            return std::get<index>(m_functions);
+        }
+
+        std::tuple<method_ptr<Methods>...> m_functions;
+    };
+} // namespace erased::details
+
+// -----------------------------------------------------------------------------
+// build/_deps/erased-src/erased/include/erased/erased.h
+// -----------------------------------------------------------------------------
+#define fwd(x) static_cast<decltype(x)&&>(x)
+
+namespace erased
+{
+
+    struct Copy
+    {
+        template <typename T>
+        static constexpr void* invoker(const T& object, void* sooPtr, std::size_t sooSize)
+        {
+            if (sizeof object > sooSize || std::is_constant_evaluated())
+                return new T{ object };
+            else {
+                return new (sooPtr) T{ object };
+            }
+        }
+    };
+
+    struct Move
+    {
+        template <typename T>
+        static constexpr void* invoker(T& object, void* sooPtr, std::size_t sooSize)
+        {
+            if (sizeof object > sooSize || std::is_constant_evaluated())
+                return new T{ std::move(object) };
+            else {
+                return new (sooPtr) T{ std::move(object) };
+            }
+        }
+    };
+
+    namespace details
+    {
+        template <typename Soo>
+        struct Destructor
+        {
+            template <typename T>
+            static constexpr void invoker(T&, Soo* soo)
+            {
+                soo->template destroy<T>();
+            }
+        };
+
+        template <int Size, typename... Methods>
+        struct soo
+        {
+            using vtable = details::vtable<Methods..., Destructor<soo>>;
+            static constexpr auto buffer_size =
+                Size - sizeof(void*) - sizeof(const vtable*);
+            std::array<std::byte, buffer_size> m_buffer;
+            void* ptr = nullptr;
+            const vtable* vtable_ptr = nullptr;
+
+            template <typename T, typename... Args>
+            constexpr T* construct(Args&&... args)
+            {
+                static_assert(sizeof(soo) == Size);
+                if constexpr (sizeof(T) <= buffer_size) {
+                    if (std::is_constant_evaluated()) {
+                        ptr = new T{ fwd(args)... };
+                    } else {
+                        ptr = new (m_buffer.data()) T{ fwd(args)... };
+                    }
+                } else {
+                    ptr = new T{ fwd(args)... };
+                }
+                vtable_ptr = vtable::template construct_for<T>();
+                return static_cast<T*>(ptr);
+            }
+
+            template <typename T>
+            constexpr T* get() noexcept
+            {
+                return static_cast<T*>(ptr);
+            }
+
+            template <typename T>
+            constexpr const T* get() const noexcept
+            {
+                return static_cast<const T*>(ptr);
+            }
+
+            template <typename T>
+            constexpr void destroy() noexcept
+            {
+                T* ptr = get<T>();
+                if constexpr (sizeof(T) <= buffer_size) {
+                    if (std::is_constant_evaluated()) {
+                        delete ptr;
+                    } else {
+                        std::destroy_at(ptr);
+                    }
+                } else {
+                    delete ptr;
+                }
+            }
+        };
+
+        template <typename T, typename... List>
+        constexpr bool contains()
+        {
+            return (std::is_same_v<T, List> || ...);
+        }
+    } // namespace details
+
+    template <int Size, typename... Methods>
+    struct basic_erased;
+
+    template <typename T>
+    struct is_erased : std::false_type
+    {
+    };
+
+    template <int Size, typename... Methods>
+    struct is_erased<basic_erased<Size, Methods...>> : std::true_type
+    {
+    };
+
+    template <typename T>
+    constexpr bool is_erased_v = is_erased<T>::value;
+
+    template <typename T>
+    concept erased_concept = is_erased_v<std::decay_t<T>>;
+
+    template <int Size, typename... Methods>
+    struct alignas(Size) basic_erased : public Methods...
+    {
+        using soo = details::soo<Size, Methods...>;
+
+        static constexpr bool copyable = details::contains<Copy, Methods...>();
+        static constexpr bool movable = details::contains<Move, Methods...>();
+
+        template <typename T>
+        constexpr basic_erased(std::in_place_type_t<T>, auto&&... args) noexcept
+        {
+            m_soo.template construct<T>(fwd(args)...);
+        }
+
+        template <typename T>
+        constexpr basic_erased(T x) noexcept
+            : basic_erased{ std::in_place_type<T>, static_cast<T&&>(x) }
+        {
+        }
+
+        template <typename Method>
+        constexpr decltype(auto) invoke(Method, auto&&... xs) const
+        {
+            return m_soo.vtable_ptr->template get<Method>()(
+                static_cast<const void*>(m_soo.ptr), fwd(xs)...
+            );
+        }
+
+        template <typename Method>
+        constexpr decltype(auto) invoke(Method, auto&&... xs)
+        {
+            return m_soo.vtable_ptr->template get<Method>()(m_soo.ptr, fwd(xs)...);
+        }
+
+        constexpr basic_erased(basic_erased&& other) noexcept
+            requires movable
+        {
+            m_soo.vtable_ptr = other.m_soo.vtable_ptr;
+            m_soo.ptr = other.invoke(Move{}, static_cast<void*>(m_soo.m_buffer.data()), soo::buffer_size);
+        }
+
+        constexpr basic_erased& operator=(basic_erased&& other) noexcept
+            requires movable
+        {
+            destroy();
+            m_soo.vtable_ptr = other.m_soo.vtable_ptr;
+            m_soo.ptr = other.invoke(Move{}, static_cast<void*>(m_soo.m_buffer.data()), soo::buffer_size);
+            return *this;
+        }
+
+        constexpr basic_erased(const basic_erased& other)
+            requires copyable
+        {
+            m_soo.vtable_ptr = other.m_soo.vtable_ptr;
+            m_soo.ptr = other.invoke(Copy{}, static_cast<void*>(m_soo.m_buffer.data()), soo::buffer_size);
+        }
+
+        constexpr basic_erased& operator=(const basic_erased& other)
+            requires copyable
+        {
+            destroy();
+            m_soo.vtable_ptr = other.m_soo.vtable_ptr;
+            m_soo.ptr = other.invoke(Copy{}, static_cast<void*>(m_soo.m_buffer.data()), soo::buffer_size);
+            return *this;
+        }
+
+        constexpr void destroy()
+        {
+            invoke(details::Destructor<decltype(m_soo)>{}, &m_soo);
+        }
+
+        constexpr ~basic_erased() { destroy(); }
+
+        template <typename T, int S, typename... M>
+        friend constexpr bool is(const basic_erased<S, M...>& object);
+
+        template <typename T, erased_concept Erased>
+        friend constexpr auto* any_cast(Erased* object);
+
+        template <typename T, erased_concept Erased>
+        friend constexpr auto&& any_cast(Erased&& object);
+
+    private:
+        soo m_soo;
+    };
+
+    template <typename... Methods>
+    using erased = basic_erased<32, Methods...>;
+
+    template <typename T, int Size, typename... Methods>
+    constexpr bool is(const basic_erased<Size, Methods...>& object)
+    {
+        using soo = typename basic_erased<Size, Methods...>::soo;
+        using vtable = typename soo::vtable;
+
+        return object.m_soo.vtable_ptr == vtable::template construct_for<T>();
+    }
+
+    template <typename T, erased_concept Erased>
+    constexpr auto* any_cast(Erased* object)
+    {
+        if (is<T>(*object))
+            return object->m_soo.template get<T>();
+        return decltype(object->m_soo.template get<T>()){ nullptr };
+    }
+
+    template <typename T, erased_concept Erased>
+    constexpr auto&& any_cast(Erased&& object)
+    {
+        if (is<T>(object))
+            return std::forward_like<Erased>(*object.m_soo.template get<T>());
+        throw std::bad_cast();
+    }
+} // namespace erased
+
+#undef fwd
+
+#define ERASED_HEAD(a, ...) a
+#define ERASED_TAIL(a, ...) __VA_ARGS__
+#define ERASED_EAT(...)
+#define ERASED_EXPAND(...) __VA_ARGS__
+
+#define ERASED_REMOVE_PARENTHESIS_IMPL(...) __VA_ARGS__
+#define ERASED_REMOVE_PARENTHESIS(...) \
+    ERASED_EXPAND(ERASED_REMOVE_PARENTHESIS_IMPL __VA_ARGS__)
+
+#define ERASED_ADD_COMA_AFTER_PARENTHESIS_IMPL(...) (__VA_ARGS__),
+#define ERASED_ADD_COMA_AFTER_PARENTHESIS(...) \
+    (ERASED_EXPAND(ERASED_ADD_COMA_AFTER_PARENTHESIS_IMPL __VA_ARGS__))
+
+#define ERASED_REMOVE_AFTER_PARENTHESIS(...)                       \
+    ERASED_REMOVE_PARENTHESIS(                                     \
+        ERASED_HEAD ERASED_ADD_COMA_AFTER_PARENTHESIS(__VA_ARGS__) \
+    )
+
+#define ERASED_CAT_IMPL(a, b) a##b
+#define ERASED_CAT(...) ERASED_CAT_IMPL(__VA_ARGS__)
+#define ERASED_GET_AFTER_requires(...) (__VA_ARGS__)
+#define ERASED_GET_INSIDE_REQUIRES(...)                       \
+    ERASED_REMOVE_AFTER_PARENTHESIS(                          \
+        ERASED_CAT(ERASED_GET_AFTER_, ERASED_EAT __VA_ARGS__) \
+    )
+
+#define ERASED_GET_TRAILING_RETURN(...) \
+    ERASED_EXPAND(ERASED_TAIL ERASED_ADD_COMA_AFTER_PARENTHESIS(ERASED_CAT(ERASED_GET_AFTER_, ERASED_EAT __VA_ARGS__)))
+
+#define ERASED_MAKE_BEHAVIOR(Name, name, signature)                                                    \
+    struct Name                                                                                        \
+    {                                                                                                  \
+        static constexpr auto                                                                          \
+        invoker(auto ERASED_REMOVE_AFTER_PARENTHESIS(signature)) ERASED_GET_TRAILING_RETURN(signature) \
+        {                                                                                              \
+            return ERASED_GET_INSIDE_REQUIRES(signature);                                              \
+        }                                                                                              \
+                                                                                                       \
+        constexpr decltype(auto) name(this auto&& self, auto&&... args)                                \
+        {                                                                                              \
+            return self.invoke(Name{}, static_cast<decltype(args)&&>(args)...);                        \
+        }                                                                                              \
+    }
+
+#undef fwd
 
 // -----------------------------------------------------------------------------
 // src/wasm-dom/attribute.hpp
@@ -121,11 +510,34 @@ namespace wasmdom
 namespace wasmdom
 {
 
+    // LCOV_EXCL_START
+    ERASED_MAKE_BEHAVIOR(
+        Create, create,
+        (&self, const std::string& name) requires(self.create(name))->emscripten::val
+    );
+    ERASED_MAKE_BEHAVIOR(
+        CreateNS, createNS,
+        (&self, const std::string& name, const std::string& ns) requires(self.createNS(name, ns))->emscripten::val
+    );
+    ERASED_MAKE_BEHAVIOR(
+        CreateText, createText,
+        (&self, const std::string& text) requires(self.createText(text))->emscripten::val
+    );
+    ERASED_MAKE_BEHAVIOR(
+        CreateComment, createComment,
+        (&self, const std::string& comment) requires(self.createComment(comment))->emscripten::val
+    );
+    ERASED_MAKE_BEHAVIOR(
+        Collect, collect,
+        (&self, emscripten::val node) requires(self.collect(node))->void
+    );
+    // LCOV_EXCL_STOP
+    using DomFactory = erased::erased<Create, CreateNS, CreateText, CreateComment, Collect>;
+
     class DomRecycler
     {
     public:
         DomRecycler(bool useWasmGC);
-        ~DomRecycler();
 
         emscripten::val create(const std::string& name);
         emscripten::val createNS(const std::string& name, const std::string& ns);
@@ -138,9 +550,7 @@ namespace wasmdom
         std::vector<emscripten::val> nodes(const std::string& name) const;
 
     private:
-        struct DomFactory;
-        struct DomRecyclerFactory;
-        DomFactory* _d_ptr;
+        DomFactory _factory;
     };
 
     DomRecycler& recycler();
@@ -797,89 +1207,82 @@ namespace wasmdom
         return upperStr;
     }
 
-    struct DomRecycler::DomFactory
+    struct DomDocumentFactory
     {
-        virtual ~DomFactory() = default;
-
-        virtual emscripten::val create(const std::string& name)
+        static inline emscripten::val create(const std::string& name)
         {
             return emscripten::val::global("document").call<emscripten::val>("createElement", name);
         }
-        virtual emscripten::val createNS(const std::string& name, const std::string& ns)
+        static inline emscripten::val createNS(const std::string& name, const std::string& ns)
         {
             emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
             node.set("asmDomNS", ns);
             return node;
         }
-        virtual emscripten::val createText(const std::string& text)
+        static inline emscripten::val createText(const std::string& text)
         {
             return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
         }
-        virtual emscripten::val createComment(const std::string& comment)
+        static inline emscripten::val createComment(const std::string& comment)
         {
             return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
         }
 
-        virtual void collect(emscripten::val /*node*/) {}
+        static inline void collect(emscripten::val /*node*/) {} // LCOV_EXCL_LINE
     };
 
-    struct DomRecycler::DomRecyclerFactory : DomRecycler::DomFactory
+    struct DomRecyclerFactory
     {
+
         std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
 
-        emscripten::val create(const std::string& name) override;
-        emscripten::val createNS(const std::string& name, const std::string& ns) override;
-        emscripten::val createText(const std::string& text) override;
-        emscripten::val createComment(const std::string& comment) override;
+        emscripten::val create(const std::string& name);
+        emscripten::val createNS(const std::string& name, const std::string& ns);
+        emscripten::val createText(const std::string& text);
+        emscripten::val createComment(const std::string& comment);
 
-        void collect(emscripten::val node) override;
+        void collect(emscripten::val node);
     };
 }
 
 wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
-    : _d_ptr{ testGC() && useWasmGC ? new DomFactory : new DomRecyclerFactory }
+    : _factory{ testGC() && useWasmGC ? DomFactory(std::in_place_type<DomDocumentFactory>) : DomFactory(std::in_place_type<DomRecyclerFactory>) }
 {
 }
 
-wasmdom::DomRecycler::~DomRecycler()
-{
-    delete _d_ptr;
-}
-
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::create(const std::string& name)
+emscripten::val wasmdom::DomRecyclerFactory::create(const std::string& name)
 {
     std::vector<emscripten::val>& list = _nodes[upper(name)];
 
     if (list.empty())
-        return DomFactory::create(name);
+        return DomDocumentFactory::create(name);
 
     emscripten::val node = list.back();
     list.pop_back();
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createNS(const std::string& name, const std::string& ns)
+emscripten::val wasmdom::DomRecyclerFactory::createNS(const std::string& name, const std::string& ns)
 {
     std::vector<emscripten::val>& list = _nodes[upper(name) + ns];
 
-    emscripten::val node;
-    if (list.empty()) {
-        node = DomFactory::createNS(name, ns);
-    } else {
-        node = list.back();
-        list.pop_back();
-    }
+    if (list.empty())
+        return DomDocumentFactory::createNS(name, ns);
 
+    emscripten::val node = list.back();
+    list.pop_back();
+
+    node.set("asmDomNS", ns);
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createText(const std::string& text)
+emscripten::val wasmdom::DomRecyclerFactory::createText(const std::string& text)
 {
     constexpr const char* textKey = "#TEXT";
     std::vector<emscripten::val>& list = _nodes[textKey];
 
     if (list.empty())
-        return DomFactory::createText(text);
+        return DomDocumentFactory::createText(text);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -888,13 +1291,13 @@ emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createText(const std::
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createComment(const std::string& comment)
+emscripten::val wasmdom::DomRecyclerFactory::createComment(const std::string& comment)
 {
     constexpr const char* commentKey = "#COMMENT";
     std::vector<emscripten::val>& list = _nodes[commentKey];
 
     if (list.empty())
-        return DomFactory::createComment(comment);
+        return DomDocumentFactory::createComment(comment);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -903,7 +1306,7 @@ emscripten::val wasmdom::DomRecycler::DomRecyclerFactory::createComment(const st
     return node;
 }
 
-void wasmdom::DomRecycler::DomRecyclerFactory::collect(emscripten::val node)
+void wasmdom::DomRecyclerFactory::collect(emscripten::val node)
 {
     // clean
     for (emscripten::val child = node["lastChild"]; !child.isNull(); child = node["lastChild"]) {
@@ -959,34 +1362,34 @@ void wasmdom::DomRecycler::DomRecyclerFactory::collect(emscripten::val node)
 
 emscripten::val wasmdom::DomRecycler::create(const std::string& name)
 {
-    return _d_ptr->create(name);
+    return _factory.create(name);
 }
 
 emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
 {
-    return _d_ptr->createNS(name, ns);
+    return _factory.createNS(name, ns);
 }
 
 emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
 {
-    return _d_ptr->createText(text);
+    return _factory.createText(text);
 }
 
 emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
 {
-    return _d_ptr->createComment(comment);
+    return _factory.createComment(comment);
 }
 
 void wasmdom::DomRecycler::collect(emscripten::val node)
 {
-    _d_ptr->collect(node);
+    _factory.collect(node);
 }
 
 std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
 {
-    DomRecyclerFactory* ptr{ dynamic_cast<DomRecyclerFactory*>(_d_ptr) };
-    if (ptr && ptr->_nodes.contains(name))
-        return ptr->_nodes.at(name);
+    const DomRecyclerFactory* factory{ erased::any_cast<DomRecyclerFactory>(&_factory) };
+    if (factory && factory->_nodes.contains(name))
+        return factory->_nodes.at(name);
     return {};
 }
 
