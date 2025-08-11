@@ -8,7 +8,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
 {
     setupDom();
 
-    wasmdom::DomRecycler recycler;
+    wasmdom::DomRecycler recycler(false);
 
     SECTION("should access an unknown node")
     {

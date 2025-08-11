@@ -9,11 +9,13 @@
 namespace wasmdom
 {
 
+    struct DomFactoryVTable;
+
     class DomRecycler
     {
     public:
+        DomRecycler(bool useWasmGC);
 #ifdef WASMDOM_COVERAGE
-        DomRecycler();
         ~DomRecycler();
 #endif
 
@@ -24,9 +26,14 @@ namespace wasmdom
 
         void collect(emscripten::val node);
 
+        // valid if no garbage collector
         std::vector<emscripten::val> nodes(const std::string& name) const;
 
     private:
+        friend struct DomFactory;
+        friend struct DomRecyclerFactory;
+        const DomFactoryVTable* _factory;
+
         std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
     };
 

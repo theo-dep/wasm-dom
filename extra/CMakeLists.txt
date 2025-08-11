@@ -24,8 +24,16 @@ add_custom_command(
 add_custom_target(single_header ALL DEPENDS ${OUTPUT_FILE})
 
 set(TEST_MAIN ${CMAKE_CURRENT_BINARY_DIR}/main.cpp)
-file(WRITE ${TEST_MAIN} "#include <${OUTPUT_FILE}>\n\nint main() {\n wasmdom::VNode vnode(nullptr);\n return 0;\n}\n")
+file(WRITE ${TEST_MAIN}
+        "#include <${OUTPUT_FILE}>\n"
+        "int main() {\n"
+        "     wasmdom::VNode vnode = wasmdom::dsl::div();\n"
+        "     wasmdom::VDom vdom(emscripten::val(\"\"));\n"
+        "     vdom.patch(vnode);\n"
+        "     return 0;\n"
+        "}\n"
+)
 
 add_executable(single_header_test ${TEST_MAIN})
-target_link_options(single_header_test PRIVATE -lembind -sEXPORTED_RUNTIME_METHODS=['UTF8ToString'])
+target_link_options(single_header_test PRIVATE -lembind)
 add_dependencies(single_header_test single_header)

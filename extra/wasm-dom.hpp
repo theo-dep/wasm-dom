@@ -121,9 +121,13 @@ namespace wasmdom
 namespace wasmdom
 {
 
+    struct DomFactoryVTable;
+
     class DomRecycler
     {
     public:
+        DomRecycler(bool useWasmGC);
+
         emscripten::val create(const std::string& name);
         emscripten::val createNS(const std::string& name, const std::string& ns);
         emscripten::val createText(const std::string& text);
@@ -131,9 +135,14 @@ namespace wasmdom
 
         void collect(emscripten::val node);
 
+        // valid if no garbage collector
         std::vector<emscripten::val> nodes(const std::string& name) const;
 
     private:
+        friend struct DomFactory;
+        friend struct DomRecyclerFactory;
+        const DomFactoryVTable* _factory;
+
         std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
     };
 
@@ -255,6 +264,356 @@ inline wasmdom::VNode::VNode(const std::string& nodeSel, std::pair<K, V>&&... no
     : VNode(nodeSel)
 {
     _data->data = attributesToVNode(std::forward<std::pair<K, V>>(nodeData)...);
+}
+
+// -----------------------------------------------------------------------------
+// src/wasm-dom/h.hpp
+// -----------------------------------------------------------------------------
+namespace wasmdom::dsl
+{
+    // can't use comma operator ("s", "s") with string literals
+    // it must be std::string, so write ("s", "s"s) or ("s"s, "s")
+    using namespace std::string_literals;
+
+    // helper to write VNode((key, val), (key, val)...)
+    template <Stringifiable K, Attribute V>
+    inline std::pair<K, V> operator,(K&& key, V&& val)
+    {
+        return { std::forward<K>(key), std::forward<V>(val) };
+    }
+
+    // helper to type pointers to data members for operator,
+    template <class F>
+    inline auto f(F&& f) { return std::function(std::forward<F>(f)); }
+
+    inline VNode t(const std::string& inlineText) { return VNode(text_tag, inlineText); }
+    inline VNode fragment() { return VNode(""); }
+    inline VNode comment() { return VNode("!"); }
+    inline VNode comment(const std::string& text) { return comment()(text); }
+
+#define WASMDOM_DSL_SEL_NAME(X, N)                                                                                 \
+    inline VNode X() { return VNode(N); }                                                                          \
+    template <Stringifiable... K, Attribute... V>                                                                  \
+    inline VNode X(std::pair<K, V>&&... nodeData) { return VNode(N, std::forward<std::pair<K, V>>(nodeData)...); } \
+    inline VNode X(const VNodeAttributes& nodeData) { return VNode(N, nodeData); }
+
+#define WASMDOM_DSL_SEL(X) WASMDOM_DSL_SEL_NAME(X, #X)
+
+#define WASMDOM_DSL_PARENS ()
+
+#define WASMDOM_DSL_EXPAND(...) WASMDOM_DSL_EXPAND4(WASMDOM_DSL_EXPAND4(WASMDOM_DSL_EXPAND4(WASMDOM_DSL_EXPAND4(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND4(...) WASMDOM_DSL_EXPAND3(WASMDOM_DSL_EXPAND3(WASMDOM_DSL_EXPAND3(WASMDOM_DSL_EXPAND3(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND3(...) WASMDOM_DSL_EXPAND2(WASMDOM_DSL_EXPAND2(WASMDOM_DSL_EXPAND2(WASMDOM_DSL_EXPAND2(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND2(...) WASMDOM_DSL_EXPAND1(WASMDOM_DSL_EXPAND1(WASMDOM_DSL_EXPAND1(WASMDOM_DSL_EXPAND1(__VA_ARGS__))))
+#define WASMDOM_DSL_EXPAND1(...) __VA_ARGS__
+
+#define WASMDOM_DSL_FOR_EACH(macro, ...) \
+    __VA_OPT__(WASMDOM_DSL_EXPAND(WASMDOM_DSL_FOR_EACH_HELPER(macro, __VA_ARGS__)))
+#define WASMDOM_DSL_FOR_EACH_HELPER(macro, a1, ...) \
+    macro(a1)                                       \
+        __VA_OPT__(WASMDOM_DSL_FOR_EACH_AGAIN WASMDOM_DSL_PARENS(macro, __VA_ARGS__))
+#define WASMDOM_DSL_FOR_EACH_AGAIN() WASMDOM_DSL_FOR_EACH_HELPER
+
+    // clang-format off
+#define WASMDOM_DSL_ELEMENTS                                        \
+        /* Document structure */                                    \
+        html,                                                       \
+        head,                                                       \
+        body,                                                       \
+        title,                                                      \
+        base,                                                       \
+        link,                                                       \
+        meta,                                                       \
+        style,                                                      \
+        script,                                                     \
+        noscript,                                                   \
+                                                                    \
+        /* Sectioning */                                            \
+        main,                                                       \
+        section,                                                    \
+        nav,                                                        \
+        article,                                                    \
+        aside,                                                      \
+        header,                                                     \
+        footer,                                                     \
+        address,                                                    \
+                                                                    \
+        /* Headings */                                              \
+        h1,                                                         \
+        h2,                                                         \
+        h3,                                                         \
+        h4,                                                         \
+        h5,                                                         \
+        h6,                                                         \
+        hgroup,                                                     \
+                                                                    \
+        /* Text content */                                          \
+        div,                                                        \
+        p,                                                          \
+        blockquote,                                                 \
+        ol,                                                         \
+        ul,                                                         \
+        li,                                                         \
+        dl,                                                         \
+        dt,                                                         \
+        dd,                                                         \
+        figure,                                                     \
+        figcaption,                                                 \
+        pre,                                                        \
+        hr,                                                         \
+                                                                    \
+        /* Inline text */                                           \
+        a,                                                          \
+        abbr,                                                       \
+        b,                                                          \
+        bdi,                                                        \
+        bdo,                                                        \
+        br,                                                         \
+        cite,                                                       \
+        code,                                                       \
+        data,                                                       \
+        dfn,                                                        \
+        em,                                                         \
+        i,                                                          \
+        kbd,                                                        \
+        mark,                                                       \
+        q,                                                          \
+        rb,                                                         \
+        rp,                                                         \
+        rt,                                                         \
+        rtc,                                                        \
+        ruby,                                                       \
+        s,                                                          \
+        samp,                                                       \
+        small,                                                      \
+        span,                                                       \
+        strong,                                                     \
+        sub,                                                        \
+        sup,                                                        \
+        time,                                                       \
+        u,                                                          \
+        var,                                                        \
+        wbr,                                                        \
+                                                                    \
+        /* Media */                                                 \
+        area,                                                       \
+        audio,                                                      \
+        img,                                                        \
+        map,                                                        \
+        track,                                                      \
+        video,                                                      \
+        embed,                                                      \
+        iframe,                                                     \
+        object,                                                     \
+        param,                                                      \
+        picture,                                                    \
+        portal,                                                     \
+        source,                                                     \
+                                                                    \
+        /* Forms */                                                 \
+        form,                                                       \
+        label,                                                      \
+        input,                                                      \
+        button,                                                     \
+        select,                                                     \
+        datalist,                                                   \
+        optgroup,                                                   \
+        option,                                                     \
+        textarea,                                                   \
+        output,                                                     \
+        progress,                                                   \
+        meter,                                                      \
+        fieldset,                                                   \
+        legend,                                                     \
+                                                                    \
+        /* Tables */                                                \
+        table,                                                      \
+        caption,                                                    \
+        colgroup,                                                   \
+        col,                                                        \
+        tbody,                                                      \
+        thead,                                                      \
+        tfoot,                                                      \
+        tr,                                                         \
+        td,                                                         \
+        th,                                                         \
+                                                                    \
+        /* Interactive */                                           \
+        details,                                                    \
+        summary,                                                    \
+        dialog,                                                     \
+                                                                    \
+        /* Web Components */                                        \
+        slot,                                                       \
+        /* hTemplate, */                                            \
+        /* webComponent, */                                         \
+                                                                    \
+        /* Deprecated/Obsolete (still in specs) */                  \
+        /*  acronym, */                                             \
+        /* applet, */                                               \
+        /* basefont, */                                             \
+        /* big, */                                                  \
+        /* center, */                                               \
+        /* dir, */                                                  \
+        /* font, */                                                 \
+        /* frame, */                                                \
+        /* frameset, */                                             \
+        /* isindex, */                                              \
+        /* keygen, */                                               \
+        /* listing, */                                              \
+        /* marquee, */                                              \
+        /* menuitem, */                                             \
+        /* multicol, */                                             \
+        /* nextid, */                                               \
+        /* nobr, */                                                 \
+        /* noembed, */                                              \
+        /* noframes, */                                             \
+        /* plaintext, */                                            \
+        /* spacer, */                                               \
+        /* strike, */                                               \
+        /* tt, */                                                   \
+        /* xmp, */                                                  \
+                                                                    \
+        /* MathML elements commonly used in HTML */                 \
+        /* math, */                                                 \
+        /* annotation, */                                           \
+        /* annotationXml, */                                        \
+        /* maction, */                                              \
+        /* maligngroup, */                                          \
+        /* malignmark, */                                           \
+        /* menclose, */                                             \
+        /* merror, */                                               \
+        /* mfenced, */                                              \
+        /* mfrac, */                                                \
+        /* mglyph, */                                               \
+        /* mi, */                                                   \
+        /* mlabeledtr, */                                           \
+        /* mlongdiv, */                                             \
+        /* mmultiscripts, */                                        \
+        /* mn, */                                                   \
+        /* mo, */                                                   \
+        /* mover, */                                                \
+        /* mpadded, */                                              \
+        /* mphantom, */                                             \
+        /* mroot, */                                                \
+        /* mrow, */                                                 \
+        /* ms, */                                                   \
+        /* mscarries, */                                            \
+        /* mscarry, */                                              \
+        /* msgroup, */                                              \
+        /* mspace, */                                               \
+        /* msqrt, */                                                \
+        /* msrow, */                                                \
+        /* mstack, */                                               \
+        /* mstyle, */                                               \
+        /* msub, */                                                 \
+        /* msup, */                                                 \
+        /* msubsup, */                                              \
+        /* mtable, */                                               \
+        /* mtd, */                                                  \
+        /* mtext, */                                                \
+        /* mtr, */                                                  \
+        /* munder, */                                               \
+        /* munderover, */                                           \
+        /* semantics, */                                            \
+                                                                    \
+        /* SVG elements commonly used in HTML */                    \
+        svg,                                                        \
+        animate,                                                    \
+        animateMotion,                                              \
+        animateTransform,                                           \
+        circle,                                                     \
+        clipPath,                                                   \
+        /* colorProfile, */                                         \
+        defs,                                                       \
+        desc,                                                       \
+        ellipse,                                                    \
+        feBlend,                                                    \
+        feColorMatrix,                                              \
+        feComponentTransfer,                                        \
+        feComposite,                                                \
+        feConvolveMatrix,                                           \
+        feDiffuseLighting,                                          \
+        feDisplacementMap,                                          \
+        feDistantLight,                                             \
+        feDropShadow,                                               \
+        feFlood,                                                    \
+        feFuncA,                                                    \
+        feFuncB,                                                    \
+        feFuncG,                                                    \
+        feFuncR,                                                    \
+        feGaussianBlur,                                             \
+        feImage,                                                    \
+        feMerge,                                                    \
+        feMergeNode,                                                \
+        feMorphology,                                               \
+        feOffset,                                                   \
+        fePointLight,                                               \
+        feSpecularLighting,                                         \
+        feSpotLight,                                                \
+        feTile,                                                     \
+        feTurbulence,                                               \
+        filter,                                                     \
+        /* fontFace, */                                             \
+        /* fontFaceFormat, */                                       \
+        /* fontFaceName, */                                         \
+        /* fontFaceSrc, */                                          \
+        /* fontFaceUri, */                                          \
+        foreignObject,                                              \
+        g,                                                          \
+        glyph,                                                      \
+        image,                                                      \
+        line,                                                       \
+        linearGradient,                                             \
+        marker,                                                     \
+        mask,                                                       \
+        metadata,                                                   \
+        /* missingGlyph, */                                         \
+        mpath,                                                      \
+        path,                                                       \
+        pattern,                                                    \
+        polygon,                                                    \
+        polyline,                                                   \
+        radialGradient,                                             \
+        rect,                                                       \
+        set,                                                        \
+        stop,                                                       \
+        /* hSwitch, */                                              \
+        symbol,                                                     \
+        text,                                                       \
+        textPath,                                                   \
+        tspan,                                                      \
+        use,                                                        \
+        view
+    // clang-format on
+
+    WASMDOM_DSL_FOR_EACH(WASMDOM_DSL_SEL, WASMDOM_DSL_ELEMENTS)
+
+#define WASMDOM_DSL_CONFLICT_ELEMENTS \
+    hTemplate, hSwitch,               \
+        webComponent,                 \
+        missingGlyph,                 \
+        fontFace, fontFaceFormat, fontFaceName, fontFaceSrc, fontFaceUri, colorProfile // annotationXml
+
+    // Elements with naming conflicts resolved
+    WASMDOM_DSL_SEL_NAME(hTemplate, "template")
+    WASMDOM_DSL_SEL_NAME(hSwitch, "switch")
+
+    // Web Components with dashes
+    WASMDOM_DSL_SEL_NAME(webComponent, "web-component")
+
+    // SVG elements with dashes
+    WASMDOM_DSL_SEL_NAME(missingGlyph, "missing-glyph")
+    WASMDOM_DSL_SEL_NAME(fontFace, "font-face")
+    WASMDOM_DSL_SEL_NAME(fontFaceFormat, "font-face-format")
+    WASMDOM_DSL_SEL_NAME(fontFaceName, "font-face-name")
+    WASMDOM_DSL_SEL_NAME(fontFaceSrc, "font-face-src")
+    WASMDOM_DSL_SEL_NAME(fontFaceUri, "font-face-uri")
+    WASMDOM_DSL_SEL_NAME(colorProfile, "color-profile")
+
+    // MathML elements with dashes
+    // WASMDOM_DSL_SEL_NAME(annotationXml, "annotation-xml")
+
 }
 
 // -----------------------------------------------------------------------------
@@ -418,12 +777,17 @@ int wasmdom::domapi::nextSibling(int nodePtr)
 // -----------------------------------------------------------------------------
 wasmdom::DomRecycler& wasmdom::recycler()
 {
-    static DomRecycler recycler;
+    static DomRecycler recycler(true);
     return recycler;
 }
 
 namespace wasmdom
 {
+    EM_JS(bool, testGC, (), {
+        // https://github.com/GoogleChromeLabs/wasm-feature-detect/blob/main/src/detectors/gc/index.js
+        return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]));
+    })
+
     std::string upper(const std::string& str)
     {
         static const auto toupper{
@@ -435,43 +799,104 @@ namespace wasmdom
         std::ranges::copy(std::views::transform(str, toupper), upperStr.begin());
         return upperStr;
     }
+
+    struct DomFactory
+    {
+        static emscripten::val create(DomRecycler&, const std::string& name)
+        {
+            return emscripten::val::global("document").call<emscripten::val>("createElement", name);
+        }
+        static emscripten::val createNS(DomRecycler&, const std::string& name, const std::string& ns)
+        {
+            emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
+            node.set("asmDomNS", ns);
+            return node;
+        }
+        static emscripten::val createText(DomRecycler&, const std::string& text)
+        {
+            return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
+        }
+        static emscripten::val createComment(DomRecycler&, const std::string& comment)
+        {
+            return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
+        }
+
+        static void collect(DomRecycler&, emscripten::val /*node*/) {} // // LCOV_EXCL_LINE
+    };
+
+    struct DomRecyclerFactory
+    {
+        static emscripten::val create(DomRecycler& recycler, const std::string& name);
+        static emscripten::val createNS(DomRecycler& recycler, const std::string& name, const std::string& ns);
+        static emscripten::val createText(DomRecycler& recycler, const std::string& text);
+        static emscripten::val createComment(DomRecycler& recycler, const std::string& comment);
+
+        static void collect(DomRecycler& recycler, emscripten::val node);
+    };
+
+    struct DomFactoryVTable
+    {
+        emscripten::val (*create)(DomRecycler&, const std::string&) = nullptr;
+        emscripten::val (*createNS)(DomRecycler&, const std::string&, const std::string&) = nullptr;
+        emscripten::val (*createText)(DomRecycler&, const std::string&) = nullptr;
+        emscripten::val (*createComment)(DomRecycler&, const std::string&) = nullptr;
+        void (*collect)(DomRecycler&, emscripten::val) = nullptr;
+    };
+
+    template <typename T>
+    consteval DomFactoryVTable makeDomVTable()
+    {
+        return {
+            &T::create,
+            &T::createNS,
+            &T::createText,
+            &T::createComment,
+            &T::collect
+        };
+    }
+
+    static inline constexpr DomFactoryVTable domFactoryVTable = makeDomVTable<DomFactory>();
+    static inline constexpr DomFactoryVTable domRecyclerFactoryVTable = makeDomVTable<DomRecyclerFactory>();
 }
 
-emscripten::val wasmdom::DomRecycler::create(const std::string& name)
+wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
+    : _factory{ testGC() && useWasmGC ? &domFactoryVTable : &domRecyclerFactoryVTable }
 {
-    std::vector<emscripten::val>& list = _nodes[upper(name)];
+}
+
+emscripten::val wasmdom::DomRecyclerFactory::create(DomRecycler& recycler, const std::string& name)
+{
+    std::vector<emscripten::val>& list = recycler._nodes[upper(name)];
 
     if (list.empty())
-        return emscripten::val::global("document").call<emscripten::val>("createElement", name);
+        return DomFactory::create(recycler, name);
 
     emscripten::val node = list.back();
     list.pop_back();
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
+emscripten::val wasmdom::DomRecyclerFactory::createNS(DomRecycler& recycler, const std::string& name, const std::string& ns)
 {
-    std::vector<emscripten::val>& list = _nodes[upper(name) + ns];
+    std::vector<emscripten::val>& list = recycler._nodes[upper(name) + ns];
 
-    emscripten::val node;
-    if (list.empty()) {
-        node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
-    } else {
-        node = list.back();
-        list.pop_back();
-    }
+    if (list.empty())
+        return DomFactory::createNS(recycler, name, ns);
+
+    emscripten::val node = list.back();
+    list.pop_back();
 
     node.set("asmDomNS", ns);
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
+emscripten::val wasmdom::DomRecyclerFactory::createText(DomRecycler& recycler, const std::string& text)
 {
     constexpr const char* textKey = "#TEXT";
-    std::vector<emscripten::val>& list = _nodes[textKey];
+    std::vector<emscripten::val>& list = recycler._nodes[textKey];
 
     if (list.empty())
-        return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
+        return DomFactory::createText(recycler, text);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -480,13 +905,13 @@ emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
     return node;
 }
 
-emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
+emscripten::val wasmdom::DomRecyclerFactory::createComment(DomRecycler& recycler, const std::string& comment)
 {
     constexpr const char* commentKey = "#COMMENT";
-    std::vector<emscripten::val>& list = _nodes[commentKey];
+    std::vector<emscripten::val>& list = recycler._nodes[commentKey];
 
     if (list.empty())
-        return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
+        return DomFactory::createComment(recycler, comment);
 
     emscripten::val node = list.back();
     list.pop_back();
@@ -495,12 +920,12 @@ emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
     return node;
 }
 
-void wasmdom::DomRecycler::collect(emscripten::val node)
+void wasmdom::DomRecyclerFactory::collect(DomRecycler& recycler, emscripten::val node)
 {
     // clean
     for (emscripten::val child = node["lastChild"]; !child.isNull(); child = node["lastChild"]) {
         node.call<void>("removeChild", child);
-        collect(child);
+        collect(recycler, child);
     }
 
     if (!node["attributes"].isUndefined()) {
@@ -545,8 +970,33 @@ void wasmdom::DomRecycler::collect(emscripten::val node)
         nodeName += node["namespaceURI"].as<std::string>();
     }
 
-    std::vector<emscripten::val>& list = _nodes[nodeName];
+    std::vector<emscripten::val>& list = recycler._nodes[nodeName];
     list.push_back(node);
+}
+
+emscripten::val wasmdom::DomRecycler::create(const std::string& name)
+{
+    return _factory->create(*this, name);
+}
+
+emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
+{
+    return _factory->createNS(*this, name, ns);
+}
+
+emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
+{
+    return _factory->createText(*this, text);
+}
+
+emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
+{
+    return _factory->createComment(*this, comment);
+}
+
+void wasmdom::DomRecycler::collect(emscripten::val node)
+{
+    _factory->collect(*this, node);
 }
 
 std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
