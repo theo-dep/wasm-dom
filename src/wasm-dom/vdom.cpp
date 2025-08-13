@@ -77,19 +77,12 @@ namespace wasmdom
         }
     }
 
-    VNode boundCheckVNode(Children& ch, int idx, int endIdx)
-    {
-        return (idx >= 0 && idx <= endIdx ? ch[idx] : nullptr);
-    }
-
     void updateChildren(int parentElm, Children& oldCh, Children& newCh)
     {
         int oldStartIdx = 0;
         int newStartIdx = 0;
         int oldEndIdx = oldCh.size() - 1;
         int newEndIdx = newCh.size() - 1;
-        const int& oldMaxIdx = oldEndIdx; // to avoid unsequenced modification and access
-        const int& newMaxIdx = newEndIdx; // |
         VNode oldStartVnode = oldCh[0];
         VNode oldEndVnode = oldCh[oldEndIdx];
         VNode newStartVnode = newCh[0];
@@ -99,33 +92,33 @@ namespace wasmdom
 
         while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
             if (!oldStartVnode) {
-                oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
+                oldStartVnode = ++oldStartIdx <= oldEndIdx ? oldCh[oldStartIdx] : nullptr;
             } else if (!oldEndVnode) {
-                oldEndVnode = boundCheckVNode(oldCh, --oldEndIdx, oldMaxIdx);
+                oldEndVnode = --oldEndIdx >= oldStartIdx ? oldCh[oldEndIdx] : nullptr;
             } else if (sameVNode(oldStartVnode, newStartVnode)) {
                 if (oldStartVnode != newStartVnode)
                     patchVNode(oldStartVnode, newStartVnode, parentElm);
-                oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
-                newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
+                oldStartVnode = ++oldStartIdx <= oldEndIdx ? oldCh[oldStartIdx] : nullptr;
+                newStartVnode = ++newStartIdx <= newEndIdx ? newCh[newStartIdx] : nullptr;
             } else if (sameVNode(oldEndVnode, newEndVnode)) {
                 if (oldEndVnode != newEndVnode)
                     patchVNode(oldEndVnode, newEndVnode, parentElm);
-                oldEndVnode = boundCheckVNode(oldCh, --oldEndIdx, oldMaxIdx);
-                newEndVnode = boundCheckVNode(newCh, --newEndIdx, newMaxIdx);
+                oldEndVnode = --oldEndIdx >= oldStartIdx ? oldCh[oldEndIdx] : nullptr;
+                newEndVnode = --newEndIdx >= newStartIdx ? newCh[newEndIdx] : nullptr;
             } else if (sameVNode(oldStartVnode, newEndVnode)) {
                 if (oldStartVnode != newEndVnode)
                     patchVNode(oldStartVnode, newEndVnode, parentElm);
                 int nextSiblingOldPtr = domapi::nextSibling(oldEndVnode.elm());
                 domapi::insertBefore(parentElm, oldStartVnode.elm(), nextSiblingOldPtr);
-                oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
-                newEndVnode = boundCheckVNode(newCh, --newEndIdx, newMaxIdx);
+                oldStartVnode = ++oldStartIdx <= oldEndIdx ? oldCh[oldStartIdx] : nullptr;
+                newEndVnode = --newEndIdx >= newStartIdx ? newCh[newEndIdx] : nullptr;
             } else if (sameVNode(oldEndVnode, newStartVnode)) {
                 if (oldEndVnode != newStartVnode)
                     patchVNode(oldEndVnode, newStartVnode, parentElm);
 
                 domapi::insertBefore(parentElm, oldEndVnode.elm(), oldStartVnode.elm());
-                oldEndVnode = boundCheckVNode(oldCh, --oldEndIdx, oldMaxIdx);
-                newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
+                oldEndVnode = --oldEndIdx >= oldStartIdx ? oldCh[oldEndIdx] : nullptr;
+                newStartVnode = ++newStartIdx <= newEndIdx ? newCh[newStartIdx] : nullptr;
             } else {
                 if (!oldKeys) {
                     oldKeys = true;
@@ -151,7 +144,7 @@ namespace wasmdom
                         domapi::insertBefore(parentElm, elmToMove.elm(), oldStartVnode.elm());
                     }
                 }
-                newStartVnode = boundCheckVNode(newCh, ++newStartIdx, newMaxIdx);
+                newStartVnode = ++newStartIdx <= newEndIdx ? newCh[newStartIdx] : nullptr;
             }
         }
         if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
