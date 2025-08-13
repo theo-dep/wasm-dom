@@ -77,9 +77,8 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             if (!_data->children.empty()) {
                 _data->hash |= hasDirectChildren;
 
-                Children::size_type i = _data->children.size();
-                while (i--) {
-                    _data->children[i].normalize(addNS && _data->sel != "foreignObject");
+                for (VNode& child : _data->children) {
+                    child.normalize(addNS && _data->sel != "foreignObject");
                 }
             }
 

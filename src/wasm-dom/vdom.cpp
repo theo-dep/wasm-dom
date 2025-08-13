@@ -56,16 +56,16 @@ namespace wasmdom
 
     void addVNodes(int parentElm, int before, Children& vnodes, Children::size_type startIdx, Children::size_type endIdx)
     {
-        while (startIdx <= endIdx) {
-            int elm = createElm(vnodes[startIdx++]);
+        for (; startIdx <= endIdx; ++startIdx) {
+            int elm = createElm(vnodes[startIdx]);
             domapi::insertBefore(parentElm, elm, before);
         }
     }
 
     void removeVNodes(const Children& vnodes, Children::size_type startIdx, Children::size_type endIdx)
     {
-        while (startIdx <= endIdx) {
-            const VNode& vnode = vnodes[startIdx++];
+        for (; startIdx <= endIdx; ++startIdx) {
+            const VNode& vnode = vnodes[startIdx];
 
             if (vnode) {
                 domapi::removeChild(vnode.elm());
@@ -129,12 +129,11 @@ namespace wasmdom
             } else {
                 if (!oldKeys) {
                     oldKeys = true;
-                    int beginIdx = oldStartIdx;
-                    while (beginIdx <= oldEndIdx) {
+
+                    for (int beginIdx = oldStartIdx; beginIdx <= oldEndIdx; ++beginIdx) {
                         if (oldCh[beginIdx].hash() & hasKey) {
                             oldKeyToIdx.emplace(oldCh[beginIdx].key(), beginIdx);
                         }
-                        ++beginIdx;
                     }
                 }
                 if (!oldKeyToIdx.contains(newStartVnode.key())) {
