@@ -67,9 +67,9 @@ namespace wasmdom
 
         VNode& operator()(const std::string& nodeText);
 
-        VNode& operator()(const Children::value_type& child);
+        VNode& operator()(const VNode& child);
         VNode& operator()(const Children& nodeChildren);
-        VNode& operator()(std::initializer_list<Children::value_type> nodeChildren);
+        VNode& operator()(std::initializer_list<VNode> nodeChildren);
 
 #ifdef WASMDOM_COVERAGE
         VNode(const VNode& other);
