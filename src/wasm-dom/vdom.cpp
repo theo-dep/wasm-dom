@@ -97,7 +97,7 @@ namespace wasmdom
         bool oldKeys = false;
         std::unordered_map<std::string, int> oldKeyToIdx;
 
-        while (oldStartIdx <= oldEndIdx & newStartIdx <= newEndIdx) {
+        while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
             if (!oldStartVnode) {
                 oldStartVnode = boundCheckVNode(oldCh, ++oldStartIdx, oldMaxIdx);
             } else if (!oldEndVnode) {
