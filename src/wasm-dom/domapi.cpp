@@ -35,8 +35,9 @@ namespace wasmdom::domapi
 
 emscripten::val wasmdom::domapi::node(int nodePtr)
 {
-    if (nodes().contains(nodePtr))
-        return nodes()[nodePtr];
+    const auto nodeIt = nodes().find(nodePtr);
+    if (nodeIt != nodes().cend())
+        return nodeIt->second;
     return emscripten::val::null();
 }
 

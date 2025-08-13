@@ -33,10 +33,11 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
         return;
 
     if (!(_data->hash & isNormalized)) {
-        if (_data->data.attrs.contains("key")) {
+        const auto attrsIt = _data->data.attrs.find("key");
+        if (attrsIt != _data->data.attrs.cend()) {
             _data->hash |= hasKey;
-            _data->key = _data->data.attrs["key"];
-            _data->data.attrs.erase("key");
+            _data->key = attrsIt->second;
+            _data->data.attrs.erase(attrsIt);
         }
 
         if (_data->sel[0] == '!') {
@@ -304,8 +305,9 @@ namespace wasmdom
             if (isSvgContainerElement ||
                 (!isSvg && std::ranges::find(voidElements, vnode.sel()) == voidElements.cend())) {
 
-                if (vnode.props().contains("innerHTML") != 0) {
-                    html.append(vnode.props().at("innerHTML").as<std::string>());
+                const auto propsIt = vnode.props().find("innerHTML");
+                if (propsIt != vnode.props().cend()) {
+                    html.append(propsIt->second.as<std::string>());
                 } else {
                     for (const VNode& child : vnode.children()) {
                         toHTML(child, html);
@@ -345,7 +347,8 @@ namespace wasmdom
         }
 
         for (const auto& [key, val] : attrs) {
-            if (!oldAttrs.contains(key) || oldAttrs.at(key) != val) {
+            const auto oldAttrsIt = oldAttrs.find(key);
+            if (oldAttrsIt == oldAttrs.cend() || oldAttrsIt->second != val) {
                 domapi::setAttribute(vnode.elm(), key, val);
             }
         }
@@ -368,8 +371,9 @@ namespace wasmdom
         for (const auto& [key, val] : props) {
             node["asmDomRaws"].call<void>("push", key);
 
-            if (!oldProps.contains(key) ||
-                !val.strictlyEquals(oldProps.at(key)) ||
+            const auto oldPropsIt = oldProps.find(key);
+            if (oldPropsIt == oldProps.cend() ||
+                !val.strictlyEquals(oldPropsIt->second) ||
                 ((key == "value" || key == "checked") &&
                  !val.strictlyEquals(node[key]))) {
                 node.set(key, val);
@@ -435,17 +439,21 @@ namespace wasmdom
             }
         }
 
-        if (vnode.hash() & hasRef) {
-            bool (*const* callback)(emscripten::val) = callbacks.at("ref").target<bool (*)(emscripten::val)>();
-            bool (*const* oldCallback)(emscripten::val) = oldVnode.hash() & hasRef ? oldCallbacks.at("ref").target<bool (*)(emscripten::val)>() : nullptr;
-            if (!callback || !oldCallback || *oldCallback != *callback) {
-                if (oldVnode.hash() & hasRef) {
-                    oldCallbacks.at("ref")(emscripten::val::null());
-                }
-                callbacks.at("ref")(node);
-            }
-        } else if (oldVnode.hash() & hasRef) {
-            oldCallbacks.at("ref")(emscripten::val::null());
+        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
+        const Callback oldCallback = oldVnode.hash() & hasRef ? oldCallbacks.at("ref") : Callback();
+
+        // callback store a function pointer and it is the same, do nothing
+        const auto rawCallback = callback.target<bool (*)(emscripten::val)>();
+        const auto rawOldCallback = oldCallback.target<bool (*)(emscripten::val)>();
+        if (rawCallback && rawOldCallback && *rawCallback == *rawOldCallback)
+            return;
+
+        if (oldCallback) {
+            oldCallback(emscripten::val::null());
+        }
+
+        if (callback) {
+            callback(node);
         }
     }
 
@@ -453,7 +461,7 @@ namespace wasmdom
 
 void wasmdom::VNode::diff(const VNode& oldVnode) const
 {
-    if (!*this || !oldVnode)
+    if (!*this || !oldVnode || *this == oldVnode)
         return;
 
     const unsigned int vnodes = _data->hash | oldVnode._data->hash;
@@ -475,10 +483,11 @@ namespace wasmdom
         std::string eventType = event["type"].as<std::string>();
 
         const Callbacks& callbacks = vnodeCallbacks()[nodePtr];
-        if (!callbacks.contains(eventType)) {
-            eventType = "on" + eventType;
+        auto callbackIt = callbacks.find(eventType);
+        if (callbackIt == callbacks.cend()) {
+            callbackIt = callbacks.find("on" + eventType);
         }
-        return callbacks.at(eventType)(event);
+        return callbackIt->second(event);
     }
 
 }
