@@ -128,14 +128,12 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
         lower(sel);
 
         VNodeAttributes data;
-        int i = node["attributes"]["length"].as<int>();
-        while (i--) {
+        for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
             data.attrs.emplace(node["attributes"][i]["nodeName"].as<std::string>(), node["attributes"][i]["nodeValue"].as<std::string>());
         }
 
         Children children;
-        i = 0;
-        for (int n = node["childNodes"]["length"].as<int>(); i < n; ++i) {
+        for (int i : std::views::iota(0, node["childNodes"]["length"].as<int>())) {
             children.push_back(toVNode(node["childNodes"][i]));
         }
 

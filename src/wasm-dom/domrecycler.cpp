@@ -164,7 +164,7 @@ void wasmdom::DomRecyclerFactory::collect(DomRecycler& recycler, emscripten::val
     }
 
     if (!node["attributes"].isUndefined()) {
-        for (int i = node["attributes"]["length"].as<int>() - 1; i >= 0; --i) {
+        for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
             node.call<void>("removeAttribute", node["attributes"][i]["name"]);
         }
     }
@@ -172,7 +172,7 @@ void wasmdom::DomRecyclerFactory::collect(DomRecycler& recycler, emscripten::val
     node.set("asmDomVNodeCallbacks", emscripten::val::undefined());
 
     if (!node["asmDomRaws"].isUndefined()) {
-        for (int i = 0; i < node["asmDomRaws"]["length"].as<int>(); ++i) {
+        for (int i : std::views::iota(0, node["asmDomRaws"]["length"].as<int>())) {
             node.set(node["asmDomRaws"][i], emscripten::val::undefined());
         }
         node.set("asmDomRaws", emscripten::val::undefined());
@@ -180,7 +180,7 @@ void wasmdom::DomRecyclerFactory::collect(DomRecycler& recycler, emscripten::val
 
     if (!node["asmDomEvents"].isUndefined()) {
         emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
-        for (int i = 0; i < keys["length"].as<int>(); ++i) {
+        for (int i : std::views::iota(0, keys["length"].as<int>())) {
             emscripten::val event = keys[i];
             node.call<void>("removeEventListener", event, node["asmDomEvents"][event], false);
         }
@@ -192,7 +192,7 @@ void wasmdom::DomRecyclerFactory::collect(DomRecycler& recycler, emscripten::val
     }
 
     emscripten::val nodeKeys = emscripten::val::global("Object").call<emscripten::val>("keys", node);
-    for (int i = 0; i < nodeKeys["length"].as<int>(); ++i) {
+    for (int i : std::views::iota(0, nodeKeys["length"].as<int>())) {
         std::string key = nodeKeys[i].as<std::string>();
         if (!key.starts_with("asmDom")) {
             node.set(key, emscripten::val::undefined());
