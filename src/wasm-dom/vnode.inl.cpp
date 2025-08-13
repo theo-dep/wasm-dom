@@ -45,7 +45,7 @@ wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
 }
 
 WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator()(const Children::value_type& child)
+wasmdom::VNode& wasmdom::VNode::operator()(const VNode& child)
 {
     _data->children.push_back(child);
     return *this;
@@ -59,7 +59,7 @@ wasmdom::VNode& wasmdom::VNode::operator()(const Children& nodeChildren)
 }
 
 WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<Children::value_type> nodeChildren)
+wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<VNode> nodeChildren)
 {
     _data->children = nodeChildren;
     return *this;

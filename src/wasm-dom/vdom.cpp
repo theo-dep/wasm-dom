@@ -19,7 +19,7 @@ namespace wasmdom
     bool sameVNode(const VNode& vnode1, const VNode& vnode2)
     {
         return
-            // compare selector, nodeType and key existance
+            // compare selector, nodeType and key existence
             ((vnode1.hash() & id) == (vnode2.hash() & id)) &&
             // compare keys
             (!(vnode1.hash() & hasKey) || (vnode1.key() == vnode2.key()));
@@ -54,7 +54,7 @@ namespace wasmdom
         return vnode.elm();
     }
 
-    void addVNodes(int parentElm, int before, Children& vnodes, Children::size_type startIdx, Children::size_type endIdx)
+    void addVNodes(int parentElm, int before, Children& vnodes, std::size_t startIdx, std::size_t endIdx)
     {
         for (; startIdx <= endIdx; ++startIdx) {
             int elm = createElm(vnodes[startIdx]);
@@ -62,7 +62,7 @@ namespace wasmdom
         }
     }
 
-    void removeVNodes(const Children& vnodes, Children::size_type startIdx, Children::size_type endIdx)
+    void removeVNodes(const Children& vnodes, std::size_t startIdx, std::size_t endIdx)
     {
         for (; startIdx <= endIdx; ++startIdx) {
             const VNode& vnode = vnodes[startIdx];
@@ -79,10 +79,10 @@ namespace wasmdom
 
     void updateChildren(int parentElm, Children& oldCh, Children& newCh)
     {
-        int oldStartIdx = 0;
-        int newStartIdx = 0;
-        int oldEndIdx = oldCh.size() - 1;
-        int newEndIdx = newCh.size() - 1;
+        std::size_t oldStartIdx = 0;
+        std::size_t newStartIdx = 0;
+        std::size_t oldEndIdx = oldCh.size() - 1;
+        std::size_t newEndIdx = newCh.size() - 1;
 
         VNode oldStartVnode = nullptr;
         VNode oldEndVnode = nullptr;
@@ -132,7 +132,7 @@ namespace wasmdom
                 if (!oldKeys) {
                     oldKeys = true;
 
-                    for (int beginIdx = oldStartIdx; beginIdx <= oldEndIdx; ++beginIdx) {
+                    for (std::size_t beginIdx = oldStartIdx; beginIdx <= oldEndIdx; ++beginIdx) {
                         if (oldCh[beginIdx].hash() & hasKey) {
                             oldKeyToIdx.emplace(oldCh[beginIdx].key(), beginIdx);
                         }
@@ -158,7 +158,7 @@ namespace wasmdom
         }
         if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
             if (oldStartIdx > oldEndIdx) {
-                addVNodes(parentElm, newEndIdx + 1 <= static_cast<int>(newCh.size()) - 1 ? newCh[newEndIdx + 1].elm() : 0, newCh, newStartIdx, newEndIdx);
+                addVNodes(parentElm, newEndIdx + 1 <= newCh.size() - 1 ? newCh[newEndIdx + 1].elm() : 0, newCh, newStartIdx, newEndIdx);
             } else {
                 removeVNodes(oldCh, oldStartIdx, oldEndIdx);
             }
