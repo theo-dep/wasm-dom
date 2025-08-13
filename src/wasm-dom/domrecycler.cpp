@@ -236,7 +236,8 @@ void wasmdom::DomRecycler::collect(emscripten::val node)
 
 std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
 {
-    if (_nodes.contains(name))
-        return _nodes.at(name);
+    const auto nodeIt = _nodes.find(name);
+    if (nodeIt != _nodes.cend())
+        return nodeIt->second;
     return {};
 }
