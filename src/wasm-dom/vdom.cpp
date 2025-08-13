@@ -83,42 +83,51 @@ namespace wasmdom
         int newStartIdx = 0;
         int oldEndIdx = oldCh.size() - 1;
         int newEndIdx = newCh.size() - 1;
-        VNode oldStartVnode = oldCh[0];
-        VNode oldEndVnode = oldCh[oldEndIdx];
-        VNode newStartVnode = newCh[0];
-        VNode newEndVnode = newCh[newEndIdx];
+
+        VNode oldStartVnode = nullptr;
+        VNode oldEndVnode = nullptr;
+        VNode newStartVnode = nullptr;
+        VNode newEndVnode = nullptr;
+
+        VNode elmToMove = nullptr;
+
         bool oldKeys = false;
         std::unordered_map<std::string, int> oldKeyToIdx;
 
         while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+            oldStartVnode = oldCh[oldStartIdx];
+            oldEndVnode = oldCh[oldEndIdx];
+            newStartVnode = newCh[newStartIdx];
+            newEndVnode = newCh[newEndIdx];
+
             if (!oldStartVnode) {
-                oldStartVnode = ++oldStartIdx <= oldEndIdx ? oldCh[oldStartIdx] : nullptr;
+                ++oldStartIdx;
             } else if (!oldEndVnode) {
-                oldEndVnode = --oldEndIdx >= oldStartIdx ? oldCh[oldEndIdx] : nullptr;
+                --oldEndIdx;
             } else if (sameVNode(oldStartVnode, newStartVnode)) {
                 if (oldStartVnode != newStartVnode)
                     patchVNode(oldStartVnode, newStartVnode, parentElm);
-                oldStartVnode = ++oldStartIdx <= oldEndIdx ? oldCh[oldStartIdx] : nullptr;
-                newStartVnode = ++newStartIdx <= newEndIdx ? newCh[newStartIdx] : nullptr;
+                ++oldStartIdx;
+                ++newStartIdx;
             } else if (sameVNode(oldEndVnode, newEndVnode)) {
                 if (oldEndVnode != newEndVnode)
                     patchVNode(oldEndVnode, newEndVnode, parentElm);
-                oldEndVnode = --oldEndIdx >= oldStartIdx ? oldCh[oldEndIdx] : nullptr;
-                newEndVnode = --newEndIdx >= newStartIdx ? newCh[newEndIdx] : nullptr;
+                --oldEndIdx;
+                --newEndIdx;
             } else if (sameVNode(oldStartVnode, newEndVnode)) {
                 if (oldStartVnode != newEndVnode)
                     patchVNode(oldStartVnode, newEndVnode, parentElm);
-                int nextSiblingOldPtr = domapi::nextSibling(oldEndVnode.elm());
+                const int nextSiblingOldPtr = domapi::nextSibling(oldEndVnode.elm());
                 domapi::insertBefore(parentElm, oldStartVnode.elm(), nextSiblingOldPtr);
-                oldStartVnode = ++oldStartIdx <= oldEndIdx ? oldCh[oldStartIdx] : nullptr;
-                newEndVnode = --newEndIdx >= newStartIdx ? newCh[newEndIdx] : nullptr;
+                ++oldStartIdx;
+                --newEndIdx;
             } else if (sameVNode(oldEndVnode, newStartVnode)) {
                 if (oldEndVnode != newStartVnode)
                     patchVNode(oldEndVnode, newStartVnode, parentElm);
 
                 domapi::insertBefore(parentElm, oldEndVnode.elm(), oldStartVnode.elm());
-                oldEndVnode = --oldEndIdx >= oldStartIdx ? oldCh[oldEndIdx] : nullptr;
-                newStartVnode = ++newStartIdx <= newEndIdx ? newCh[newStartIdx] : nullptr;
+                --oldEndIdx;
+                ++newStartIdx;
             } else {
                 if (!oldKeys) {
                     oldKeys = true;
@@ -130,21 +139,21 @@ namespace wasmdom
                     }
                 }
                 if (!oldKeyToIdx.contains(newStartVnode.key())) {
-                    int elm = createElm(newStartVnode);
+                    const int elm = createElm(newStartVnode);
                     domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
                 } else {
-                    VNode elmToMove = oldCh[oldKeyToIdx[newStartVnode.key()]];
+                    elmToMove = oldCh[oldKeyToIdx[newStartVnode.key()]];
                     if ((elmToMove.hash() & extractSel) != (newStartVnode.hash() & extractSel)) {
-                        int elm = createElm(newStartVnode);
+                        const int elm = createElm(newStartVnode);
                         domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
                     } else {
                         if (elmToMove != newStartVnode)
                             patchVNode(elmToMove, newStartVnode, parentElm);
-                        oldCh[oldKeyToIdx[newStartVnode.key()]] = nullptr;
                         domapi::insertBefore(parentElm, elmToMove.elm(), oldStartVnode.elm());
+                        oldCh[oldKeyToIdx[newStartVnode.key()]] = nullptr;
                     }
                 }
-                newStartVnode = ++newStartIdx <= newEndIdx ? newCh[newStartIdx] : nullptr;
+                ++newStartIdx;
             }
         }
         if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
