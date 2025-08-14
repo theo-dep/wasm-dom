@@ -46,11 +46,11 @@ TEST_CASE("attributes", "[attributes]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("can be memoized")
@@ -66,21 +66,21 @@ TEST_CASE("attributes", "[attributes]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
 
         VNode vnode2 = div(data);
 
         vdom.patch(vnode2);
 
-        elm = jsDom.bodyFirstChild();
+        node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should be omitted when falsy values are provided")
@@ -93,11 +93,11 @@ TEST_CASE("attributes", "[attributes]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("value")).isNull());
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).isNull());
     }
 
     SECTION("should set truthy values to empty string")
@@ -112,11 +112,11 @@ TEST_CASE("attributes", "[attributes]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("readonly")).strictlyEquals(emscripten::val("")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("readonly")).strictlyEquals(emscripten::val("")));
     }
 
     SECTION("should be set correctly when xlink namespaced")
@@ -126,10 +126,10 @@ TEST_CASE("attributes", "[attributes]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
         REQUIRE(
-            elm.call<emscripten::val>(
+            node.call<emscripten::val>(
                 "getAttributeNS",
                 emscripten::val("http://www.w3.org/1999/xlink"),
                 emscripten::val("href")
@@ -144,10 +144,10 @@ TEST_CASE("attributes", "[attributes]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
         REQUIRE(
-            elm.call<emscripten::val>(
+            node.call<emscripten::val>(
                 "getAttributeNS",
                 emscripten::val("http://www.w3.org/XML/1998/namespace"),
                 emscripten::val("base")

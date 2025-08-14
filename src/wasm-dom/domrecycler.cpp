@@ -6,12 +6,6 @@
 #include <ranges>
 #include <unordered_map>
 
-wasmdom::DomRecycler& wasmdom::recycler()
-{
-    static DomRecycler recycler(true);
-    return recycler;
-}
-
 namespace wasmdom
 {
     EM_JS(bool, testGC, (), {
@@ -168,8 +162,6 @@ void wasmdom::DomRecyclerFactory::collect(DomRecycler& recycler, emscripten::val
             node.call<void>("removeAttribute", node["attributes"][i]["name"]);
         }
     }
-
-    node.set("asmDomVNodeCallbacks", emscripten::val::undefined());
 
     if (!node["asmDomRaws"].isUndefined()) {
         for (int i : std::views::iota(0, node["asmDomRaws"]["length"].as<int>())) {

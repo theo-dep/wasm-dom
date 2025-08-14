@@ -18,9 +18,9 @@ TEST_CASE("dataset", "[dataset]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should update dataset")
@@ -33,19 +33,19 @@ TEST_CASE("dataset", "[dataset]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
         VNode vnode2 = i(data);
 
         vdom.patch(vnode2);
 
-        elm = jsDom.bodyFirstChild();
+        node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
     }
 
     SECTION("can be memorized")
@@ -57,18 +57,18 @@ TEST_CASE("dataset", "[dataset]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
 
         VNode vnode2 = div(("data-baz", "baz"s));
 
         vdom.patch(vnode2);
 
-        elm = jsDom.bodyFirstChild();
+        node = jsDom.bodyFirstChild();
 
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-baz")).strictlyEquals(emscripten::val("baz")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).isNull());
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-baz")).strictlyEquals(emscripten::val("baz")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).isNull());
     }
 }

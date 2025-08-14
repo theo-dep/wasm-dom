@@ -18,8 +18,8 @@ TEST_CASE("props", "[props]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://localhost/")));
     }
 
     SECTION("changes an elements props")
@@ -31,8 +31,8 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode);
         vdom.patch(vnode2);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://localhost/")));
     }
 
     SECTION("preserves memorized props")
@@ -45,13 +45,13 @@ TEST_CASE("props", "[props]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://other/")));
 
         vdom.patch(vnode2);
 
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://other/")));
     }
 
     SECTION("removes an elements props")
@@ -63,8 +63,8 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode);
         vdom.patch(vnode2);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["src"].isUndefined());
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["src"].isUndefined());
     }
 
     SECTION("should update value prop if user interacted with the element")
@@ -75,15 +75,15 @@ TEST_CASE("props", "[props]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["value"].strictlyEquals(emscripten::val("foo")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["value"].strictlyEquals(emscripten::val("foo")));
 
-        elm.set("value", emscripten::val("bar"));
-        REQUIRE(elm["value"].strictlyEquals(emscripten::val("bar")));
+        node.set("value", emscripten::val("bar"));
+        REQUIRE(node["value"].strictlyEquals(emscripten::val("bar")));
 
         vdom.patch(vnode2);
 
-        REQUIRE(elm["value"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node["value"].strictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should update checked prop if user interacted with the element")
@@ -102,14 +102,14 @@ TEST_CASE("props", "[props]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["checked"].strictlyEquals(emscripten::val(true)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["checked"].strictlyEquals(emscripten::val(true)));
 
-        elm.set("checked", emscripten::val(false));
-        REQUIRE(elm["checked"].strictlyEquals(emscripten::val(false)));
+        node.set("checked", emscripten::val(false));
+        REQUIRE(node["checked"].strictlyEquals(emscripten::val(false)));
 
         vdom.patch(vnode2);
 
-        REQUIRE(elm["checked"].strictlyEquals(emscripten::val(true)));
+        REQUIRE(node["checked"].strictlyEquals(emscripten::val(true)));
     }
 }

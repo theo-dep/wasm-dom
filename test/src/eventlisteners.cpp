@@ -30,9 +30,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(result.size() == 1);
     }
@@ -47,9 +47,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(result.size() == 1);
 
@@ -60,9 +60,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         vdom.patch(vnode2);
 
-        elm = jsDom.bodyFirstChild();
+        node = jsDom.bodyFirstChild();
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(result.size() == 1);
     }
@@ -77,13 +77,13 @@ TEST_CASE("eventListeners", "[eventListeners]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(result.size() == 1);
 
-        elm["firstChild"].call<void>("click");
+        node["firstChild"].call<void>("click");
 
         REQUIRE(result.size() == 3);
     }
@@ -101,9 +101,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(count == 2);
     }
@@ -121,9 +121,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(count == 2);
 
@@ -135,7 +135,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         vdom.patch(vnode2);
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(count == 1);
     }
@@ -153,9 +153,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(count == 2);
 
@@ -167,7 +167,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         vdom.patch(vnode2);
 
-        elm.call<void>("click");
+        node.call<void>("click");
 
         REQUIRE(count == 3);
     }
@@ -182,9 +182,9 @@ TEST_CASE("eventListeners", "[eventListeners]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
 
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
+        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
 
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
 
@@ -192,7 +192,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         vdom.patch(vnode2);
 
-        keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
+        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
 
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
     }

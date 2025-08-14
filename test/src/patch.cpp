@@ -57,15 +57,15 @@ VNode spanNumWithOpacity(int z, std::string o)
     );
 }
 
-std::vector<int> shuffle(std::vector<int>& arr, int elms)
+std::vector<int> shuffle(std::vector<int>& arr, int nodes)
 {
     std::vector<int> newArr;
-    newArr.resize(elms);
-    for (int n = 0; n < elms; ++n) {
+    newArr.resize(nodes);
+    for (int n = 0; n < nodes; ++n) {
         newArr[n] = arr[n];
     }
-    for (int n = 0; n < elms; ++n) {
-        int i = rand() % elms;
+    for (int n = 0; n < nodes; ++n) {
+        int i = rand() % nodes;
 
         int temp = newArr[n];
         newArr[n] = newArr[i];
@@ -85,7 +85,7 @@ TEST_CASE("patch", "[patch]")
         VNode vnode = nullptr;
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
         REQUIRE(jsDom.document()["body"]["children"]["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(jsDom.document()["body"]["firstChild"].strictlyEquals(emscripten::val(jsDom.root())));
     }
@@ -97,20 +97,20 @@ TEST_CASE("patch", "[patch]")
         VNode vnode = span();
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
+        emscripten::val node = jsDom.bodyFirstChild();
         REQUIRE(jsDom.document()["body"]["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["className"].strictlyEquals(emscripten::val("")));
+        REQUIRE(node["nodeName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["className"].strictlyEquals(emscripten::val("")));
     }
 
     SECTION("should patch the same node")
     {
         VNode vnode = div();
         VDom vdom(jsDom.root());
-        VNode elmPtr = vdom.patch(vnode);
-        vdom.patch(elmPtr);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
+        VNode nodePtr = vdom.patch(vnode);
+        vdom.patch(nodePtr);
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
     }
 
     SECTION("should have a tag")
@@ -118,8 +118,8 @@ TEST_CASE("patch", "[patch]")
         VNode vnode = div();
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
     }
 
     SECTION("should have the correct namespace")
@@ -131,8 +131,8 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["firstChild"]["namespaceURI"].strictlyEquals(emscripten::val(svgNamespace)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["firstChild"]["namespaceURI"].strictlyEquals(emscripten::val(svgNamespace)));
     }
 
     SECTION("should inject svg namespace")
@@ -150,10 +150,10 @@ TEST_CASE("patch", "[patch]")
 
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["namespaceURI"].strictlyEquals(emscripten::val(svgNamespace)));
-        REQUIRE(elm["firstChild"]["namespaceURI"].strictlyEquals(emscripten::val(svgNamespace)));
-        REQUIRE(elm["firstChild"]["firstChild"]["namespaceURI"].strictlyEquals(emscripten::val(XHTMLNamespace)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["namespaceURI"].strictlyEquals(emscripten::val(svgNamespace)));
+        REQUIRE(node["firstChild"]["namespaceURI"].strictlyEquals(emscripten::val(svgNamespace)));
+        REQUIRE(node["firstChild"]["firstChild"]["namespaceURI"].strictlyEquals(emscripten::val(XHTMLNamespace)));
     }
 
     SECTION("should create elements with class")
@@ -161,8 +161,8 @@ TEST_CASE("patch", "[patch]")
         VNode vnode = div(("class", "foo"s));
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("class")).strictlyEquals(emscripten::val("foo")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("class")).strictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should create elements with text content")
@@ -173,8 +173,8 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["innerHTML"].strictlyEquals(emscripten::val("I am a string")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["innerHTML"].strictlyEquals(emscripten::val("I am a string")));
     }
 
     // TODO : how can we test this?
@@ -189,29 +189,29 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("I am a string")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("I am a string")));
     }
 
     SECTION("is a patch of the root element")
     {
-        emscripten::val elmWithIdAndClass = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
-        elmWithIdAndClass.set("id", emscripten::val("id"));
-        elmWithIdAndClass.set("className", emscripten::val("class"));
+        emscripten::val nodeWithIdAndClass = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
+        nodeWithIdAndClass.set("id", emscripten::val("id"));
+        nodeWithIdAndClass.set("className", emscripten::val("class"));
         VNode vnode =
             div(("id", "id"s),
                 ("class", "class"s))(
                 span()(std::string("Hi"))
             );
 
-        VDom vdom(elmWithIdAndClass);
+        VDom vdom(nodeWithIdAndClass);
         vdom.patch(vnode);
-        emscripten::val elm = domapi::node(vnode.elm());
-        REQUIRE(elm.strictlyEquals(elmWithIdAndClass));
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(elm["id"].strictlyEquals(emscripten::val("id")));
-        REQUIRE(elm["className"].strictlyEquals(emscripten::val("class")));
+        emscripten::val node = vnode.node();
+        REQUIRE(node.strictlyEquals(nodeWithIdAndClass));
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE(node["id"].strictlyEquals(emscripten::val("id")));
+        REQUIRE(node["className"].strictlyEquals(emscripten::val("class")));
     }
 
     SECTION("should create comments")
@@ -219,9 +219,9 @@ TEST_CASE("patch", "[patch]")
         VNode vnode = comment(std::string("test"));
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["nodeType"].strictlyEquals(jsDom.document()["COMMENT_NODE"]));
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("test")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["nodeType"].strictlyEquals(jsDom.document()["COMMENT_NODE"]));
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("test")));
     }
 
     SECTION("should create fragments")
@@ -232,9 +232,9 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["nodeType"].strictlyEquals(jsDom.document()["TEXT_NODE"]));
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("foo")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["nodeType"].strictlyEquals(jsDom.document()["TEXT_NODE"]));
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should patch an element inside a fragment")
@@ -249,13 +249,13 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("foo")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("foo")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("bar")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("bar")));
     }
 
     SECTION("should append elements to fragment")
@@ -275,19 +275,19 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
-        REQUIRE(elm["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
     }
 
     SECTION("should remove elements from fragment")
@@ -307,19 +307,19 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
-        REQUIRE(elm["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
     }
 
     // TODO
@@ -339,13 +339,13 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
     }
 
     SECTION("should prepend elements")
@@ -365,16 +365,16 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
     }
 
     SECTION("should add elements in the middle")
@@ -396,16 +396,16 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
     }
 
     SECTION("should add elements at begin and end")
@@ -426,16 +426,16 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
     }
 
     SECTION("should add children to parent with no children")
@@ -449,14 +449,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(0)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(0)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
     }
 
     SECTION("should remove all children from parent")
@@ -470,14 +470,14 @@ TEST_CASE("patch", "[patch]")
         VNode vnode2 = span(("key", "span"s));
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(0)));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(0)));
     }
 
     SECTION("should update one child with same key but different sel")
@@ -498,18 +498,18 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["1"]["tagName"].strictlyEquals(emscripten::val("I")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["1"]["tagName"].strictlyEquals(emscripten::val("I")));
     }
 
     SECTION("should remove elements from the beginning")
@@ -530,14 +530,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("5")));
     }
 
     SECTION("should remove elements from the end")
@@ -558,14 +558,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
     }
 
     SECTION("should remove elements from the middle")
@@ -587,15 +587,15 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("5")));
     }
 
     SECTION("should move element forward")
@@ -616,15 +616,15 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("4")));
     }
 
     SECTION("should move element to end")
@@ -643,14 +643,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("1")));
     }
 
     SECTION("should move element backwards")
@@ -671,15 +671,15 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("3")));
     }
 
     SECTION("should swap first and last")
@@ -700,15 +700,15 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("1")));
     }
 
     SECTION("should move to left and replace")
@@ -731,16 +731,16 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(5)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("6")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(5)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("6")));
     }
 
     SECTION("should move to left and leaves hole")
@@ -758,13 +758,13 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("6")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("6")));
     }
 
     SECTION("should handle moved and set to undefined element ending at the end")
@@ -783,14 +783,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("5")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
     }
 
     SECTION("should move a key in non-keyed nodes with a size up")
@@ -813,13 +813,13 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(4)));
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("1abc")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(4)));
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("1abc")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("dabc1e")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(6)));
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("dabc1e")));
     }
 
     SECTION("should reverse elements")
@@ -848,19 +848,19 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(8)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(8)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(8)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("8")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("7")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("6")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("5")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["6"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["7"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(8)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("8")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("7")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("6")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["6"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["7"]["innerHTML"].strictlyEquals(emscripten::val("1")));
     }
 
     SECTION("should reverse elements with 0")
@@ -885,17 +885,17 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(6)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
-        REQUIRE(elm["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("0")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(6)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        REQUIRE(node["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("0")));
     }
 
     SECTION("should handle random shuffles")
@@ -904,44 +904,44 @@ TEST_CASE("patch", "[patch]")
         int i;
         std::vector<int> arr;
         std::vector<std::string> opacities;
-        int elms = 14;
+        int nodes = 14;
         int samples = 5;
 
-        arr.resize(elms);
-        opacities.resize(elms);
-        for (n = 0; n < elms; ++n) {
+        arr.resize(nodes);
+        opacities.resize(nodes);
+        for (n = 0; n < nodes; ++n) {
             arr[n] = n;
         }
 
         for (n = 0; n < samples; ++n) {
             Children children;
-            for (i = 0; i < elms; ++i) {
+            for (i = 0; i < nodes; ++i) {
                 children.push_back(spanNumWithOpacity(arr[i], std::string("1")));
             }
             VNode vnode1 = span()(children);
 
-            std::vector<int> shufArr = shuffle(arr, elms);
+            std::vector<int> shufArr = shuffle(arr, nodes);
 
-            emscripten::val elm = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
-            VDom vdom(elm);
+            emscripten::val node = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
+            VDom vdom(node);
             vdom.patch(vnode1);
-            elm = domapi::node(vnode1.elm());
-            for (i = 0; i < elms; ++i) {
-                REQUIRE(elm["children"][std::to_string(i)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(i))));
+            node = vnode1.node();
+            for (i = 0; i < nodes; ++i) {
+                REQUIRE(node["children"][std::to_string(i)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(i))));
                 opacities[i] = std::string("0.");
                 opacities[i].append(std::to_string(rand() % 99999));
             }
             Children opacityChildren;
-            for (i = 0; i < elms; ++i) {
+            for (i = 0; i < nodes; ++i) {
                 opacityChildren.push_back(spanNumWithOpacity(shufArr[i], opacities[i]));
             }
             VNode vnode2 = span()(opacityChildren);
 
             vdom.patch(vnode2);
-            elm = domapi::node(vnode2.elm());
-            for (i = 0; i < elms; ++i) {
-                REQUIRE(elm["children"][std::to_string(i)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(shufArr[i]))));
-                REQUIRE(emscripten::val(opacities[i]).call<emscripten::val>("indexOf", elm["children"][std::to_string(i)]["style"]["opacity"]).strictlyEquals(emscripten::val(0)));
+            node = vnode2.node();
+            for (i = 0; i < nodes; ++i) {
+                REQUIRE(node["children"][std::to_string(i)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(shufArr[i]))));
+                REQUIRE(emscripten::val(opacities[i]).call<emscripten::val>("indexOf", node["children"][std::to_string(i)]["style"]["opacity"]).strictlyEquals(emscripten::val(0)));
             }
         }
     }
@@ -974,17 +974,17 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(6)));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("0")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("5")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(6)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("0")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("3")));
     }
 
     SECTION("should support all null/undefined children")
@@ -1019,17 +1019,17 @@ TEST_CASE("patch", "[patch]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         vdom.patch(vnode2);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(0)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(0)));
         vdom.patch(vnode3);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(6)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("5")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("4")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
-        REQUIRE(elm["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("0")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(6)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("5")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("4")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("3")));
+        REQUIRE(node["children"]["3"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["4"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["5"]["innerHTML"].strictlyEquals(emscripten::val("0")));
     }
 
     SECTION("should handle random shuffles with null/undefined children")
@@ -1055,8 +1055,8 @@ TEST_CASE("patch", "[patch]")
             }
             std::vector<int> shufArr = shuffle(arr, len);
 
-            emscripten::val elm = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
-            VDom vdom(elm);
+            emscripten::val node = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
+            VDom vdom(node);
             vdom.patch(div());
 
             Children children = Children();
@@ -1065,15 +1065,15 @@ TEST_CASE("patch", "[patch]")
             }
             VNode vnode = div()(children);
             vdom.patch(vnode);
-            elm = domapi::node(vnode.elm());
+            node = vnode.node();
             r = 0;
             for (j = 0; j < len; ++j) {
                 if (shufArr[j] != 0) {
-                    REQUIRE(elm["children"][std::to_string(r)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(shufArr[j]))));
+                    REQUIRE(node["children"][std::to_string(r)]["innerHTML"].strictlyEquals(emscripten::val(std::to_string(shufArr[j]))));
                     ++r;
                 }
             }
-            REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(r)));
+            REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(r)));
         }
     }
 
@@ -1090,14 +1090,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("World")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("World")));
     }
 
     SECTION("should handle unmoved text nodes")
@@ -1114,11 +1114,11 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
     }
 
     SECTION("should handle changing text children")
@@ -1135,11 +1135,11 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text2")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text2")));
     }
 
     SECTION("should handle unmoved comment nodes")
@@ -1156,11 +1156,11 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
     }
 
     SECTION("should handle changing comment text")
@@ -1177,11 +1177,11 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text2")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Text2")));
     }
 
     SECTION("should handle changing empty comment")
@@ -1198,11 +1198,11 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Test")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Test")));
     }
 
     SECTION("should prepend element")
@@ -1218,14 +1218,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("World")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("World")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("World")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("World")));
     }
 
     SECTION("should prepend element of different tag type")
@@ -1241,16 +1241,16 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("World")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("World")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(elm["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("World")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE(node["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Hello")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("World")));
     }
 
     SECTION("should remove elements")
@@ -1268,14 +1268,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("One")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("Two")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("One")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("Two")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("One")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("One")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
     }
 
     SECTION("should remove a single text node")
@@ -1284,11 +1284,11 @@ TEST_CASE("patch", "[patch]")
         VNode vnode2 = div();
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("One")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("One")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("")));
     }
 
     SECTION("should remove a single text node when children are updated")
@@ -1301,12 +1301,12 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("One")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("One")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Two")));
-        REQUIRE(elm["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("Three")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Two")));
+        REQUIRE(node["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("Three")));
     }
 
     SECTION("should remove a text node among other elements")
@@ -1322,14 +1322,14 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("One")));
-        REQUIRE(elm["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("Two")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("One")));
+        REQUIRE(node["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("Two")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(elm["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Three")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Three")));
     }
 
     SECTION("should reorder elements")
@@ -1348,20 +1348,20 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("One")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("Two")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("One")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("Two")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("One")));
-        REQUIRE(elm["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("Two")));
-        REQUIRE(elm["children"]["0"]["tagName"].strictlyEquals(emscripten::val("B")));
-        REQUIRE(elm["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(elm["children"]["2"]["tagName"].strictlyEquals(emscripten::val("DIV")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(3)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("Three")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("One")));
+        REQUIRE(node["children"]["2"]["innerHTML"].strictlyEquals(emscripten::val("Two")));
+        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("B")));
+        REQUIRE(node["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
+        REQUIRE(node["children"]["2"]["tagName"].strictlyEquals(emscripten::val("DIV")));
     }
 
     SECTION("should support null/undefined children")
@@ -1393,20 +1393,20 @@ TEST_CASE("patch", "[patch]")
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
         vdom.patch(vnode2);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
         vdom.patch(vnode3);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("2")));
     }
 
     SECTION("should support all null/undefined children")
@@ -1429,12 +1429,12 @@ TEST_CASE("patch", "[patch]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         vdom.patch(vnode2);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["length"].strictlyEquals(emscripten::val(0)));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(0)));
         vdom.patch(vnode3);
-        elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
-        REQUIRE(elm["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
+        node = jsDom.bodyFirstChild();
+        REQUIRE(node["children"]["0"]["innerHTML"].strictlyEquals(emscripten::val("2")));
+        REQUIRE(node["children"]["1"]["innerHTML"].strictlyEquals(emscripten::val("1")));
     }
 
     SECTION("should set asmDomRaws")
@@ -1444,14 +1444,14 @@ TEST_CASE("patch", "[patch]")
         VNode vnode3 = i();
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["asmDomRaws"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["asmDomRaws"]["0"].strictlyEquals(emscripten::val("foo")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["asmDomRaws"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["asmDomRaws"]["0"].strictlyEquals(emscripten::val("foo")));
         vdom.patch(vnode2);
-        REQUIRE(elm["asmDomRaws"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(elm["asmDomRaws"]["0"].strictlyEquals(emscripten::val("bar")));
+        REQUIRE(node["asmDomRaws"]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node["asmDomRaws"]["0"].strictlyEquals(emscripten::val("bar")));
         vdom.patch(vnode3);
-        REQUIRE(elm["asmDomRaws"]["length"].strictlyEquals(emscripten::val(0)));
+        REQUIRE(node["asmDomRaws"]["length"].strictlyEquals(emscripten::val(0)));
     }
 
     SECTION("should set asmDomEvents")
@@ -1461,16 +1461,16 @@ TEST_CASE("patch", "[patch]")
         VNode vnode3 = i();
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
+        emscripten::val node = jsDom.bodyFirstChild();
+        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(keys["0"].strictlyEquals(emscripten::val("click")));
         vdom.patch(vnode2);
-        keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
+        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(keys["0"].strictlyEquals(emscripten::val("keydown")));
         vdom.patch(vnode3);
-        keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
+        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
     }
 
@@ -1479,8 +1479,8 @@ TEST_CASE("patch", "[patch]")
         VNode vnode = webComponent();
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
     }
 
     SECTION("should patch a WebComponent with attributes")
@@ -1488,10 +1488,10 @@ TEST_CASE("patch", "[patch]")
         VNode vnode = webComponent(("foo", "bar"s), ("bar", "42"s));
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("foo")).strictlyEquals(emscripten::val("bar")));
-        REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("bar")).strictlyEquals(emscripten::val("42")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("foo")).strictlyEquals(emscripten::val("bar")));
+        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("bar")).strictlyEquals(emscripten::val("42")));
     }
 
     SECTION("should patch a WebComponent with eventListeners")
@@ -1500,15 +1500,15 @@ TEST_CASE("patch", "[patch]")
             webComponent(("onclick", f(onClick)), ("onfoo-event", f(onClick)));
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE(node["nodeName"].strictlyEquals(emscripten::val("WEB-COMPONENT")));
     }
 
     SECTION("should create a template node")
     {
         VNode vnode =
             hTemplate(("id", "template-node"s))(
-                { style()(" p{ color : green;"),
+                { style()("p { color : green; }"),
                   p()(std::string("Hello world!")) }
             );
         VDom vdom(jsDom.root());
@@ -1723,8 +1723,8 @@ TEST_CASE("patch", "[patch]")
         VNode vnode1 = i(("onclick", f(onClick)), ("ref", f(onClick)));
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
-        emscripten::val elm = jsDom.bodyFirstChild();
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
+        emscripten::val node = jsDom.bodyFirstChild();
+        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(keys["0"].strictlyEquals(emscripten::val("click")));
     }
