@@ -1,6 +1,7 @@
 #include "vnode.hpp"
 
 #include "domapi.hpp"
+#include "domkeys.hpp"
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -358,7 +359,7 @@ namespace wasmdom
         const Props& props = vnode.props();
 
         emscripten::val& node = vnode.node();
-        node.set("asmDomRaws", emscripten::val::array());
+        node.set(nodeRawsKey, emscripten::val::array());
 
         for (const auto& [key, _] : oldProps) {
             if (!props.contains(key)) {
@@ -367,7 +368,7 @@ namespace wasmdom
         }
 
         for (const auto& [key, val] : props) {
-            node["asmDomRaws"].call<void>("push", key);
+            node[nodeRawsKey].call<void>("push", key);
 
             const auto oldPropsIt = oldProps.find(key);
             if (oldPropsIt == oldProps.cend() ||
@@ -380,7 +381,6 @@ namespace wasmdom
     }
 
     // store callbacks addresses to be called in functionCallback
-    static inline constexpr const char* nodeCallbacksKey = "asmDomNodeCallbacksKey";
     std::unordered_map<std::size_t, Callbacks>& vnodeCallbacks()
     {
         static std::unordered_map<std::size_t, Callbacks> vnodeCallbacks;
@@ -433,20 +433,20 @@ namespace wasmdom
             if (!callbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
                 node.call<void>("removeEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
-                node["asmDomEvents"].delete_(eventKey);
+                node[nodeEventsKey].delete_(eventKey);
             }
         }
 
         storeCallbacks(oldVnode, vnode);
-        if (node["asmDomEvents"].isUndefined()) {
-            node.set("asmDomEvents", emscripten::val::object());
+        if (node[nodeEventsKey].isUndefined()) {
+            node.set(nodeEventsKey, emscripten::val::object());
         }
 
         for (const auto& [key, _] : callbacks) {
             if (!oldCallbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
                 node.call<void>("addEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
-                node["asmDomEvents"].set(eventKey, emscripten::val::module_property("eventProxy"));
+                node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
         }
 

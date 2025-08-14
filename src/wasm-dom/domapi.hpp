@@ -5,8 +5,6 @@
 namespace wasmdom
 {
 
-    class VNode;
-
     namespace domapi
     {
         emscripten::val createElement(const std::string& tag);
