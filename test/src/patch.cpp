@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "wasm-dom.hpp"
+#include "wasm-dom/domkeys.hpp"
 
 #include "jsdom.hpp"
 
@@ -1445,13 +1446,13 @@ TEST_CASE("patch", "[patch]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["asmDomRaws"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["asmDomRaws"]["0"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE(node[nodeRawsKey]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node[nodeRawsKey]["0"].strictlyEquals(emscripten::val("foo")));
         vdom.patch(vnode2);
-        REQUIRE(node["asmDomRaws"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["asmDomRaws"]["0"].strictlyEquals(emscripten::val("bar")));
+        REQUIRE(node[nodeRawsKey]["length"].strictlyEquals(emscripten::val(1)));
+        REQUIRE(node[nodeRawsKey]["0"].strictlyEquals(emscripten::val("bar")));
         vdom.patch(vnode3);
-        REQUIRE(node["asmDomRaws"]["length"].strictlyEquals(emscripten::val(0)));
+        REQUIRE(node[nodeRawsKey]["length"].strictlyEquals(emscripten::val(0)));
     }
 
     SECTION("should set asmDomEvents")
@@ -1462,15 +1463,15 @@ TEST_CASE("patch", "[patch]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         emscripten::val node = jsDom.bodyFirstChild();
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
+        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(keys["0"].strictlyEquals(emscripten::val("click")));
         vdom.patch(vnode2);
-        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
+        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(keys["0"].strictlyEquals(emscripten::val("keydown")));
         vdom.patch(vnode3);
-        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
+        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
     }
 
@@ -1724,7 +1725,7 @@ TEST_CASE("patch", "[patch]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         emscripten::val node = jsDom.bodyFirstChild();
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
+        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(1)));
         REQUIRE(keys["0"].strictlyEquals(emscripten::val("click")));
     }

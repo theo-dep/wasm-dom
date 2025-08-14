@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "wasm-dom.hpp"
+#include "wasm-dom/domkeys.hpp"
 
 #include "jsdom.hpp"
 
@@ -201,7 +202,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
+        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
 
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
 
@@ -209,7 +210,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         vdom.patch(vnode2);
 
-        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node["asmDomEvents"]);
+        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
 
         REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
     }
