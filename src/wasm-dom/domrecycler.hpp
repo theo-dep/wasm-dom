@@ -37,6 +37,4 @@ namespace wasmdom
         std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
     };
 
-    DomRecycler& recycler();
-
 }

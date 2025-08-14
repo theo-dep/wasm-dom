@@ -84,13 +84,16 @@ WASMDOM_INLINE
 const std::string& wasmdom::VNode::ns() const { return _data->ns; }
 
 WASMDOM_INLINE
-unsigned int wasmdom::VNode::hash() const { return _data->hash; }
+std::size_t wasmdom::VNode::hash() const { return _data->hash; }
 
 WASMDOM_INLINE
-int wasmdom::VNode::elm() const { return _data->elm; }
+const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
 
 WASMDOM_INLINE
-void wasmdom::VNode::setElm(int nodeElm) { _data->elm = nodeElm; }
+emscripten::val& wasmdom::VNode::node() { return _data->node; }
+
+WASMDOM_INLINE
+void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
 
 WASMDOM_INLINE
 const wasmdom::Children& wasmdom::VNode::children() const { return _data->children; }

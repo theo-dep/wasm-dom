@@ -85,8 +85,8 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             if (_data->sel[0] == '\0') {
                 _data->hash |= isFragment;
             } else {
-                static unsigned int currentHash = 0;
-                static std::unordered_map<std::string, unsigned int> hashes;
+                static std::size_t currentHash = 0;
+                static std::unordered_map<std::string, std::size_t> hashes;
 
                 if (hashes[_data->sel] == 0) {
                     hashes[_data->sel] = ++currentHash;
@@ -146,7 +146,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     } else {
         vnode = VNode("");
     }
-    vnode._data->elm = domapi::addNode(node);
+    vnode.setNode(node);
     return vnode;
 }
 
@@ -337,26 +337,28 @@ namespace wasmdom
         const Attrs& oldAttrs = oldVnode.attrs();
         const Attrs& attrs = vnode.attrs();
 
+        const emscripten::val& node = vnode.node();
+
         for (const auto& [key, _] : oldAttrs) {
             if (!attrs.contains(key)) {
-                domapi::removeAttribute(vnode.elm(), key);
+                domapi::removeAttribute(node, key);
             }
         }
 
         for (const auto& [key, val] : attrs) {
             const auto oldAttrsIt = oldAttrs.find(key);
             if (oldAttrsIt == oldAttrs.cend() || oldAttrsIt->second != val) {
-                domapi::setAttribute(vnode.elm(), key, val);
+                domapi::setAttribute(node, key, val);
             }
         }
     }
 
-    void diffProps(const VNode& oldVnode, const VNode& vnode)
+    void diffProps(const VNode& oldVnode, VNode& vnode)
     {
         const Props& oldProps = oldVnode.props();
         const Props& props = vnode.props();
 
-        emscripten::val node = domapi::node(vnode.elm());
+        emscripten::val& node = vnode.node();
         node.set("asmDomRaws", emscripten::val::array());
 
         for (const auto& [key, _] : oldProps) {
@@ -379,23 +381,36 @@ namespace wasmdom
     }
 
     // store callbacks addresses to be called in functionCallback
-    std::unordered_map<int, Callbacks>& vnodeCallbacks()
+    static inline constexpr const char* nodeCallbacksKey = "asmDomNodeCallbacksKey";
+    std::unordered_map<std::size_t, Callbacks>& vnodeCallbacks()
     {
-        static std::unordered_map<int, Callbacks> vnodeCallbacks;
+        static std::unordered_map<std::size_t, Callbacks> vnodeCallbacks;
         return vnodeCallbacks;
     }
-    emscripten::val storeCallbacks(const VNode& oldVnode, const VNode& vnode)
+    std::size_t incrementCallbackKey()
     {
-        if (vnodeCallbacks().contains(oldVnode.elm())) {
-            auto nodeHandle = vnodeCallbacks().extract(oldVnode.elm());
-            nodeHandle.key() = vnode.elm();
-            nodeHandle.mapped() = vnode.callbacks();
-            vnodeCallbacks().insert(std::move(nodeHandle));
+        static std::size_t lastCallbackKey = 0;
+        return ++lastCallbackKey;
+    }
+    void storeCallbacks(const VNode& oldVnode, VNode& vnode)
+    {
+        const emscripten::val& oldNode = oldVnode.node();
+
+        std::size_t callbackKey = 0;
+        if (oldNode.isNull()) {
+            callbackKey = incrementCallbackKey();
         } else {
-            vnodeCallbacks().emplace(vnode.elm(), vnode.callbacks());
+            const emscripten::val oldNodeCallbacksKey = oldNode[nodeCallbacksKey];
+            if (oldNodeCallbacksKey.isUndefined()) {
+                callbackKey = incrementCallbackKey();
+            } else {
+                callbackKey = oldNodeCallbacksKey.as<std::size_t>();
+            }
         }
 
-        return emscripten::val(vnode.elm());
+        emscripten::val& node = vnode.node();
+        node.set(nodeCallbacksKey, callbackKey);
+        vnodeCallbacks()[callbackKey] = vnode.callbacks();
     }
 
     std::string formatEventKey(const std::string& key)
@@ -406,12 +421,12 @@ namespace wasmdom
         return eventKey;
     }
 
-    void diffCallbacks(const VNode& oldVnode, const VNode& vnode)
+    void diffCallbacks(const VNode& oldVnode, VNode& vnode)
     {
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        emscripten::val node = domapi::node(vnode.elm());
+        emscripten::val& node = vnode.node();
 
         std::string eventKey;
 
@@ -423,7 +438,7 @@ namespace wasmdom
             }
         }
 
-        node.set("asmDomVNodeCallbacksKey", storeCallbacks(oldVnode, vnode));
+        storeCallbacks(oldVnode, vnode);
         if (node["asmDomEvents"].isUndefined()) {
             node.set("asmDomEvents", emscripten::val::object());
         }
@@ -456,12 +471,12 @@ namespace wasmdom
 
 }
 
-void wasmdom::VNode::diff(const VNode& oldVnode) const
+void wasmdom::VNode::diff(const VNode& oldVnode)
 {
     if (!*this || !oldVnode || *this == oldVnode)
         return;
 
-    const unsigned int vnodes = _data->hash | oldVnode._data->hash;
+    const std::size_t vnodes = _data->hash | oldVnode._data->hash;
 
     if (vnodes & hasAttrs)
         diffAttrs(oldVnode, *this);
@@ -476,10 +491,10 @@ namespace wasmdom
 
     bool eventProxy(emscripten::val event)
     {
-        int nodePtr = event["currentTarget"]["asmDomVNodeCallbacksKey"].as<int>();
-        std::string eventType = event["type"].as<std::string>();
+        const std::size_t callbackKey = event["currentTarget"][nodeCallbacksKey].as<std::size_t>();
+        const std::string eventType = event["type"].as<std::string>();
 
-        const Callbacks& callbacks = vnodeCallbacks()[nodePtr];
+        const Callbacks& callbacks = vnodeCallbacks()[callbackKey];
         auto callbackIt = callbacks.find(eventType);
         if (callbackIt == callbacks.cend()) {
             callbackIt = callbacks.find("on" + eventType);

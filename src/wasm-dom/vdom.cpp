@@ -5,6 +5,8 @@
 
 #include <emscripten.h>
 
+#include <algorithm>
+
 wasmdom::VDom::VDom(const emscripten::val& element)
     : _currentNode(VNode::toVNode(element))
 {
@@ -14,7 +16,7 @@ wasmdom::VDom::VDom(const emscripten::val& element)
 namespace wasmdom
 {
 
-    void patchVNode(VNode& oldVnode, VNode& vnode, int parentElm);
+    void patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& parentNode);
 
     bool sameVNode(const VNode& vnode1, const VNode& vnode2)
     {
@@ -25,164 +27,148 @@ namespace wasmdom
             (!(vnode1.hash() & hasKey) || (vnode1.key() == vnode2.key()));
     }
 
-    int createElm(VNode& vnode)
+    void createNode(VNode& vnode)
     {
         if (vnode.hash() & isElement) {
             if (vnode.hash() & hasNS) {
-                vnode.setElm(domapi::createElementNS(vnode.ns(), vnode.sel()));
+                vnode.setNode(domapi::createElementNS(vnode.ns(), vnode.sel()));
             } else {
-                vnode.setElm(domapi::createElement(vnode.sel()));
+                vnode.setNode(domapi::createElement(vnode.sel()));
             }
         } else if (vnode.hash() & isText) {
-            vnode.setElm(domapi::createTextNode(vnode.sel()));
-            return vnode.elm();
+            vnode.setNode(domapi::createTextNode(vnode.sel()));
+            return;
         } else if (vnode.hash() & isFragment) {
-            vnode.setElm(domapi::createDocumentFragment());
+            vnode.setNode(domapi::createDocumentFragment());
         } else if (vnode.hash() & isComment) {
-            vnode.setElm(domapi::createComment(vnode.sel()));
-            return vnode.elm();
+            vnode.setNode(domapi::createComment(vnode.sel()));
+            return;
         }
 
         for (VNode& child : vnode._data->children) {
-            int elm = createElm(child);
-            domapi::appendChild(vnode.elm(), elm);
+            createNode(child);
+            domapi::appendChild(vnode.node(), child.node());
         }
 
         static const VNode emptyNode("");
         vnode.diff(emptyNode);
-
-        return vnode.elm();
     }
 
-    void addVNodes(int parentElm, int before, Children& vnodes, std::size_t startIdx, std::size_t endIdx)
+    void addVNodes(const emscripten::val& parentNode, const emscripten::val& beforeNode, Children::iterator start, Children::iterator end)
     {
-        for (; startIdx <= endIdx; ++startIdx) {
-            int elm = createElm(vnodes[startIdx]);
-            domapi::insertBefore(parentElm, elm, before);
+        for (; start <= end; ++start) {
+            createNode(*start);
+            domapi::insertBefore(parentNode, start->node(), beforeNode);
         }
     }
 
-    void removeVNodes(const Children& vnodes, std::size_t startIdx, std::size_t endIdx)
+    void removeVNodes(Children::iterator start, Children::iterator end)
     {
-        for (; startIdx <= endIdx; ++startIdx) {
-            const VNode& vnode = vnodes[startIdx];
+        for (; start <= end; ++start) {
+            if (*start) {
+                domapi::removeChild(start->node());
 
-            if (vnode) {
-                domapi::removeChild(vnode.elm());
-
-                if (vnode.hash() & hasRef) {
-                    vnode.callbacks().at("ref")(emscripten::val::null());
+                if (start->hash() & hasRef) {
+                    start->callbacks().at("ref")(emscripten::val::null());
                 }
             }
         }
     }
 
-    void updateChildren(int parentElm, Children& oldCh, Children& newCh)
+    void updateChildren(const emscripten::val& parentNode, Children& oldCh, Children& newCh)
     {
-        std::size_t oldStartIdx = 0;
-        std::size_t newStartIdx = 0;
-        std::size_t oldEndIdx = oldCh.size() - 1;
-        std::size_t newEndIdx = newCh.size() - 1;
-
-        VNode oldStartVnode = nullptr;
-        VNode oldEndVnode = nullptr;
-        VNode newStartVnode = nullptr;
-        VNode newEndVnode = nullptr;
-
-        VNode elmToMove = nullptr;
+        Children::iterator oldStart = oldCh.begin();
+        Children::iterator newStart = newCh.begin();
+        Children::iterator oldEnd = std::prev(oldCh.end());
+        Children::iterator newEnd = std::prev(newCh.end());
 
         bool oldKeys = false;
-        std::unordered_map<std::string, int> oldKeyToIdx;
+        std::unordered_map<std::string, Children::iterator> oldKeyTo;
 
-        while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
-            oldStartVnode = oldCh[oldStartIdx];
-            oldEndVnode = oldCh[oldEndIdx];
-            newStartVnode = newCh[newStartIdx];
-            newEndVnode = newCh[newEndIdx];
+        while (oldStart <= oldEnd && newStart <= newEnd) {
+            if (!*oldStart) {
+                ++oldStart;
+            } else if (!*oldEnd) {
+                --oldEnd;
+            } else if (sameVNode(*oldStart, *newStart)) {
+                if (*oldStart != *newStart)
+                    patchVNode(*oldStart, *newStart, parentNode);
+                ++oldStart;
+                ++newStart;
+            } else if (sameVNode(*oldEnd, *newEnd)) {
+                if (*oldEnd != *newEnd)
+                    patchVNode(*oldEnd, *newEnd, parentNode);
+                --oldEnd;
+                --newEnd;
+            } else if (sameVNode(*oldStart, *newEnd)) {
+                if (*oldStart != *newEnd)
+                    patchVNode(*oldStart, *newEnd, parentNode);
+                const emscripten::val nextSiblingOldPtr = domapi::nextSibling(oldEnd->node());
+                domapi::insertBefore(parentNode, oldStart->node(), nextSiblingOldPtr);
+                ++oldStart;
+                --newEnd;
+            } else if (sameVNode(*oldEnd, *newStart)) {
+                if (*oldEnd != *newStart)
+                    patchVNode(*oldEnd, *newStart, parentNode);
 
-            if (!oldStartVnode) {
-                ++oldStartIdx;
-            } else if (!oldEndVnode) {
-                --oldEndIdx;
-            } else if (sameVNode(oldStartVnode, newStartVnode)) {
-                if (oldStartVnode != newStartVnode)
-                    patchVNode(oldStartVnode, newStartVnode, parentElm);
-                ++oldStartIdx;
-                ++newStartIdx;
-            } else if (sameVNode(oldEndVnode, newEndVnode)) {
-                if (oldEndVnode != newEndVnode)
-                    patchVNode(oldEndVnode, newEndVnode, parentElm);
-                --oldEndIdx;
-                --newEndIdx;
-            } else if (sameVNode(oldStartVnode, newEndVnode)) {
-                if (oldStartVnode != newEndVnode)
-                    patchVNode(oldStartVnode, newEndVnode, parentElm);
-                const int nextSiblingOldPtr = domapi::nextSibling(oldEndVnode.elm());
-                domapi::insertBefore(parentElm, oldStartVnode.elm(), nextSiblingOldPtr);
-                ++oldStartIdx;
-                --newEndIdx;
-            } else if (sameVNode(oldEndVnode, newStartVnode)) {
-                if (oldEndVnode != newStartVnode)
-                    patchVNode(oldEndVnode, newStartVnode, parentElm);
-
-                domapi::insertBefore(parentElm, oldEndVnode.elm(), oldStartVnode.elm());
-                --oldEndIdx;
-                ++newStartIdx;
+                domapi::insertBefore(parentNode, oldEnd->node(), oldStart->node());
+                --oldEnd;
+                ++newStart;
             } else {
                 if (!oldKeys) {
                     oldKeys = true;
 
-                    for (std::size_t beginIdx = oldStartIdx; beginIdx <= oldEndIdx; ++beginIdx) {
-                        if (oldCh[beginIdx].hash() & hasKey) {
-                            oldKeyToIdx.emplace(oldCh[beginIdx].key(), beginIdx);
+                    for (Children::iterator begin = oldStart; begin <= oldEnd; ++begin) {
+                        if (begin->hash() & hasKey) {
+                            oldKeyTo.emplace(begin->key(), begin);
                         }
                     }
                 }
-                if (!oldKeyToIdx.contains(newStartVnode.key())) {
-                    const int elm = createElm(newStartVnode);
-                    domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
+                if (!oldKeyTo.contains(newStart->key())) {
+                    createNode(*newStart);
+                    domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
                 } else {
-                    elmToMove = oldCh[oldKeyToIdx[newStartVnode.key()]];
-                    if ((elmToMove.hash() & extractSel) != (newStartVnode.hash() & extractSel)) {
-                        const int elm = createElm(newStartVnode);
-                        domapi::insertBefore(parentElm, elm, oldStartVnode.elm());
+                    const Children::iterator elmToMove = oldKeyTo[newStart->key()];
+                    if ((elmToMove->hash() & extractSel) != (newStart->hash() & extractSel)) {
+                        createNode(*newStart);
+                        domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
                     } else {
-                        if (elmToMove != newStartVnode)
-                            patchVNode(elmToMove, newStartVnode, parentElm);
-                        domapi::insertBefore(parentElm, elmToMove.elm(), oldStartVnode.elm());
-                        oldCh[oldKeyToIdx[newStartVnode.key()]] = nullptr;
+                        if (*elmToMove != *newStart)
+                            patchVNode(*elmToMove, *newStart, parentNode);
+                        domapi::insertBefore(parentNode, elmToMove->node(), oldStart->node());
+                        *elmToMove = nullptr;
                     }
                 }
-                ++newStartIdx;
+                ++newStart;
             }
         }
-        if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
-            if (oldStartIdx > oldEndIdx) {
-                addVNodes(parentElm, newEndIdx + 1 <= newCh.size() - 1 ? newCh[newEndIdx + 1].elm() : 0, newCh, newStartIdx, newEndIdx);
+        if (oldStart <= oldEnd || newStart <= newEnd) {
+            if (oldStart > oldEnd) {
+                addVNodes(parentNode, std::next(newEnd) != newCh.end() ? std::next(newEnd)->node() : emscripten::val::null(), newStart, newEnd);
             } else {
-                removeVNodes(oldCh, oldStartIdx, oldEndIdx);
+                removeVNodes(oldStart, oldEnd);
             }
         }
     }
 
 }
 
-void wasmdom::patchVNode(VNode& oldVnode, VNode& vnode, int parentElm)
+void wasmdom::patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& parentNode)
 {
-    vnode.setElm(oldVnode.elm());
+    vnode.setNode(oldVnode.node());
     if (vnode.hash() & isElementOrFragment) {
-        const unsigned int childrenNotEmpty = vnode.hash() & hasChildren;
-        const unsigned int oldChildrenNotEmpty = oldVnode.hash() & hasChildren;
+        const std::size_t childrenNotEmpty = vnode.hash() & hasChildren;
+        const std::size_t oldChildrenNotEmpty = oldVnode.hash() & hasChildren;
         if (childrenNotEmpty && oldChildrenNotEmpty) {
-            updateChildren(vnode.hash() & isFragment ? parentElm : vnode.elm(), oldVnode._data->children, vnode._data->children);
+            updateChildren(vnode.hash() & isFragment ? parentNode : vnode.node(), oldVnode._data->children, vnode._data->children);
         } else if (childrenNotEmpty) {
-            addVNodes(vnode.hash() & isFragment ? parentElm : vnode.elm(), 0, vnode._data->children, 0, vnode.children().size() - 1);
+            addVNodes(vnode.hash() & isFragment ? parentNode : vnode.node(), emscripten::val::null(), vnode._data->children.begin(), std::prev(vnode._data->children.end()));
         } else if (oldChildrenNotEmpty) {
-            removeVNodes(oldVnode._data->children, 0, oldVnode.children().size() - 1);
+            removeVNodes(oldVnode._data->children.begin(), std::prev(oldVnode._data->children.end()));
         }
         vnode.diff(oldVnode);
     } else if (vnode.sel() != oldVnode.sel()) {
-        domapi::setNodeValue(vnode.elm(), vnode.sel());
+        domapi::setNodeValue(vnode.node(), vnode.sel());
     }
 }
 
@@ -191,20 +177,20 @@ const wasmdom::VNode& wasmdom::VDom::patch(const VNode& vnode)
     if (!vnode || _currentNode == vnode)
         return _currentNode;
 
-    VNode newNode = vnode;
-    newNode.normalize();
+    VNode newVnode = vnode;
+    newVnode.normalize();
 
-    if (sameVNode(_currentNode, newNode)) {
-        patchVNode(_currentNode, newNode, _currentNode.elm());
+    if (sameVNode(_currentNode, newVnode)) {
+        patchVNode(_currentNode, newVnode, _currentNode.node());
     } else {
-        int elm = createElm(newNode);
-        int parentPtr = domapi::parentNode(_currentNode.elm());
-        int nextSiblingElmPtr = domapi::nextSibling(_currentNode.elm());
-        domapi::insertBefore(parentPtr, elm, nextSiblingElmPtr);
-        domapi::removeChild(_currentNode.elm());
+        createNode(newVnode);
+        const emscripten::val parentNode = domapi::parentNode(_currentNode.node());
+        const emscripten::val nextSiblingNode = domapi::nextSibling(_currentNode.node());
+        domapi::insertBefore(parentNode, newVnode.node(), nextSiblingNode);
+        domapi::removeChild(_currentNode.node());
     }
 
-    _currentNode = newNode;
+    _currentNode = newVnode;
 
     return _currentNode;
 }
