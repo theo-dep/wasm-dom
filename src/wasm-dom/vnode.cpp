@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <array>
 #include <ranges>
-#include <regex>
 
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
@@ -415,10 +414,10 @@ namespace wasmdom
 
     std::string formatEventKey(const std::string& key)
     {
-        static const std::regex eventPrefix("^on");
-        std::string eventKey;
-        std::regex_replace(std::back_inserter(eventKey), key.cbegin(), key.cend(), eventPrefix, "");
-        return eventKey;
+        static constexpr std::string_view eventPrefix = "on";
+        if (key.starts_with(eventPrefix))
+            return key.substr(eventPrefix.size());
+        return key;
     }
 
     void diffCallbacks(const VNode& oldVnode, VNode& vnode)

@@ -37,6 +37,23 @@ TEST_CASE("eventListeners", "[eventListeners]")
         REQUIRE(result.size() == 1);
     }
 
+    SECTION("should attach a click event handler without prefix to element")
+    {
+        VNode vnode =
+            div(("click", callback))(
+                { a()("Click my parent") }
+            );
+
+        VDom vdom(jsDom.root());
+        vdom.patch(vnode);
+
+        emscripten::val node = jsDom.bodyFirstChild();
+
+        node.call<void>("click");
+
+        REQUIRE(result.size() == 1);
+    }
+
     SECTION("should detach attached click event handler to element")
     {
         VNode vnode =
