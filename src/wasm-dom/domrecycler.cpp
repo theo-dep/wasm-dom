@@ -16,8 +16,8 @@ namespace wasmdom
     std::string upper(const std::string& str)
     {
         static const auto toupper{
-            [](const std::string::value_type& c) -> std::string::value_type {
-                return static_cast<std::string::value_type>(std::toupper(c));
+            [](unsigned char c) -> std::string::value_type {
+                return std::toupper(c);
             }
         };
         std::string upperStr = str;

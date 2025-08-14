@@ -108,8 +108,8 @@ namespace wasmdom
     void lower(std::string& str)
     {
         static const auto tolower{
-            [](const std::string::value_type& c) -> std::string::value_type {
-                return static_cast<std::string::value_type>(std::tolower(c));
+            [](unsigned char c) -> std::string::value_type {
+                return std::tolower(c);
             }
         };
         std::ranges::copy(std::views::transform(str, tolower), str.begin());
