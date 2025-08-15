@@ -167,25 +167,24 @@ void wasmdom::patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& p
     }
 }
 
-const wasmdom::VNode& wasmdom::VDom::patch(const VNode& vnode)
+const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 {
     if (!vnode || _currentNode == vnode)
         return _currentNode;
 
-    VNode newVnode = vnode;
-    newVnode.normalize();
+    vnode.normalize();
 
-    if (sameVNode(_currentNode, newVnode)) {
-        patchVNode(_currentNode, newVnode, _currentNode.node());
+    if (sameVNode(_currentNode, vnode)) {
+        patchVNode(_currentNode, vnode, _currentNode.node());
     } else {
-        createNode(newVnode);
+        createNode(vnode);
         const emscripten::val parentNode = domapi::parentNode(_currentNode.node());
         const emscripten::val nextSiblingNode = domapi::nextSibling(_currentNode.node());
-        domapi::insertBefore(parentNode, newVnode.node(), nextSiblingNode);
+        domapi::insertBefore(parentNode, vnode.node(), nextSiblingNode);
         domapi::removeChild(_currentNode.node());
     }
 
-    _currentNode = newVnode;
+    _currentNode = vnode;
 
     return _currentNode;
 }
