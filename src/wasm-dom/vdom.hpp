@@ -15,7 +15,7 @@ namespace wasmdom
     public:
         VDom(const emscripten::val& element);
 
-        const VNode& patch(const VNode& vnode);
+        const VNode& patch(VNode vnode);
 
     private:
         VNode _currentNode;
