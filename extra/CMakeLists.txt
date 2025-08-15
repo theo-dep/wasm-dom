@@ -1,11 +1,17 @@
-file(GLOB HEADER_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp")
-file(GLOB SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.cpp")
+file(GLOB_RECURSE HEADER_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp")
+file(GLOB_RECURSE SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.cpp")
 
 set(OUTPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/wasm-dom.hpp)
 
 find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format)
 if(CLANG_FORMAT_EXECUTABLE)
     set(CLANG_FORMAT_COMMAND COMMAND ${CLANG_FORMAT_EXECUTABLE} -i ${OUTPUT_FILE})
+endif()
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.25)
+    cmake_language(GET_MESSAGE_LOG_LEVEL CMAKE_LOG_LEVEL)
+else()
+    set(CMAKE_LOG_LEVEL "STATUS")
 endif()
 
 add_custom_command(
@@ -15,9 +21,10 @@ add_custom_command(
         -DHEADER_FILES="${HEADER_FILES}"
         -DSOURCE_FILES="${SOURCE_FILES}"
         -DOUTPUT_FILE="${OUTPUT_FILE}"
+        --log-level=${CMAKE_LOG_LEVEL}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/single_header.cmake
     ${CLANG_FORMAT_COMMAND}
-    DEPENDS ${HEADER_FILES} ${SOURCE_FILES}
+    DEPENDS ${HEADER_FILES} ${SOURCE_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/single_header.cmake
     COMMENT "Generating single header file ${OUTPUT_FILE}"
 )
 
