@@ -9,12 +9,12 @@ option(WASM_DOM_EXAMPLES "Build examples" ON)
 
 set(WASM_DOM_COVERAGE OFF CACHE BOOL "Enable code coverage instrumentation")
 
-add_compile_options(-Werror -Wall -Wextra -pedantic -sSTRICT -Wno-dollar-in-identifier-extension)
+include(cmake/compile_flags.cmake)
+include(cmake/disable_exceptions.cmake)
+include(cmake/optimization_flags.cmake)
 
 if(WASM_DOM_COVERAGE)
     add_subdirectory(coverage)
-else()
-    add_link_options(-sNO_FILESYSTEM)
 endif()
 
 add_subdirectory(src)

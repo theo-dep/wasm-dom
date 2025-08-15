@@ -1,17 +1,16 @@
 set(TARGET_NAME wasm-dom)
 
-add_library(${TARGET_NAME}
+add_library(wasm-dom
     wasm-dom/domapi.cpp
     wasm-dom/domrecycler.cpp
     wasm-dom/vdom.cpp
     wasm-dom/vnode.cpp
 )
 
-target_include_directories(${TARGET_NAME} PUBLIC .)
-
-target_link_options(${TARGET_NAME} PUBLIC -lembind)
+target_include_directories(wasm-dom PUBLIC .)
+target_link_libraries(wasm-dom PRIVATE compile_flags optimization_flags disable_exceptions)
 
 if(WASM_DOM_COVERAGE)
-    target_compile_definitions(${TARGET_NAME} PUBLIC WASMDOM_COVERAGE)
-    target_link_libraries(${TARGET_NAME} PUBLIC llvm-gcov)
+    target_compile_definitions(wasm-dom PUBLIC WASMDOM_COVERAGE)
+    target_link_libraries(wasm-dom PUBLIC llvm-gcov)
 endif()
