@@ -285,7 +285,7 @@ namespace wasmdom
         } else if (vnode.hash() & isComment) {
             html.append("<!--" + vnode.sel() + "-->");
         } else if (vnode.hash() & isFragment) {
-            for (const VNode& child : vnode.children()) {
+            for (const VNode& child : vnode) {
                 toHTML(child, html);
             }
         } else {
@@ -306,7 +306,7 @@ namespace wasmdom
                 if (propsIt != vnode.props().cend()) {
                     html.append(propsIt->second.as<std::string>());
                 } else {
-                    for (const VNode& child : vnode.children()) {
+                    for (const VNode& child : vnode) {
                         toHTML(child, html);
                     }
                 }
