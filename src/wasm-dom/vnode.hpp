@@ -92,8 +92,6 @@ namespace wasmdom
 
         void setNode(const emscripten::val& node);
 
-        const Children& children() const;
-
         void normalize();
 
         operator bool() const;
@@ -106,11 +104,13 @@ namespace wasmdom
 
         static VNode toVNode(const emscripten::val& node);
 
+        Children::iterator begin();
+        Children::iterator end();
+        Children::const_iterator begin() const;
+        Children::const_iterator end() const;
+
     private:
         void normalize(bool injectSvgNamespace);
-
-        friend void createNode(VNode& vnode);
-        friend void patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& parentNode);
 
         // contains selector for elements and fragments, text for comments and textNodes
         std::shared_ptr<SharedData> _data = nullptr;

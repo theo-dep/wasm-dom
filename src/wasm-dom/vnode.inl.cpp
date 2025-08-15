@@ -96,9 +96,6 @@ WASMDOM_INLINE
 void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
 
 WASMDOM_INLINE
-const wasmdom::Children& wasmdom::VNode::children() const { return _data->children; }
-
-WASMDOM_INLINE
 void wasmdom::VNode::normalize() { normalize(false); }
 
 WASMDOM_INLINE
@@ -109,3 +106,15 @@ bool wasmdom::VNode::operator!() const { return _data == nullptr; }
 
 WASMDOM_INLINE
 bool wasmdom::VNode::operator==(const VNode& other) const { return _data == other._data; }
+
+WASMDOM_INLINE
+wasmdom::Children::iterator wasmdom::VNode::begin() { return _data->children.begin(); }
+
+WASMDOM_INLINE
+wasmdom::Children::iterator wasmdom::VNode::end() { return _data->children.end(); }
+
+WASMDOM_INLINE
+wasmdom::Children::const_iterator wasmdom::VNode::begin() const { return _data->children.begin(); }
+
+WASMDOM_INLINE
+wasmdom::Children::const_iterator wasmdom::VNode::end() const { return _data->children.end(); }

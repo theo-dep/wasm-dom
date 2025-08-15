@@ -45,7 +45,7 @@ namespace wasmdom
             return;
         }
 
-        for (VNode& child : vnode._data->children) {
+        for (VNode& child : vnode) {
             createNode(child);
             domapi::appendChild(vnode.node(), child.node());
         }
@@ -75,13 +75,8 @@ namespace wasmdom
         }
     }
 
-    void updateChildren(const emscripten::val& parentNode, Children& oldCh, Children& newCh)
+    void updateChildren(const emscripten::val& parentNode, Children::iterator oldStart, Children::iterator oldEnd, Children::iterator newStart, Children::iterator newEnd, Children::iterator end)
     {
-        Children::iterator oldStart = oldCh.begin();
-        Children::iterator newStart = newCh.begin();
-        Children::iterator oldEnd = std::prev(oldCh.end());
-        Children::iterator newEnd = std::prev(newCh.end());
-
         bool oldKeys = false;
         std::unordered_map<std::string, Children::iterator> oldKeyTo;
 
@@ -144,7 +139,7 @@ namespace wasmdom
         }
         if (oldStart <= oldEnd || newStart <= newEnd) {
             if (oldStart > oldEnd) {
-                addVNodes(parentNode, std::next(newEnd) != newCh.end() ? std::next(newEnd)->node() : emscripten::val::null(), newStart, newEnd);
+                addVNodes(parentNode, std::next(newEnd) != end ? std::next(newEnd)->node() : emscripten::val::null(), newStart, newEnd);
             } else {
                 removeVNodes(oldStart, oldEnd);
             }
@@ -160,11 +155,11 @@ void wasmdom::patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& p
         const std::size_t childrenNotEmpty = vnode.hash() & hasChildren;
         const std::size_t oldChildrenNotEmpty = oldVnode.hash() & hasChildren;
         if (childrenNotEmpty && oldChildrenNotEmpty) {
-            updateChildren(vnode.hash() & isFragment ? parentNode : vnode.node(), oldVnode._data->children, vnode._data->children);
+            updateChildren(vnode.hash() & isFragment ? parentNode : vnode.node(), oldVnode.begin(), std::prev(oldVnode.end()), vnode.begin(), std::prev(vnode.end()), vnode.end());
         } else if (childrenNotEmpty) {
-            addVNodes(vnode.hash() & isFragment ? parentNode : vnode.node(), emscripten::val::null(), vnode._data->children.begin(), std::prev(vnode._data->children.end()));
+            addVNodes(vnode.hash() & isFragment ? parentNode : vnode.node(), emscripten::val::null(), vnode.begin(), std::prev(vnode.end()));
         } else if (oldChildrenNotEmpty) {
-            removeVNodes(oldVnode._data->children.begin(), std::prev(oldVnode._data->children.end()));
+            removeVNodes(oldVnode.begin(), std::prev(oldVnode.end()));
         }
         vnode.diff(oldVnode);
     } else if (vnode.sel() != oldVnode.sel()) {
