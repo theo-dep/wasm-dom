@@ -2,13 +2,10 @@
 
 #include "domapi.hpp"
 #include "domkeys.hpp"
+#include "internals/diff.hpp"
+#include "internals/tohtml.hpp"
 
-#include <emscripten.h>
 #include <emscripten/bind.h>
-
-#include <algorithm>
-#include <array>
-#include <ranges>
 
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
@@ -104,19 +101,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
     }
 }
 
-namespace wasmdom
-{
-    void lower(std::string& str)
-    {
-        static const auto tolower{
-            [](unsigned char c) -> std::string::value_type {
-                return std::tolower(c);
-            }
-        };
-        std::ranges::copy(std::views::transform(str, tolower), str.begin());
-    }
-}
-
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
     VNode vnode = nullptr;
@@ -124,7 +108,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     // isElement
     if (nodeType == 1) {
         std::string sel = node["tagName"].as<std::string>();
-        lower(sel);
+        internals::lower(sel);
 
         VNodeAttributes data;
         for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
@@ -150,173 +134,6 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     return vnode;
 }
 
-namespace wasmdom
-{
-
-    // All SVG children elements, not in this list, should self-close
-
-    static constexpr inline std::array containerElements{
-        // http://www.w3.org/TR/SVG/intro.html#TermContainerElement
-        "a",
-        "defs",
-        "glyph",
-        "g",
-        "marker",
-        "mask",
-        "missing-glyph",
-        "pattern",
-        "svg",
-        "switch",
-        "symbol",
-        "text",
-
-        // http://www.w3.org/TR/SVG/intro.html#TermDescriptiveElement
-        "desc",
-        "metadata",
-        "title"
-    };
-
-    // http://www.w3.org/html/wg/drafts/html/master/syntax.html#void-elements
-    static constexpr inline std::array voidElements{
-        "area",
-        "base",
-        "br",
-        "col",
-        "embed",
-        "hr",
-        "img",
-        "input",
-        //"keygen",
-        "link",
-        "meta",
-        "param",
-        "source",
-        "track",
-        "wbr"
-    };
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/element
-    static constexpr inline std::array omitProps{
-        "attributes",
-        "childElementCount",
-        "children",
-        "classList",
-        "clientHeight",
-        "clientLeft",
-        "clientTop",
-        "clientWidth",
-        "currentStyle",
-        "firstElementChild",
-        "innerHTML",
-        "lastElementChild",
-        "nextElementSibling",
-        "ongotpointercapture",
-        "onlostpointercapture",
-        "onwheel",
-        "outerHTML",
-        "previousElementSibling",
-        "runtimeStyle",
-        "scrollHeight",
-        "scrollLeft",
-        "scrollLeftMax",
-        "scrollTop",
-        "scrollTopMax",
-        "scrollWidth",
-        "tabStop",
-        "tagName"
-    };
-
-    std::string encode(const std::string& data)
-    {
-        std::string encoded;
-        std::size_t size = data.size();
-        encoded.reserve(size);
-        for (std::size_t pos = 0; pos != size; ++pos) {
-            switch (data[pos]) {
-                case '&':
-                    encoded.append("&amp;");
-                    break;
-                case '\"':
-                    encoded.append("&quot;");
-                    break;
-                case '\'':
-                    encoded.append("&apos;");
-                    break;
-                case '<':
-                    encoded.append("&lt;");
-                    break;
-                case '>':
-                    encoded.append("&gt;");
-                    break;
-                case '`':
-                    encoded.append("&#96;");
-                    break;
-                default:
-                    encoded.append(&data[pos], 1);
-                    break;
-            }
-        }
-        return encoded;
-    }
-
-    void appendAttributes(const VNode& vnode, std::string& html)
-    {
-        for (const auto& [key, val] : vnode.attrs()) {
-            html.append(" " + key + "=\"" + encode(val) + "\"");
-        }
-
-        emscripten::val String = emscripten::val::global("String");
-        for (const auto& [key, val] : vnode.props()) {
-            if (std::ranges::find(omitProps, key) == omitProps.cend()) {
-                std::string lowerKey(key);
-                lower(lowerKey);
-                html.append(" " + lowerKey + "=\"" + encode(String(val).as<std::string>()) + "\"");
-            }
-        }
-    }
-
-    void toHTML(const VNode& vnode, std::string& html)
-    {
-        if (!vnode)
-            return;
-
-        if (vnode.hash() & isText && !vnode.sel().empty()) {
-            html.append(encode(vnode.sel()));
-        } else if (vnode.hash() & isComment) {
-            html.append("<!--" + vnode.sel() + "-->");
-        } else if (vnode.hash() & isFragment) {
-            for (const VNode& child : vnode) {
-                toHTML(child, html);
-            }
-        } else {
-            bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
-            bool isSvgContainerElement = isSvg && std::ranges::find(containerElements, vnode.sel()) != containerElements.cend();
-
-            html.append("<" + vnode.sel());
-            appendAttributes(vnode, html);
-            if (isSvg && !isSvgContainerElement) {
-                html.append(" /");
-            }
-            html.append(">");
-
-            if (isSvgContainerElement ||
-                (!isSvg && std::ranges::find(voidElements, vnode.sel()) == voidElements.cend())) {
-
-                const auto propsIt = vnode.props().find("innerHTML");
-                if (propsIt != vnode.props().cend()) {
-                    html.append(propsIt->second.as<std::string>());
-                } else {
-                    for (const VNode& child : vnode) {
-                        toHTML(child, html);
-                    }
-                }
-                html.append("</" + vnode.sel() + ">");
-            }
-        }
-    }
-
-}
-
 std::string wasmdom::VNode::toHTML() const
 {
     VNode vnode = *this;
@@ -325,149 +142,8 @@ std::string wasmdom::VNode::toHTML() const
         vnode.normalize();
 
     std::string html;
-    wasmdom::toHTML(vnode, html);
+    internals::toHTML(vnode, html);
     return html;
-}
-
-namespace wasmdom
-{
-
-    void diffAttrs(const VNode& oldVnode, const VNode& vnode)
-    {
-        const Attrs& oldAttrs = oldVnode.attrs();
-        const Attrs& attrs = vnode.attrs();
-
-        const emscripten::val& node = vnode.node();
-
-        for (const auto& [key, _] : oldAttrs) {
-            if (!attrs.contains(key)) {
-                domapi::removeAttribute(node, key);
-            }
-        }
-
-        for (const auto& [key, val] : attrs) {
-            const auto oldAttrsIt = oldAttrs.find(key);
-            if (oldAttrsIt == oldAttrs.cend() || oldAttrsIt->second != val) {
-                domapi::setAttribute(node, key, val);
-            }
-        }
-    }
-
-    void diffProps(const VNode& oldVnode, VNode& vnode)
-    {
-        const Props& oldProps = oldVnode.props();
-        const Props& props = vnode.props();
-
-        emscripten::val& node = vnode.node();
-        node.set(nodeRawsKey, emscripten::val::array());
-
-        for (const auto& [key, _] : oldProps) {
-            if (!props.contains(key)) {
-                node.set(key, emscripten::val::undefined());
-            }
-        }
-
-        for (const auto& [key, val] : props) {
-            node[nodeRawsKey].call<void>("push", key);
-
-            const auto oldPropsIt = oldProps.find(key);
-            if (oldPropsIt == oldProps.cend() ||
-                !val.strictlyEquals(oldPropsIt->second) ||
-                ((key == "value" || key == "checked") &&
-                 !val.strictlyEquals(node[key]))) {
-                node.set(key, val);
-            }
-        }
-    }
-
-    // store callbacks addresses to be called in functionCallback
-    std::unordered_map<std::size_t, Callbacks>& vnodeCallbacks()
-    {
-        static std::unordered_map<std::size_t, Callbacks> vnodeCallbacks;
-        return vnodeCallbacks;
-    }
-    std::size_t incrementCallbackKey()
-    {
-        static std::size_t lastCallbackKey = 0;
-        return ++lastCallbackKey;
-    }
-    void storeCallbacks(const VNode& oldVnode, VNode& vnode)
-    {
-        const emscripten::val& oldNode = oldVnode.node();
-
-        std::size_t callbackKey = 0;
-        if (oldNode.isNull()) {
-            callbackKey = incrementCallbackKey();
-        } else {
-            const emscripten::val oldNodeCallbacksKey = oldNode[nodeCallbacksKey];
-            if (oldNodeCallbacksKey.isUndefined()) {
-                callbackKey = incrementCallbackKey();
-            } else {
-                callbackKey = oldNodeCallbacksKey.as<std::size_t>();
-            }
-        }
-
-        emscripten::val& node = vnode.node();
-        node.set(nodeCallbacksKey, callbackKey);
-        vnodeCallbacks()[callbackKey] = vnode.callbacks();
-    }
-
-    std::string formatEventKey(const std::string& key)
-    {
-        static constexpr std::string_view eventPrefix = "on";
-        if (key.starts_with(eventPrefix))
-            return key.substr(eventPrefix.size());
-        return key;
-    }
-
-    void diffCallbacks(const VNode& oldVnode, VNode& vnode)
-    {
-        const Callbacks& oldCallbacks = oldVnode.callbacks();
-        const Callbacks& callbacks = vnode.callbacks();
-
-        emscripten::val& node = vnode.node();
-
-        std::string eventKey;
-
-        for (const auto& [key, _] : oldCallbacks) {
-            if (!callbacks.contains(key) && key != "ref") {
-                eventKey = formatEventKey(key);
-                node.call<void>("removeEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
-                node[nodeEventsKey].delete_(eventKey);
-            }
-        }
-
-        storeCallbacks(oldVnode, vnode);
-        if (node[nodeEventsKey].isUndefined()) {
-            node.set(nodeEventsKey, emscripten::val::object());
-        }
-
-        for (const auto& [key, _] : callbacks) {
-            if (!oldCallbacks.contains(key) && key != "ref") {
-                eventKey = formatEventKey(key);
-                node.call<void>("addEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
-                node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
-            }
-        }
-
-        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
-        const Callback oldCallback = oldVnode.hash() & hasRef ? oldCallbacks.at("ref") : Callback();
-
-        // callback store a function pointer and it is the same, do nothing
-        const auto rawCallback = callback.target<bool (*)(emscripten::val)>();
-        const auto rawOldCallback = oldCallback.target<bool (*)(emscripten::val)>();
-        if (rawCallback && rawOldCallback && *rawCallback == *rawOldCallback)
-            return;
-
-        if (oldCallback) {
-            oldCallback(emscripten::val::null());
-        }
-
-        if (callback) {
-            callback(node);
-        }
-    }
-
 }
 
 void wasmdom::VNode::diff(const VNode& oldVnode)
@@ -478,17 +154,16 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
     const std::size_t vnodes = _data->hash | oldVnode._data->hash;
 
     if (vnodes & hasAttrs)
-        diffAttrs(oldVnode, *this);
+        internals::diffAttrs(oldVnode, *this);
     if (vnodes & hasProps)
-        diffProps(oldVnode, *this);
+        internals::diffProps(oldVnode, *this);
     if (vnodes & hasCallbacks)
-        diffCallbacks(oldVnode, *this);
+        internals::diffCallbacks(oldVnode, *this);
 }
 
-namespace wasmdom
+namespace wasmdom::internals
 {
-
-    bool eventProxy(emscripten::val event)
+    inline bool eventProxy(emscripten::val event)
     {
         const std::size_t callbackKey = event["currentTarget"][nodeCallbacksKey].as<std::size_t>();
         const std::string eventType = event["type"].as<std::string>();
@@ -500,10 +175,9 @@ namespace wasmdom
         }
         return callbackIt->second(event);
     }
-
 }
 
 EMSCRIPTEN_BINDINGS(wasmdomEventModule)
 {
-    emscripten::function("eventProxy", wasmdom::eventProxy);
+    emscripten::function("eventProxy", wasmdom::internals::eventProxy);
 }

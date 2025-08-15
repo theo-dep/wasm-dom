@@ -1,41 +1,34 @@
 #include "domapi.hpp"
 
 #include "domrecycler.hpp"
-#include "vnode.hpp"
 
-#include <emscripten.h>
-
-#include <unordered_map>
-
-namespace wasmdom
+namespace wasmdom::internals
 {
-
-    static inline DomRecycler& recycler()
+    inline DomRecycler& recycler()
     {
         static DomRecycler recycler(true);
         return recycler;
     }
-
 }
 
 emscripten::val wasmdom::domapi::createElement(const std::string& tag)
 {
-    return recycler().create(tag);
+    return internals::recycler().create(tag);
 }
 
 emscripten::val wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
-    return recycler().createNS(qualifiedName, namespaceURI);
+    return internals::recycler().createNS(qualifiedName, namespaceURI);
 }
 
 emscripten::val wasmdom::domapi::createTextNode(const std::string& text)
 {
-    return recycler().createText(text);
+    return internals::recycler().createText(text);
 }
 
 emscripten::val wasmdom::domapi::createComment(const std::string& comment)
 {
-    return recycler().createComment(comment);
+    return internals::recycler().createComment(comment);
 }
 
 emscripten::val wasmdom::domapi::createDocumentFragment()
@@ -60,7 +53,7 @@ void wasmdom::domapi::removeChild(const emscripten::val& child)
     if (!parentNode.isNull())
         parentNode.call<void>("removeChild", child);
 
-    recycler().collect(child);
+    internals::recycler().collect(child);
 }
 
 void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)

@@ -9,7 +9,12 @@
 namespace wasmdom
 {
 
-    struct DomFactoryVTable;
+    namespace internals
+    {
+        struct DomFactoryVTable;
+        struct DomFactory;
+        struct DomRecyclerFactory;
+    }
 
     class DomRecycler
     {
@@ -30,9 +35,9 @@ namespace wasmdom
         std::vector<emscripten::val> nodes(const std::string& name) const;
 
     private:
-        friend struct DomFactory;
-        friend struct DomRecyclerFactory;
-        const DomFactoryVTable* _factory;
+        friend struct internals::DomFactory;
+        friend struct internals::DomRecyclerFactory;
+        const internals::DomFactoryVTable* _factory;
 
         std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
     };
