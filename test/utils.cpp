@@ -16,6 +16,7 @@ emscripten::val getBodyFirstChild()
 }
 
 EM_JS(void, createDom, (), {
+    const { JSDOM } = require("jsdom");
     const dom = new JSDOM('<!DOCTYPE html><body></body>');
     globalThis.dom = dom;
     globalThis.window = dom.window;
