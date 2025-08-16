@@ -2,13 +2,13 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 using namespace wasmdom;
 
 TEST_CASE("domApi", "[domApi]")
 {
-    setupDom();
+    const JSDom jsDom;
 
     SECTION("should access an unknown node")
     {

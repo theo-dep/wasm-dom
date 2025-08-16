@@ -2,23 +2,23 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
 
 TEST_CASE("dataset", "[dataset]")
 {
-    setupDom();
+    const JSDom jsDom;
 
     SECTION("should set on initial element creation")
     {
         VNode vnode = div(("data-foo", "foo"s));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
     }
@@ -30,10 +30,10 @@ TEST_CASE("dataset", "[dataset]")
                        { "data-bar", "bar" } };
         VNode vnode = i(data);
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
@@ -42,7 +42,7 @@ TEST_CASE("dataset", "[dataset]")
 
         vdom.patch(vnode2);
 
-        elm = getBodyFirstChild();
+        elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
@@ -54,10 +54,10 @@ TEST_CASE("dataset", "[dataset]")
             div(("data-foo", "foo"s),
                 ("data-bar", "bar"s));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
@@ -66,7 +66,7 @@ TEST_CASE("dataset", "[dataset]")
 
         vdom.patch(vnode2);
 
-        elm = getBodyFirstChild();
+        elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-baz")).strictlyEquals(emscripten::val("baz")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).isNull());

@@ -2,10 +2,13 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
-
 using namespace wasmdom;
 using namespace wasmdom::dsl;
+
+inline bool onClick(emscripten::val /*event*/)
+{
+    return true;
+}
 
 TEST_CASE("h", "[h]")
 {

@@ -2,39 +2,39 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
 
 TEST_CASE("toVNode", "[toVNode]")
 {
-    setupDom();
+    const JSDom jsDom;
 
     SECTION("should convert a node to vnode")
     {
-        emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val node = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
 
         VNode vnode{ VNode::toVNode(node) };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
     }
 
     SECTION("should convert text node to vnode")
     {
-        emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("Hello world!"));
+        emscripten::val node = jsDom.document().call<emscripten::val>("createTextNode", emscripten::val("Hello world!"));
 
         VNode vnode{ VNode::toVNode(node) };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("#text")));
         REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("Hello world!")));
@@ -42,14 +42,14 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should convert comment node to vnode")
     {
-        emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createComment", emscripten::val("Hello world!"));
+        emscripten::val node = jsDom.document().call<emscripten::val>("createComment", emscripten::val("Hello world!"));
 
         VNode vnode{ VNode::toVNode(node) };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm["nodeName"].strictlyEquals(emscripten::val("#comment")));
         REQUIRE(elm["textContent"].strictlyEquals(emscripten::val("Hello world!")));
@@ -57,17 +57,17 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should convert a node with attributes to vnode")
     {
-        emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val node = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
         node.call<void>("setAttribute", emscripten::val("src"), emscripten::val("http://localhost/"));
         node.call<void>("setAttribute", emscripten::val("data-foo"), emscripten::val("bar"));
         node.call<void>("setAttribute", emscripten::val("data-bar"), emscripten::val("foo"));
 
         VNode vnode{ VNode::toVNode(node) };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("src")).strictlyEquals(emscripten::val("http://localhost/")));
@@ -77,23 +77,23 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should convert a node with children to vnode")
     {
-        emscripten::val parent = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
-        emscripten::val h1 = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("h1"));
-        h1.call<void>("appendChild", emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("Hello World!")));
-        emscripten::val p = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("p"));
-        p.call<void>("appendChild", emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("foo")));
-        p.call<void>("appendChild", emscripten::val::global("document").call<emscripten::val>("createComment", emscripten::val("bar")));
-        emscripten::val child = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val parent = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val h1 = jsDom.document().call<emscripten::val>("createElement", emscripten::val("h1"));
+        h1.call<void>("appendChild", jsDom.document().call<emscripten::val>("createTextNode", emscripten::val("Hello World!")));
+        emscripten::val p = jsDom.document().call<emscripten::val>("createElement", emscripten::val("p"));
+        p.call<void>("appendChild", jsDom.document().call<emscripten::val>("createTextNode", emscripten::val("foo")));
+        p.call<void>("appendChild", jsDom.document().call<emscripten::val>("createComment", emscripten::val("bar")));
+        emscripten::val child = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
         parent.call<void>("appendChild", h1);
         parent.call<void>("appendChild", p);
         parent.call<void>("appendChild", child);
 
         VNode vnode{ VNode::toVNode(parent) };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
         REQUIRE(elm["childNodes"]["length"].strictlyEquals(emscripten::val(3)));
@@ -112,20 +112,20 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should convert a node with attributes and children to vnode")
     {
-        emscripten::val parent = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val parent = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
         parent.call<void>("setAttribute", emscripten::val("data-foo"), emscripten::val("foo"));
-        emscripten::val img = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("img"));
+        emscripten::val img = jsDom.document().call<emscripten::val>("createElement", emscripten::val("img"));
         img.call<void>("setAttribute", emscripten::val("src"), emscripten::val("http://localhost/"));
-        emscripten::val div = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val div = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
         parent.call<void>("appendChild", img);
         parent.call<void>("appendChild", div);
 
         VNode vnode{ VNode::toVNode(parent) };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm["tagName"].strictlyEquals(emscripten::val("DIV")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
@@ -137,9 +137,9 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should remove previous children of the root element")
     {
-        emscripten::val h2 = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("h2"));
+        emscripten::val h2 = jsDom.document().call<emscripten::val>("createElement", emscripten::val("h2"));
         h2.set("textContent", emscripten::val("Hello"));
-        emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val prevElm = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
         prevElm.set("id", emscripten::val("id"));
         prevElm.set("className", emscripten::val("class"));
         prevElm.call<void>("appendChild", h2);
@@ -168,7 +168,7 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should support patching in a DocumentFragment")
     {
-        emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createDocumentFragment");
+        emscripten::val prevElm = jsDom.document().call<emscripten::val>("createDocumentFragment");
 
         VNode nextVNode =
             fragment()(
@@ -197,12 +197,12 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should remove some children of the root element")
     {
-        emscripten::val h2 = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("h2"));
+        emscripten::val h2 = jsDom.document().call<emscripten::val>("createElement", emscripten::val("h2"));
         h2.set("textContent", emscripten::val("Hello"));
-        emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val prevElm = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
         prevElm.set("id", emscripten::val("id"));
         prevElm.set("className", emscripten::val("class"));
-        emscripten::val text = emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("Foobar"));
+        emscripten::val text = jsDom.document().call<emscripten::val>("createTextNode", emscripten::val("Foobar"));
         text.set("testProperty", emscripten::val(123));
         prevElm.call<void>("appendChild", text);
         prevElm.call<void>("appendChild", h2);
@@ -230,12 +230,12 @@ TEST_CASE("toVNode", "[toVNode]")
 
     SECTION("should remove text elements")
     {
-        emscripten::val valH2 = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("h2"));
+        emscripten::val valH2 = jsDom.document().call<emscripten::val>("createElement", emscripten::val("h2"));
         valH2.set("textContent", emscripten::val("Hello"));
-        emscripten::val prevElm = emscripten::val::global("document").call<emscripten::val>("createElement", emscripten::val("div"));
+        emscripten::val prevElm = jsDom.document().call<emscripten::val>("createElement", emscripten::val("div"));
         prevElm.set("id", emscripten::val("id"));
         prevElm.set("className", emscripten::val("class"));
-        emscripten::val text = emscripten::val::global("document").call<emscripten::val>("createTextNode", emscripten::val("Foobar"));
+        emscripten::val text = jsDom.document().call<emscripten::val>("createTextNode", emscripten::val("Foobar"));
         prevElm.call<void>("appendChild", text);
         prevElm.call<void>("appendChild", valH2);
 
