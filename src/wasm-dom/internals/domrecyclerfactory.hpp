@@ -2,6 +2,7 @@
 
 #include "wasm-dom/domrecycler.hpp"
 #include "wasm-dom/internals/domfactory.hpp"
+#include "wasm-dom/internals/jsapi.hpp"
 #include "wasm-dom/internals/utils.hpp"
 
 #include <emscripten/val.h>
@@ -81,13 +82,13 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
 {
     // clean
     for (emscripten::val child = node["lastChild"]; !child.isNull(); child = node["lastChild"]) {
-        node.call<void>("removeChild", child);
+        jsapi::removeChild(node.as_handle(), child.as_handle());
         collect(recycler, child);
     }
 
     if (!node["attributes"].isUndefined()) {
         for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
-            node.call<void>("removeAttribute", node["attributes"][i]["name"]);
+            jsapi::removeAttribute(node.as_handle(), node["attributes"][i]["name"].as<std::string>().c_str());
         }
     }
 
@@ -102,7 +103,7 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
         for (int i : std::views::iota(0, keys["length"].as<int>())) {
             emscripten::val event = keys[i];
-            node.call<void>("removeEventListener", event, node[nodeEventsKey][event], false);
+            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), node[nodeEventsKey][event].as_handle());
         }
         node.set(nodeEventsKey, emscripten::val::undefined());
     }

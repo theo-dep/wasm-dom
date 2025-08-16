@@ -1,6 +1,21 @@
 file(GLOB_RECURSE HEADER_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp")
 file(GLOB_RECURSE SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.cpp")
 
+# clean jsapi.c content
+file(READ ${CMAKE_SOURCE_DIR}/src/wasm-dom/internals/jsapi.c JSAPI_CONTENT)
+string(REGEX REPLACE "#include <.*>\n\n" "" JSAPI_CONTENT "${JSAPI_CONTENT}")
+string(REGEX REPLACE "typedef struct _EM_VAL\\* EM_VAL;\n" "" JSAPI_CONTENT "${JSAPI_CONTENT}")
+string(REGEX REPLACE "EM_VAL" "emscripten::EM_VAL" JSAPI_CONTENT "${JSAPI_CONTENT}")
+
+# add jsapi.c content in jsapi.hpp
+set(JSAPI_FILE ${CMAKE_BINARY_DIR}/src/wasm-dom/internals/jsapi.hpp)
+file(WRITE ${JSAPI_FILE} "#pragma once\n\n#include <emscripten/em_js.h>\n#include <emscripten/val.h>\n\nnamespace wasmdom::internals::jsapi {\n\n${JSAPI_CONTENT}\n}")
+
+# replace jsapi.hpp by the generated one
+list(FIND HEADER_FILES ${CMAKE_SOURCE_DIR}/src/wasm-dom/internals/jsapi.hpp JSAPI_INDEX)
+list(REMOVE_AT HEADER_FILES ${JSAPI_INDEX})
+list(INSERT HEADER_FILES ${JSAPI_INDEX} ${JSAPI_FILE})
+
 set(OUTPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/wasm-dom.hpp)
 
 find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format)

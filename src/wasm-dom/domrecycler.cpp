@@ -5,7 +5,7 @@
 #include "internals/domrecyclerfactory.hpp"
 #include "internals/utils.hpp"
 
-#include <emscripten.h>
+#include <emscripten/em_js.h>
 
 namespace wasmdom::internals
 {

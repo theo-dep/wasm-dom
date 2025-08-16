@@ -1,6 +1,7 @@
 #include "domapi.hpp"
 
 #include "domrecycler.hpp"
+#include "internals/jsapi.hpp"
 
 namespace wasmdom::internals
 {
@@ -33,7 +34,7 @@ emscripten::val wasmdom::domapi::createComment(const std::string& comment)
 
 emscripten::val wasmdom::domapi::createDocumentFragment()
 {
-    return emscripten::val::global("document").call<emscripten::val>("createDocumentFragment");
+    return emscripten::val::take_ownership(internals::jsapi::createDocumentFragment());
 }
 
 void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
@@ -41,7 +42,7 @@ void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emsc
     if (parentNode.isNull() || parentNode.isUndefined())
         return;
 
-    parentNode.call<void>("insertBefore", newNode, referenceNode);
+    internals::jsapi::insertBefore(parentNode.as_handle(), newNode.as_handle(), referenceNode.as_handle());
 }
 
 void wasmdom::domapi::removeChild(const emscripten::val& child)
@@ -51,29 +52,29 @@ void wasmdom::domapi::removeChild(const emscripten::val& child)
 
     const emscripten::val parentNode(child["parentNode"]);
     if (!parentNode.isNull())
-        parentNode.call<void>("removeChild", child);
+        internals::jsapi::removeChild(parentNode.as_handle(), child.as_handle());
 
     internals::recycler().collect(child);
 }
 
 void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
 {
-    parent.call<void>("appendChild", child);
+    internals::jsapi::appendChild(parent.as_handle(), child.as_handle());
 }
 
 void wasmdom::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
 {
-    node.call<void>("removeAttribute", attribute);
+    internals::jsapi::removeAttribute(node.as_handle(), attribute.c_str());
 }
 
 void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
 {
     if (attribute.starts_with("xml:")) {
-        node.call<void>("setAttributeNS", std::string("http://www.w3.org/XML/1998/namespace"), attribute, value);
+        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", attribute.c_str(), value.c_str());
     } else if (attribute.starts_with("xlink:")) {
-        node.call<void>("setAttributeNS", std::string("http://www.w3.org/1999/xlink"), attribute, value);
+        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/1999/xlink", attribute.c_str(), value.c_str());
     } else {
-        node.call<void>("setAttribute", attribute, value);
+        internals::jsapi::setAttribute(node.as_handle(), attribute.c_str(), value.c_str());
     }
 }
 

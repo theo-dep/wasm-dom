@@ -1,5 +1,7 @@
 #pragma once
 
+#include "wasm-dom/internals/jsapi.hpp"
+
 #include <emscripten/val.h>
 
 namespace wasmdom
@@ -13,21 +15,21 @@ namespace wasmdom::internals
     {
         static inline emscripten::val create(DomRecycler&, const std::string& name)
         {
-            return emscripten::val::global("document").call<emscripten::val>("createElement", name);
+            return emscripten::val::take_ownership(jsapi::createElement(name.c_str()));
         }
         static inline emscripten::val createNS(DomRecycler&, const std::string& name, const std::string& ns)
         {
-            emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
+            emscripten::val node = emscripten::val::take_ownership(jsapi::createElementNS(ns.c_str(), name.c_str()));
             node.set(nodeNSKey, ns);
             return node;
         }
         static inline emscripten::val createText(DomRecycler&, const std::string& text)
         {
-            return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
+            return emscripten::val::take_ownership(jsapi::createTextNode(text.c_str()));
         }
         static inline emscripten::val createComment(DomRecycler&, const std::string& comment)
         {
-            return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
+            return emscripten::val::take_ownership(jsapi::createComment(comment.c_str()));
         }
 
         static inline void collect(DomRecycler&, emscripten::val /*node*/) {} // // LCOV_EXCL_LINE

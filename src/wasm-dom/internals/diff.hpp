@@ -1,5 +1,6 @@
 #pragma once
 
+#include "wasm-dom/internals/jsapi.hpp"
 #include "wasm-dom/vnode.hpp"
 
 #include <unordered_map>
@@ -108,7 +109,7 @@ namespace wasmdom::internals
         for (const auto& [key, _] : oldCallbacks) {
             if (!callbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
-                node.call<void>("removeEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].delete_(eventKey);
             }
         }
@@ -121,7 +122,7 @@ namespace wasmdom::internals
         for (const auto& [key, _] : callbacks) {
             if (!oldCallbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
-                node.call<void>("addEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
         }
