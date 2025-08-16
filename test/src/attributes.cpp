@@ -2,14 +2,14 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
 
 TEST_CASE("attributes", "[attributes]")
 {
-    setupDom();
+    const JSDom jsDom;
 
     SECTION("can be copied")
     {
@@ -43,10 +43,10 @@ TEST_CASE("attributes", "[attributes]")
                 ("minlength", "1"s),
                 ("value", "foo"s));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
@@ -63,10 +63,10 @@ TEST_CASE("attributes", "[attributes]")
         };
         VNode vnode = div(data);
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
@@ -76,7 +76,7 @@ TEST_CASE("attributes", "[attributes]")
 
         vdom.patch(vnode2);
 
-        elm = getBodyFirstChild();
+        elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
@@ -90,10 +90,10 @@ TEST_CASE("attributes", "[attributes]")
                 ("minlength", "0"s),
                 ("value", "false"s));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
@@ -109,10 +109,10 @@ TEST_CASE("attributes", "[attributes]")
                 ("readonly", "true"s)
             );
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
         REQUIRE(elm.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
@@ -123,10 +123,10 @@ TEST_CASE("attributes", "[attributes]")
     {
         VNode vnode = div(("xlink:href", "#foo"s));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(
             elm.call<emscripten::val>(
@@ -141,10 +141,10 @@ TEST_CASE("attributes", "[attributes]")
     {
         VNode vnode = div(("xml:base", "#foo"s));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         REQUIRE(
             elm.call<emscripten::val>(

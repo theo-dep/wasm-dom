@@ -2,7 +2,7 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
@@ -18,7 +18,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
         return true;
     };
 
-    setupDom();
+    const JSDom jsDom;
 
     SECTION("should attach a click event handler to element")
     {
@@ -27,10 +27,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
                 { a()("Click my parent") }
             );
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         elm.call<void>("click");
 
@@ -44,10 +44,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
                 { a()("Click my parent") }
             );
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         elm.call<void>("click");
 
@@ -60,7 +60,7 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         vdom.patch(vnode2);
 
-        elm = getBodyFirstChild();
+        elm = jsDom.bodyFirstChild();
 
         elm.call<void>("click");
 
@@ -74,10 +74,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
                 { a(("onclick", callback))("Click my parent") }
             );
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         elm.call<void>("click");
 
@@ -98,10 +98,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
                 return false;
             }));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         elm.call<void>("click");
 
@@ -118,10 +118,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
                 return false;
             }));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         elm.call<void>("click");
 
@@ -150,10 +150,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
                 return false;
             }));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         elm.call<void>("click");
 
@@ -179,10 +179,10 @@ TEST_CASE("eventListeners", "[eventListeners]")
                 return false;
             }));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
 
         emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", elm["asmDomEvents"]);
 

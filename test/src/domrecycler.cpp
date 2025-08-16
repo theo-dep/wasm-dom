@@ -2,11 +2,11 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 TEST_CASE("domRecycler", "[domRecycler]")
 {
-    setupDom();
+    const JSDom jsDom;
 
     wasmdom::DomRecycler recycler(false);
 

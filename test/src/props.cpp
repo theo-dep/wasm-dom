@@ -2,23 +2,23 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
 
 TEST_CASE("props", "[props]")
 {
-    setupDom();
+    const JSDom jsDom;
 
     SECTION("should create element with prop")
     {
         VNode vnode = div(("src", emscripten::val("http://localhost/")));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
     }
 
@@ -27,11 +27,11 @@ TEST_CASE("props", "[props]")
         VNode vnode = a(("src", emscripten::val("http://other/")));
         VNode vnode2 = a(("src", emscripten::val("http://localhost/")));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
         vdom.patch(vnode2);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://localhost/")));
     }
 
@@ -42,15 +42,15 @@ TEST_CASE("props", "[props]")
         VNode vnode = a(data);
         VNode vnode2 = a(data);
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
 
         vdom.patch(vnode2);
 
-        elm = getBodyFirstChild();
+        elm = jsDom.bodyFirstChild();
         REQUIRE(elm["src"].strictlyEquals(emscripten::val("http://other/")));
     }
 
@@ -59,11 +59,11 @@ TEST_CASE("props", "[props]")
         VNode vnode = a(("src", emscripten::val("http://other/")));
         VNode vnode2 = a();
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
         vdom.patch(vnode2);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
         REQUIRE(elm["src"].isUndefined());
     }
 
@@ -72,10 +72,10 @@ TEST_CASE("props", "[props]")
         VNode vnode = input(("value", emscripten::val("foo")));
         VNode vnode2 = input(("value", emscripten::val("foo")));
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
         REQUIRE(elm["value"].strictlyEquals(emscripten::val("foo")));
 
         elm.set("value", emscripten::val("bar"));
@@ -99,10 +99,10 @@ TEST_CASE("props", "[props]")
                 ("checked", emscripten::val(true))
             );
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(vnode);
 
-        emscripten::val elm = getBodyFirstChild();
+        emscripten::val elm = jsDom.bodyFirstChild();
         REQUIRE(elm["checked"].strictlyEquals(emscripten::val(true)));
 
         elm.set("checked", emscripten::val(false));

@@ -3,7 +3,7 @@
 
 #include "wasm-dom.hpp"
 
-#include "utils.hpp"
+#include "jsdom.hpp"
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
@@ -32,7 +32,7 @@ TEST_CASE("benchmark")
 
     BENCHMARK_ADVANCED("patch without changes")(Catch::Benchmark::Chronometer meter)
     {
-        setupDom();
+        const JSDom jsDom;
 
         const auto createVNode = [] {
             Children children;
@@ -50,7 +50,7 @@ TEST_CASE("benchmark")
             )(children);
         };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(createVNode());
 
         std::vector<VNode> storage(meter.runs(), nullptr);
@@ -65,7 +65,7 @@ TEST_CASE("benchmark")
 
     BENCHMARK_ADVANCED("patch with changes")(Catch::Benchmark::Chronometer meter)
     {
-        setupDom();
+        const JSDom jsDom;
 
         const auto createVNode1 = [] {
             Children children;
@@ -98,7 +98,7 @@ TEST_CASE("benchmark")
             )(children);
         };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(createVNode2());
 
         std::vector<VNode> storage(meter.runs(), nullptr);
@@ -113,7 +113,7 @@ TEST_CASE("benchmark")
 
     BENCHMARK_ADVANCED("patch with additions")(Catch::Benchmark::Chronometer meter)
     {
-        setupDom();
+        const JSDom jsDom;
 
         const auto createVNode1 = [] {
             Children children;
@@ -137,7 +137,7 @@ TEST_CASE("benchmark")
             );
         };
 
-        VDom vdom(getRoot());
+        VDom vdom(jsDom.root());
         vdom.patch(createVNode2());
 
         std::vector<VNode> storage(meter.runs(), nullptr);
