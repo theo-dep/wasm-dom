@@ -121,7 +121,8 @@ namespace wasmdom::internals
             html.append(" " + key + "=\"" + encode(val) + "\"");
         }
 
-        emscripten::val String = emscripten::val::global("String");
+        static const emscripten::val String = emscripten::val::global("String");
+
         for (const auto& [key, val] : vnode.props()) {
             if (std::ranges::find(omitProps, key) == omitProps.cend()) {
                 std::string lowerKey(key);

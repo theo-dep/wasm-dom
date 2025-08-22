@@ -3,6 +3,7 @@
 #include "wasm-dom/internals/jsapi.hpp"
 #include "wasm-dom/vnode.hpp"
 
+#include <ranges>
 #include <unordered_map>
 
 namespace wasmdom::internals
@@ -33,8 +34,12 @@ namespace wasmdom::internals
         const Props& oldProps = oldVnode.props();
         const Props& props = vnode.props();
 
+        const emscripten::val nodeRaws = emscripten::val::array(
+            props | std::views::keys | std::ranges::to<std::vector<std::string>>()
+        );
+
         emscripten::val& node = vnode.node();
-        node.set(nodeRawsKey, emscripten::val::array());
+        node.set(nodeRawsKey, nodeRaws);
 
         for (const auto& [key, _] : oldProps) {
             if (!props.contains(key)) {
@@ -43,8 +48,6 @@ namespace wasmdom::internals
         }
 
         for (const auto& [key, val] : props) {
-            node[nodeRawsKey].call<void>("push", key);
-
             const auto oldPropsIt = oldProps.find(key);
             if (oldPropsIt == oldProps.cend() ||
                 !val.strictlyEquals(oldPropsIt->second) ||
