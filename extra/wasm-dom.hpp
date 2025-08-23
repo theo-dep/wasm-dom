@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <array>
 #include <concepts>
-#include <emscripten.h>
 #include <emscripten/bind.h>
+#include <emscripten/em_js.h>
 #include <emscripten/val.h>
 #include <functional>
 #include <memory>
@@ -625,6 +625,53 @@ namespace wasmdom::dsl
 }
 
 // -----------------------------------------------------------------------------
+// build/src/wasm-dom/internals/jsapi.hpp
+// -----------------------------------------------------------------------------
+namespace wasmdom::internals::jsapi
+{
+
+    EM_JS(emscripten::EM_VAL, createElement, (const char* name),
+    { return Emval.toHandle(document.createElement(UTF8ToString(name))); })
+
+    EM_JS(emscripten::EM_VAL, createElementNS, (const char* ns, const char* name),
+    { return Emval.toHandle(document.createElementNS(UTF8ToString(ns), UTF8ToString(name))); })
+
+    EM_JS(emscripten::EM_VAL, createTextNode, (const char* text),
+    { return Emval.toHandle(document.createTextNode(UTF8ToString(text))); })
+
+    EM_JS(emscripten::EM_VAL, createComment, (const char* comment),
+    { return Emval.toHandle(document.createComment(UTF8ToString(comment))); })
+
+    EM_JS(emscripten::EM_VAL, createDocumentFragment, (void),
+    { return Emval.toHandle(document.createDocumentFragment()); })
+
+    EM_JS(void, insertBefore, (emscripten::EM_VAL parentNode, emscripten::EM_VAL newNode, emscripten::EM_VAL referenceNode),
+    { Emval.toValue(parentNode).insertBefore(Emval.toValue(newNode), Emval.toValue(referenceNode)); })
+
+    EM_JS(void, removeChild, (emscripten::EM_VAL parentNode, emscripten::EM_VAL child),
+    { Emval.toValue(parentNode).removeChild(Emval.toValue(child)); })
+
+    EM_JS(void, appendChild, (emscripten::EM_VAL parentNode, emscripten::EM_VAL child),
+    { Emval.toValue(parentNode).appendChild(Emval.toValue(child)); })
+
+    EM_JS(void, removeAttribute, (emscripten::EM_VAL node, const char * attribute),
+    { Emval.toValue(node).removeAttribute(UTF8ToString(attribute)); })
+
+    EM_JS(void, setAttributeNS, (emscripten::EM_VAL node, const char* ns, const char * attribute, const char * value),
+    { Emval.toValue(node).setAttributeNS(UTF8ToString(ns), UTF8ToString(attribute), UTF8ToString(value)); })
+
+    EM_JS(void, setAttribute, (emscripten::EM_VAL node, const char * attribute, const char * value),
+    { Emval.toValue(node).setAttribute(UTF8ToString(attribute), UTF8ToString(value)); })
+
+    EM_JS(void, addEventListener_, (emscripten::EM_VAL node, const char * event, emscripten::EM_VAL listener),
+    { Emval.toValue(node).addEventListener(UTF8ToString(event), Emval.toValue(listener), false); })
+
+    EM_JS(void, removeEventListener_, (emscripten::EM_VAL node, const char * event, emscripten::EM_VAL listener),
+    { Emval.toValue(node).removeEventListener(UTF8ToString(event), Emval.toValue(listener), false); })
+
+}
+
+// -----------------------------------------------------------------------------
 // src/wasm-dom/internals/diff.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
@@ -655,8 +702,12 @@ namespace wasmdom::internals
         const Props& oldProps = oldVnode.props();
         const Props& props = vnode.props();
 
+        const emscripten::val nodeRaws = emscripten::val::array(
+            props | std::views::keys | std::ranges::to<std::vector<std::string>>()
+        );
+
         emscripten::val& node = vnode.node();
-        node.set(nodeRawsKey, emscripten::val::array());
+        node.set(nodeRawsKey, nodeRaws);
 
         for (const auto& [key, _] : oldProps) {
             if (!props.contains(key)) {
@@ -665,8 +716,6 @@ namespace wasmdom::internals
         }
 
         for (const auto& [key, val] : props) {
-            node[nodeRawsKey].call<void>("push", key);
-
             const auto oldPropsIt = oldProps.find(key);
             if (oldPropsIt == oldProps.cend() ||
                 !val.strictlyEquals(oldPropsIt->second) ||
@@ -731,7 +780,7 @@ namespace wasmdom::internals
         for (const auto& [key, _] : oldCallbacks) {
             if (!callbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
-                node.call<void>("removeEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].delete_(eventKey);
             }
         }
@@ -744,7 +793,7 @@ namespace wasmdom::internals
         for (const auto& [key, _] : callbacks) {
             if (!oldCallbacks.contains(key) && key != "ref") {
                 eventKey = formatEventKey(key);
-                node.call<void>("addEventListener", eventKey, emscripten::val::module_property("eventProxy"), false);
+                jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
         }
@@ -782,21 +831,21 @@ namespace wasmdom::internals
     {
         static inline emscripten::val create(DomRecycler&, const std::string& name)
         {
-            return emscripten::val::global("document").call<emscripten::val>("createElement", name);
+            return emscripten::val::take_ownership(jsapi::createElement(name.c_str()));
         }
         static inline emscripten::val createNS(DomRecycler&, const std::string& name, const std::string& ns)
         {
-            emscripten::val node = emscripten::val::global("document").call<emscripten::val>("createElementNS", ns, name);
+            emscripten::val node = emscripten::val::take_ownership(jsapi::createElementNS(ns.c_str(), name.c_str()));
             node.set(nodeNSKey, ns);
             return node;
         }
         static inline emscripten::val createText(DomRecycler&, const std::string& text)
         {
-            return emscripten::val::global("document").call<emscripten::val>("createTextNode", text);
+            return emscripten::val::take_ownership(jsapi::createTextNode(text.c_str()));
         }
         static inline emscripten::val createComment(DomRecycler&, const std::string& comment)
         {
-            return emscripten::val::global("document").call<emscripten::val>("createComment", comment);
+            return emscripten::val::take_ownership(jsapi::createComment(comment.c_str()));
         }
 
         static inline void collect(DomRecycler&, emscripten::val /*node*/) {} // // LCOV_EXCL_LINE
@@ -907,13 +956,13 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
 {
     // clean
     for (emscripten::val child = node["lastChild"]; !child.isNull(); child = node["lastChild"]) {
-        node.call<void>("removeChild", child);
+        jsapi::removeChild(node.as_handle(), child.as_handle());
         collect(recycler, child);
     }
 
     if (!node["attributes"].isUndefined()) {
         for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
-            node.call<void>("removeAttribute", node["attributes"][i]["name"]);
+            jsapi::removeAttribute(node.as_handle(), node["attributes"][i]["name"].as<std::string>().c_str());
         }
     }
 
@@ -924,11 +973,15 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         node.set(nodeRawsKey, emscripten::val::undefined());
     }
 
+    static const emscripten::val objectEntries = emscripten::val::global("Object")["entries"];
+
     if (!node[nodeEventsKey].isUndefined()) {
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
-        for (int i : std::views::iota(0, keys["length"].as<int>())) {
-            emscripten::val event = keys[i];
-            node.call<void>("removeEventListener", event, node[nodeEventsKey][event], false);
+        const emscripten::val entries = objectEntries(node[nodeEventsKey]);
+        for (int i : std::views::iota(0, entries["length"].as<int>())) {
+            const emscripten::val pair = entries[i];
+            const emscripten::val event = pair[0];
+            const emscripten::val eventProxy = pair[1];
+            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), eventProxy.as_handle());
         }
         node.set(nodeEventsKey, emscripten::val::undefined());
     }
@@ -937,9 +990,11 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         node.set("nodeValue", std::string{});
     }
 
-    emscripten::val nodeKeys = emscripten::val::global("Object").call<emscripten::val>("keys", node);
+    static const emscripten::val objectKeys = emscripten::val::global("Object")["keys"];
+
+    const emscripten::val nodeKeys = objectKeys(node);
     for (int i : std::views::iota(0, nodeKeys["length"].as<int>())) {
-        std::string key = nodeKeys[i].as<std::string>();
+        const std::string key = nodeKeys[i].as<std::string>();
         if (!key.starts_with(nodeKeyPrefix)) {
             node.set(key, emscripten::val::undefined());
         }
@@ -1192,7 +1247,7 @@ namespace wasmdom::internals
     inline std::string encode(const std::string& data)
     {
         std::string encoded;
-        std::size_t size = data.size();
+        const std::size_t size = data.size();
         encoded.reserve(size);
         for (std::size_t pos = 0; pos != size; ++pos) {
             switch (data[pos]) {
@@ -1228,7 +1283,8 @@ namespace wasmdom::internals
             html.append(" " + key + "=\"" + encode(val) + "\"");
         }
 
-        emscripten::val String = emscripten::val::global("String");
+        static const emscripten::val String = emscripten::val::global("String");
+
         for (const auto& [key, val] : vnode.props()) {
             if (std::ranges::find(omitProps, key) == omitProps.cend()) {
                 std::string lowerKey(key);
@@ -1252,8 +1308,8 @@ namespace wasmdom::internals
                 toHTML(child, html);
             }
         } else {
-            bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
-            bool isSvgContainerElement = isSvg && std::ranges::find(containerElements, vnode.sel()) != containerElements.cend();
+            const bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
+            const bool isSvgContainerElement = isSvg && std::ranges::find(containerElements, vnode.sel()) != containerElements.cend();
 
             html.append("<" + vnode.sel());
             appendAttributes(vnode, html);
@@ -1338,7 +1394,7 @@ emscripten::val wasmdom::domapi::createComment(const std::string& comment)
 
 emscripten::val wasmdom::domapi::createDocumentFragment()
 {
-    return emscripten::val::global("document").call<emscripten::val>("createDocumentFragment");
+    return emscripten::val::take_ownership(internals::jsapi::createDocumentFragment());
 }
 
 void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
@@ -1346,7 +1402,7 @@ void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emsc
     if (parentNode.isNull() || parentNode.isUndefined())
         return;
 
-    parentNode.call<void>("insertBefore", newNode, referenceNode);
+    internals::jsapi::insertBefore(parentNode.as_handle(), newNode.as_handle(), referenceNode.as_handle());
 }
 
 void wasmdom::domapi::removeChild(const emscripten::val& child)
@@ -1356,29 +1412,29 @@ void wasmdom::domapi::removeChild(const emscripten::val& child)
 
     const emscripten::val parentNode(child["parentNode"]);
     if (!parentNode.isNull())
-        parentNode.call<void>("removeChild", child);
+        internals::jsapi::removeChild(parentNode.as_handle(), child.as_handle());
 
     internals::recycler().collect(child);
 }
 
 void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
 {
-    parent.call<void>("appendChild", child);
+    internals::jsapi::appendChild(parent.as_handle(), child.as_handle());
 }
 
 void wasmdom::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
 {
-    node.call<void>("removeAttribute", attribute);
+    internals::jsapi::removeAttribute(node.as_handle(), attribute.c_str());
 }
 
 void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
 {
     if (attribute.starts_with("xml:")) {
-        node.call<void>("setAttributeNS", std::string("http://www.w3.org/XML/1998/namespace"), attribute, value);
+        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", attribute.c_str(), value.c_str());
     } else if (attribute.starts_with("xlink:")) {
-        node.call<void>("setAttributeNS", std::string("http://www.w3.org/1999/xlink"), attribute, value);
+        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/1999/xlink", attribute.c_str(), value.c_str());
     } else {
-        node.call<void>("setAttribute", attribute, value);
+        internals::jsapi::setAttribute(node.as_handle(), attribute.c_str(), value.c_str());
     }
 }
 
@@ -1543,7 +1599,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
+            const bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
             if (addNS) {
                 _data->hash |= hasNS;
                 _data->ns = "http://www.w3.org/2000/svg";
@@ -1588,7 +1644,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
     VNode vnode = nullptr;
-    int nodeType = node["nodeType"].as<int>();
+    const int nodeType = node["nodeType"].as<int>();
     // isElement
     if (nodeType == 1) {
         std::string sel = node["tagName"].as<std::string>();

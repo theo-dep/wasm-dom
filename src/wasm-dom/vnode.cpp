@@ -59,7 +59,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
+            const bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
             if (addNS) {
                 _data->hash |= hasNS;
                 _data->ns = "http://www.w3.org/2000/svg";
@@ -104,7 +104,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
     VNode vnode = nullptr;
-    int nodeType = node["nodeType"].as<int>();
+    const int nodeType = node["nodeType"].as<int>();
     // isElement
     if (nodeType == 1) {
         std::string sel = node["tagName"].as<std::string>();

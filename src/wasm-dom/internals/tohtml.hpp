@@ -85,7 +85,7 @@ namespace wasmdom::internals
     inline std::string encode(const std::string& data)
     {
         std::string encoded;
-        std::size_t size = data.size();
+        const std::size_t size = data.size();
         encoded.reserve(size);
         for (std::size_t pos = 0; pos != size; ++pos) {
             switch (data[pos]) {
@@ -146,8 +146,8 @@ namespace wasmdom::internals
                 toHTML(child, html);
             }
         } else {
-            bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
-            bool isSvgContainerElement = isSvg && std::ranges::find(containerElements, vnode.sel()) != containerElements.cend();
+            const bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
+            const bool isSvgContainerElement = isSvg && std::ranges::find(containerElements, vnode.sel()) != containerElements.cend();
 
             html.append("<" + vnode.sel());
             appendAttributes(vnode, html);
