@@ -138,7 +138,45 @@ TEST_CASE("benchmark")
         };
 
         VDom vdom(jsDom.root());
-        vdom.patch(createVNode2());
+        vdom.patch(createVNode1());
+
+        std::vector<VNode> storage(meter.runs(), nullptr);
+        for (std::size_t i = 0; i < storage.size(); ++i) {
+            storage[i] = (i % 2 == 0 ? createVNode2() : createVNode1());
+        }
+
+        meter.measure([&](int i) {
+            vdom.patch(storage[i]);
+        });
+    };
+
+    BENCHMARK_ADVANCED("patch with first addition measured")(Catch::Benchmark::Chronometer meter)
+    {
+        const JSDom jsDom;
+
+        const auto createVNode1 = [] {
+            Children children;
+            children.resize(100, nullptr);
+            for (std::size_t i = 0; i < children.size(); ++i) {
+                children[i] = span()(
+                    { span() }
+                );
+            }
+            return div(
+                ("foo", "foo"s),
+                ("bar", "bar"s),
+                ("baz", "baz"s)
+            )(children);
+        };
+        const auto createVNode2 = [] {
+            return div(
+                ("foo", "foo"s),
+                ("bar", "bar"s),
+                ("baz", "baz"s)
+            );
+        };
+
+        VDom vdom(jsDom.root());
 
         std::vector<VNode> storage(meter.runs(), nullptr);
         for (std::size_t i = 0; i < storage.size(); ++i) {

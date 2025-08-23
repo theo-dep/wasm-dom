@@ -1,137 +1,98 @@
 #include "domapi.hpp"
 
 #include "domrecycler.hpp"
-#include "vnode.hpp"
+#include "internals/jsapi.hpp"
 
-#include <emscripten.h>
-
-#include <unordered_map>
-
-namespace wasmdom::domapi
+namespace wasmdom::internals
 {
-    std::unordered_map<int, emscripten::val>& nodes()
+    inline DomRecycler& recycler()
     {
-        static std::unordered_map<int, emscripten::val> nodes{ { 0, emscripten::val::null() } };
-        return nodes;
-    }
-
-    int addPtr(const emscripten::val& node)
-    {
-        static int lastPtr = 0;
-
-        if (node.isNull() || node.isUndefined())
-            return 0;
-        if (!node["asmDomPtr"].isUndefined())
-            return node["asmDomPtr"].as<int>();
-
-        emscripten::val newNode = node;
-
-        ++lastPtr;
-        newNode.set("asmDomPtr", lastPtr);
-        nodes().emplace(lastPtr, newNode);
-        return lastPtr;
+        static DomRecycler recycler(true);
+        return recycler;
     }
 }
 
-emscripten::val wasmdom::domapi::node(int nodePtr)
+emscripten::val wasmdom::domapi::createElement(const std::string& tag)
 {
-    if (nodes().contains(nodePtr))
-        return nodes()[nodePtr];
+    return internals::recycler().create(tag);
+}
+
+emscripten::val wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
+{
+    return internals::recycler().createNS(qualifiedName, namespaceURI);
+}
+
+emscripten::val wasmdom::domapi::createTextNode(const std::string& text)
+{
+    return internals::recycler().createText(text);
+}
+
+emscripten::val wasmdom::domapi::createComment(const std::string& comment)
+{
+    return internals::recycler().createComment(comment);
+}
+
+emscripten::val wasmdom::domapi::createDocumentFragment()
+{
+    return emscripten::val::take_ownership(internals::jsapi::createDocumentFragment());
+}
+
+void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
+{
+    if (parentNode.isNull() || parentNode.isUndefined())
+        return;
+
+    internals::jsapi::insertBefore(parentNode.as_handle(), newNode.as_handle(), referenceNode.as_handle());
+}
+
+void wasmdom::domapi::removeChild(const emscripten::val& child)
+{
+    if (child.isNull() || child.isUndefined())
+        return;
+
+    const emscripten::val parentNode(child["parentNode"]);
+    if (!parentNode.isNull())
+        internals::jsapi::removeChild(parentNode.as_handle(), child.as_handle());
+
+    internals::recycler().collect(child);
+}
+
+void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
+{
+    internals::jsapi::appendChild(parent.as_handle(), child.as_handle());
+}
+
+void wasmdom::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
+{
+    internals::jsapi::removeAttribute(node.as_handle(), attribute.c_str());
+}
+
+void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
+{
+    if (attribute.starts_with("xml:")) {
+        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", attribute.c_str(), value.c_str());
+    } else if (attribute.starts_with("xlink:")) {
+        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/1999/xlink", attribute.c_str(), value.c_str());
+    } else {
+        internals::jsapi::setAttribute(node.as_handle(), attribute.c_str(), value.c_str());
+    }
+}
+
+void wasmdom::domapi::setNodeValue(emscripten::val& node, const std::string& text)
+{
+    node.set("nodeValue", text);
+}
+
+emscripten::val wasmdom::domapi::parentNode(const emscripten::val& node)
+{
+    if (!node.isNull() && !node.isUndefined() && !node["parentNode"].isNull())
+        return node["parentNode"];
     return emscripten::val::null();
 }
 
-int wasmdom::domapi::addNode(const emscripten::val& node)
+emscripten::val wasmdom::domapi::nextSibling(const emscripten::val& node)
 {
-    addPtr(node["parentNode"]);
-    addPtr(node["nextSibling"]);
-    return addPtr(node);
-}
-
-int wasmdom::domapi::createElement(const std::string& tag)
-{
-    return addPtr(recycler().create(tag));
-}
-
-int wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
-{
-    return addPtr(recycler().createNS(qualifiedName, namespaceURI));
-}
-
-int wasmdom::domapi::createTextNode(const std::string& text)
-{
-    return addPtr(recycler().createText(text));
-}
-
-int wasmdom::domapi::createComment(const std::string& comment)
-{
-    return addPtr(recycler().createComment(comment));
-}
-
-int wasmdom::domapi::createDocumentFragment()
-{
-    return addPtr(emscripten::val::global("document").call<emscripten::val>("createDocumentFragment"));
-}
-
-void wasmdom::domapi::insertBefore(int parentNodePtr, int newNodePtr, int referenceNodePtr)
-{
-    if (parentNodePtr == 0 /*|| newNodePtr == 0 || referenceNodePtr == 0*/)
-        return;
-
-    node(parentNodePtr).call<void>("insertBefore", node(newNodePtr), node(referenceNodePtr));
-}
-
-void wasmdom::domapi::removeChild(int childPtr)
-{
-    emscripten::val node = domapi::node(childPtr);
-    if (node.isNull() || node.isUndefined())
-        return;
-
-    emscripten::val parentNode = node["parentNode"];
-    if (!parentNode.isNull())
-        parentNode.call<void>("removeChild", node);
-
-    recycler().collect(node);
-}
-
-void wasmdom::domapi::appendChild(int parentPtr, int childPtr)
-{
-    node(parentPtr).call<void>("appendChild", node(childPtr));
-}
-
-void wasmdom::domapi::removeAttribute(int nodePtr, const std::string& attribute)
-{
-    node(nodePtr).call<void>("removeAttribute", attribute);
-}
-
-void wasmdom::domapi::setAttribute(int nodePtr, const std::string& attribute, const std::string& value)
-{
-    emscripten::val node = domapi::node(nodePtr);
-    if (attribute.starts_with("xml:")) {
-        node.call<void>("setAttributeNS", std::string("http://www.w3.org/XML/1998/namespace"), attribute, value);
-    } else if (attribute.starts_with("xlink:")) {
-        node.call<void>("setAttributeNS", std::string("http://www.w3.org/1999/xlink"), attribute, value);
-    } else {
-        node.call<void>("setAttribute", attribute, value);
-    }
-}
-
-void wasmdom::domapi::setNodeValue(int nodePtr, const std::string& text)
-{
-    node(nodePtr).set("nodeValue", text);
-}
-
-int wasmdom::domapi::parentNode(int nodePtr)
-{
-    emscripten::val node = domapi::node(nodePtr);
-    if (!node.isNull() && !node.isUndefined() && !node["parentNode"].isNull())
-        return node["parentNode"]["asmDomPtr"].as<int>();
-    return 0;
-}
-
-int wasmdom::domapi::nextSibling(int nodePtr)
-{
-    emscripten::val node = domapi::node(nodePtr);
     if (!node.isNull() && !node.isUndefined() && !node["nextSibling"].isNull())
-        return node["nextSibling"]["asmDomPtr"].as<int>();
-    return 0;
+        return node["nextSibling"];
+    return emscripten::val::null();
 }

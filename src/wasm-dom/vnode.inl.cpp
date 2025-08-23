@@ -45,7 +45,7 @@ wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
 }
 
 WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator()(const Children::value_type& child)
+wasmdom::VNode& wasmdom::VNode::operator()(const VNode& child)
 {
     _data->children.push_back(child);
     return *this;
@@ -59,7 +59,7 @@ wasmdom::VNode& wasmdom::VNode::operator()(const Children& nodeChildren)
 }
 
 WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<Children::value_type> nodeChildren)
+wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<VNode> nodeChildren)
 {
     _data->children = nodeChildren;
     return *this;
@@ -84,16 +84,16 @@ WASMDOM_INLINE
 const std::string& wasmdom::VNode::ns() const { return _data->ns; }
 
 WASMDOM_INLINE
-unsigned int wasmdom::VNode::hash() const { return _data->hash; }
+std::size_t wasmdom::VNode::hash() const { return _data->hash; }
 
 WASMDOM_INLINE
-int wasmdom::VNode::elm() const { return _data->elm; }
+const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
 
 WASMDOM_INLINE
-void wasmdom::VNode::setElm(int nodeElm) { _data->elm = nodeElm; }
+emscripten::val& wasmdom::VNode::node() { return _data->node; }
 
 WASMDOM_INLINE
-const wasmdom::Children& wasmdom::VNode::children() const { return _data->children; }
+void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
 
 WASMDOM_INLINE
 void wasmdom::VNode::normalize() { normalize(false); }
@@ -106,3 +106,15 @@ bool wasmdom::VNode::operator!() const { return _data == nullptr; }
 
 WASMDOM_INLINE
 bool wasmdom::VNode::operator==(const VNode& other) const { return _data == other._data; }
+
+WASMDOM_INLINE
+wasmdom::Children::iterator wasmdom::VNode::begin() { return _data->children.begin(); }
+
+WASMDOM_INLINE
+wasmdom::Children::iterator wasmdom::VNode::end() { return _data->children.end(); }
+
+WASMDOM_INLINE
+wasmdom::Children::const_iterator wasmdom::VNode::begin() const { return _data->children.begin(); }
+
+WASMDOM_INLINE
+wasmdom::Children::const_iterator wasmdom::VNode::end() const { return _data->children.end(); }

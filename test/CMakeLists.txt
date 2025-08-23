@@ -24,7 +24,7 @@ set(LINK_OPTIONS -sENVIRONMENT=node -sEXIT_RUNTIME -sNO_DISABLE_EXCEPTION_CATCHI
 add_executable(tests jsdom.cpp)
 
 target_include_directories(tests PRIVATE .)
-target_link_libraries(tests PRIVATE wasm-dom Catch2::Catch2WithMain)
+target_link_libraries(tests PRIVATE wasm-dom compile_flags optimization_flags Catch2::Catch2WithMain)
 target_link_options(tests PRIVATE ${LINK_OPTIONS})
 
 set(TEST_CASES attributes dataset domApi domRecycler eventListeners h patch props toHTML toVNode)
@@ -39,7 +39,7 @@ endforeach()
 
 add_executable(benchmarks jsdom.cpp benchmarks.cpp)
 
-target_link_libraries(benchmarks PRIVATE wasm-dom Catch2::Catch2WithMain)
+target_link_libraries(benchmarks PRIVATE wasm-dom compile_flags optimization_flags Catch2::Catch2WithMain)
 target_link_options(benchmarks PRIVATE ${LINK_OPTIONS} -sALLOW_MEMORY_GROWTH)
 
 set(CMAKE_CTEST_ARGUMENTS --verbose)

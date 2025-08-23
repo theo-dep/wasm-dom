@@ -1,8 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "wasm-dom.hpp"
+#include "wasm-dom/domkeys.hpp"
+#include "wasm-dom/domrecycler.hpp"
 
 #include "jsdom.hpp"
+
+using namespace wasmdom;
 
 TEST_CASE("domRecycler", "[domRecycler]")
 {
@@ -137,15 +140,15 @@ TEST_CASE("domRecycler", "[domRecycler]")
         REQUIRE(node["foo"].isUndefined());
     }
 
-    SECTION("should preserve asmDom props")
+    SECTION("should preserve wasmDom props")
     {
         emscripten::val node = recycler.create("a");
-        node.set("asmDomFoo", emscripten::val("foo"));
-        REQUIRE(node["asmDomFoo"].as<std::string>() == "foo");
+        node.set("wasmDomFoo", emscripten::val("foo"));
+        REQUIRE(node["wasmDomFoo"].as<std::string>() == "foo");
 
         recycler.collect(node);
 
-        REQUIRE(node["asmDomFoo"].as<std::string>() == "foo");
+        REQUIRE(node["wasmDomFoo"].as<std::string>() == "foo");
     }
 
     SECTION("should clean textContent")
@@ -168,7 +171,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         node.set("onclick", callback);
         node.set("onkeydown", callback);
-        node.set("asmDomRaws", emscripten::val::array(std::vector{ emscripten::val("onclick"), emscripten::val("onkeydown") }));
+        node.set(nodeRawsKey, emscripten::val::array(std::vector{ emscripten::val("onclick"), emscripten::val("onkeydown") }));
 
         REQUIRE(node["onclick"].strictlyEquals(callback));
         REQUIRE(node["onkeydown"].strictlyEquals(callback));
@@ -177,7 +180,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         REQUIRE((node["onclick"].isNull() || node["onclick"].isUndefined()));
         REQUIRE((node["onkeydown"].isNull() || node["onkeydown"].isUndefined()));
-        REQUIRE((node["asmDomRaws"].isNull() || node["asmDomRaws"].isUndefined()));
+        REQUIRE((node[nodeRawsKey].isNull() || node[nodeRawsKey].isUndefined()));
     }
 
     SECTION("should clean asmDomEvents")
@@ -197,7 +200,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
         node.call<void>("addEventListener", std::string("click"), callbacks["click"]);
         node.call<void>("addEventListener", std::string("keydown"), callbacks["keydown"]);
 
-        node.set("asmDomEvents", callbacks);
+        node.set(nodeEventsKey, callbacks);
 
         // Trigger click event and check calls == 1
         node.call<void>("click");
@@ -205,7 +208,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         // Collect and check asmDomEvents cleared
         recycler.collect(node);
-        REQUIRE(node["asmDomEvents"].isUndefined());
+        REQUIRE(node[nodeEventsKey].isUndefined());
 
         // Trigger click event again, calls must remain 1
         node.call<void>("click");

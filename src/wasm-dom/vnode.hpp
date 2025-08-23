@@ -51,9 +51,9 @@ namespace wasmdom
             std::string sel;
             std::string key;
             std::string ns;
-            unsigned int hash = 0;
+            std::size_t hash{ 0 };
             VNodeAttributes data;
-            int elm = 0;
+            emscripten::val node{ emscripten::val::null() };
             Children children;
         };
 
@@ -67,9 +67,9 @@ namespace wasmdom
 
         VNode& operator()(const std::string& nodeText);
 
-        VNode& operator()(const Children::value_type& child);
+        VNode& operator()(const VNode& child);
         VNode& operator()(const Children& nodeChildren);
-        VNode& operator()(std::initializer_list<Children::value_type> nodeChildren);
+        VNode& operator()(std::initializer_list<VNode> nodeChildren);
 
 #ifdef WASMDOM_COVERAGE
         VNode(const VNode& other);
@@ -86,12 +86,11 @@ namespace wasmdom
         const std::string& sel() const;
         const std::string& key() const;
         const std::string& ns() const;
-        unsigned int hash() const;
-        int elm() const;
+        std::size_t hash() const;
+        const emscripten::val& node() const;
+        emscripten::val& node();
 
-        void setElm(int nodeElm);
-
-        const Children& children() const;
+        void setNode(const emscripten::val& node);
 
         void normalize();
 
@@ -101,18 +100,17 @@ namespace wasmdom
 
         std::string toHTML() const;
 
-        void diff(const VNode& other) const;
+        void diff(const VNode& other);
 
         static VNode toVNode(const emscripten::val& node);
 
+        Children::iterator begin();
+        Children::iterator end();
+        Children::const_iterator begin() const;
+        Children::const_iterator end() const;
+
     private:
         void normalize(bool injectSvgNamespace);
-
-        friend void diffCallbacks(const VNode& oldVnode, const VNode& vnode);
-        friend emscripten::val functionCallback(const std::uintptr_t& sharedData, std::string callback, emscripten::val event);
-
-        friend int createElm(VNode& vnode);
-        friend void patchVNode(VNode& oldVnode, VNode& vnode, int parentElm);
 
         // contains selector for elements and fragments, text for comments and textNodes
         std::shared_ptr<SharedData> _data = nullptr;

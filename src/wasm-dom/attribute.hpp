@@ -49,7 +49,7 @@ namespace wasmdom
 #endif
     };
 
-    namespace detail
+    namespace internals
     {
         template <Stringifiable K, Attribute V>
         inline void attributeToVNode(VNodeAttributes& attributes, std::pair<K, V>&& attribute)
@@ -71,7 +71,7 @@ namespace wasmdom
     inline VNodeAttributes attributesToVNode(std::pair<K, V>&&... attributes)
     {
         VNodeAttributes vnodeAttributes;
-        (detail::attributeToVNode(vnodeAttributes, std::forward<std::pair<K, V>>(attributes)), ...);
+        (internals::attributeToVNode(vnodeAttributes, std::forward<std::pair<K, V>>(attributes)), ...);
         return vnodeAttributes;
     }
 

@@ -1,21 +1,84 @@
+# Script to generate single header file
+
+# Convert space-separated strings back to CMake lists
 separate_arguments(HEADER_FILES)
 separate_arguments(SOURCE_FILES)
 
-set(LAST_HPP_FILE "")
-set(FIRST_HPP_FILES "")
-foreach(FILE_PATH ${HEADER_FILES})
+# Create filename to path mapping for all files
+set(ALL_FILES ${HEADER_FILES} ${SOURCE_FILES})
+foreach(FILE_PATH ${ALL_FILES})
     get_filename_component(FILENAME ${FILE_PATH} NAME)
-    if(FILENAME STREQUAL "h.hpp" OR FILENAME STREQUAL "vdom.hpp")
-        list(APPEND LAST_HPP_FILE ${FILE_PATH})
-    else()
-        list(APPEND FIRST_HPP_FILES ${FILE_PATH})
-    endif()
+    set(FILE_MAP_${FILENAME} ${FILE_PATH})
+    list(APPEND ALL_FILENAMES ${FILENAME})
 endforeach()
 
-list(PREPEND SOURCE_FILES ${FIRST_HPP_FILES} ${LAST_HPP_FILE})
+# Build dependency graph (only for headers)
+foreach(FILE_PATH ${HEADER_FILES})
+    get_filename_component(FILENAME ${FILE_PATH} NAME)
+    file(READ ${FILE_PATH} CONTENT)
 
+    # Find local includes (our project files)
+    string(REGEX MATCHALL "#include[ \t]*\"([^\"]*)\"|#include[ \t]*<([^>]*)>" INCLUDES_IN_FILE "${CONTENT}")
+    foreach(INCLUDE_MATCH ${INCLUDES_IN_FILE})
+        # Extract filename from both quote and bracket includes
+        if(INCLUDE_MATCH MATCHES "#include[ \t]*\"([^\"]*)\"")
+            set(INCLUDE_FILE ${CMAKE_MATCH_1})
+        elseif(INCLUDE_MATCH MATCHES "#include[ \t]*<([^>]*)>")
+            set(INCLUDE_FILE ${CMAKE_MATCH_1})
+        endif()
+
+        get_filename_component(INCLUDE_BASENAME ${INCLUDE_FILE} NAME)
+
+        # If this include is one of our header files, add dependency
+        foreach(HEADER_PATH ${HEADER_FILES})
+            get_filename_component(HEADER_NAME ${HEADER_PATH} NAME)
+            if(HEADER_NAME STREQUAL INCLUDE_BASENAME)
+                list(APPEND DEPS_${FILENAME} ${INCLUDE_BASENAME})
+                break()
+            endif()
+        endforeach()
+    endforeach()
+endforeach()
+
+# Simple dependency resolution: headers first, ordered by dependencies
+set(SORTED_HEADERS "")
+set(PROCESSED "")
+
+# Function to add header and its dependencies recursively
+function(add_header_with_deps FILENAME)
+    # Skip if already processed
+    list(FIND PROCESSED ${FILENAME} ALREADY_PROCESSED)
+    if(NOT ALREADY_PROCESSED EQUAL -1)
+        return()
+    endif()
+
+    # Add dependencies first
+    if(DEFINED DEPS_${FILENAME})
+        foreach(DEP ${DEPS_${FILENAME}})
+            add_header_with_deps(${DEP})
+        endforeach()
+    endif()
+
+    # Add this header
+    list(APPEND PROCESSED ${FILENAME})
+    list(APPEND SORTED_HEADERS ${FILE_MAP_${FILENAME}})
+    set(PROCESSED ${PROCESSED} PARENT_SCOPE)
+    set(SORTED_HEADERS ${SORTED_HEADERS} PARENT_SCOPE)
+endfunction()
+
+# Process all headers with dependency order
+foreach(FILE_PATH ${HEADER_FILES})
+    get_filename_component(FILENAME ${FILE_PATH} NAME)
+    add_header_with_deps(${FILENAME})
+endforeach()
+
+# Final order: sorted headers + all cpp files
+set(SOURCE_FILES ${SORTED_HEADERS} ${SOURCE_FILES})
+
+# Initialize output file
 file(WRITE ${OUTPUT_FILE} "")
 
+# File header
 file(APPEND ${OUTPUT_FILE} "// =============================================================================\n")
 file(APPEND ${OUTPUT_FILE} "// Single Header Library\n")
 file(APPEND ${OUTPUT_FILE} "// Auto-generated from multiple source files\n")
@@ -23,17 +86,21 @@ file(APPEND ${OUTPUT_FILE} "// Project: ${PROJECT_NAME}\n")
 file(APPEND ${OUTPUT_FILE} "// =============================================================================\n")
 file(APPEND ${OUTPUT_FILE} "#pragma once\n\n")
 
+# Collect all includes that are not local files
 set(ALL_INCLUDES "")
 
 foreach(FILE_PATH ${SOURCE_FILES})
     file(READ ${FILE_PATH} CONTENT)
 
+    # Extract the filename from the include
     string(REGEX MATCHALL "#include[ \t]*<[^>]*>" SYSTEM_INCLUDES "${CONTENT}")
+    # Only keep includes that are not in our source files
     foreach(INCLUDE ${SYSTEM_INCLUDES})
          string(APPEND ALL_INCLUDES "${INCLUDE}\n")
     endforeach()
 endforeach()
 
+# Add unique includes
 string(REGEX REPLACE "\n+" "\n" ALL_INCLUDES "${ALL_INCLUDES}")
 string(REGEX REPLACE "^(.+\n)" "\\1" UNIQUE_INCLUDES "${ALL_INCLUDES}")
 
@@ -47,6 +114,7 @@ endforeach()
 
 file(APPEND ${OUTPUT_FILE} "\n")
 
+# Process each file
 list(LENGTH SOURCE_FILES FILE_COUNT)
 message(DEBUG "Found ${FILE_COUNT} files to include:")
 
@@ -56,6 +124,7 @@ foreach(FILE_PATH ${SOURCE_FILES})
 
     file(READ ${FILE_PATH} CONTENT)
 
+    # Clean up content
     string(REGEX REPLACE "#pragma once[^\n]*\n?" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#include[^\n]*\n?" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#ifdef WASMDOM_COVERAGE\n.*WASMDOM_INLINE.*#else.*#endif" "" CONTENT "${CONTENT}")
@@ -68,6 +137,7 @@ foreach(FILE_PATH ${SOURCE_FILES})
     string(REGEX REPLACE "^[\n\r\t ]+" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "[\n\r\t ]+$" "" CONTENT "${CONTENT}")
 
+    # Add cleaned content
     file(APPEND ${OUTPUT_FILE} "// -----------------------------------------------------------------------------\n")
     file(APPEND ${OUTPUT_FILE} "// ${REL_PATH}\n")
     file(APPEND ${OUTPUT_FILE} "// -----------------------------------------------------------------------------\n")
