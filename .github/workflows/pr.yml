@@ -1,4 +1,4 @@
-name: Build with Emscripten
+name: Build with Emscripten 4.0.13
 
 on:
   push:
@@ -9,9 +9,9 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
-      image: emscripten/emsdk:latest
+      image: emscripten/emsdk:4.0.13
     permissions:
       checks: write
       id-token: write
@@ -60,9 +60,9 @@ jobs:
         retention-days: 7
 
   build-coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
-      image: emscripten/emsdk:latest
+      image: emscripten/emsdk:4.0.13
     permissions:
       pull-requests: write
       id-token: write
@@ -115,7 +115,7 @@ jobs:
         update-comment: true
 
   deploy-badges:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-coverage
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     permissions:
