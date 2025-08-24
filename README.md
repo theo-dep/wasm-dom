@@ -32,6 +32,7 @@ Initial version of wasm-dom is a fork of [asm-dom](https://github.com/mbasso/asm
 - Remove the `init` method and create DOM API functions and DomRecycler singleton class.
 - Add [WebAssembly Garbage Collector](https://github.com/WebAssembly/gc) support but keep DOM recycler for old browser ([very recent feature](https://webassembly.org/features/#table-row-gc)).
 - Improve performance by 50%. See [PR #14](https://github.com/theo-dep/wasm-dom/pull/14) to follow.
+- Can be used without exceptions and RTTI to [optimize code size](https://emscripten.org/docs/optimizing/Optimizing-Code.html#c-rtti).
 
 ## Motivation
 
