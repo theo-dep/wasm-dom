@@ -112,6 +112,10 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         node.set(nodeEventsKey, emscripten::val::undefined());
     }
 
+    if (!node[oldNodeKey].isUndefined()) {
+        node.set(oldNodeKey, emscripten::val::undefined());
+    }
+
     if (!node["nodeValue"].isNull() && !node["nodeValue"].as<std::string>().empty()) {
         node.set("nodeValue", std::string{});
     }

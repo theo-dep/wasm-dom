@@ -32,6 +32,7 @@ Initial version of wasm-dom is a fork of [asm-dom](https://github.com/mbasso/asm
 - Remove the `init` method and create DOM API functions and DomRecycler singleton class.
 - Add [WebAssembly Garbage Collector](https://github.com/WebAssembly/gc) support but keep DOM recycler for old browser ([very recent feature](https://webassembly.org/features/#table-row-gc)).
 - Improve performance by 50%. See [PR #14](https://github.com/theo-dep/wasm-dom/pull/14) to follow.
+- Can be used without exceptions and RTTI to [optimize code size](https://emscripten.org/docs/optimizing/Optimizing-Code.html#c-rtti).
 
 ## Motivation
 
@@ -232,7 +233,7 @@ int main() {
 }
 ```
 
-ref callback is also invoked if it changes, in the following example wasm-dom will call refCallback after the DOM node is mounted and then anotherRefCallback after the update.
+ref callback is also invoked if it changes. In the following example, wasm-dom will call refCallback after the DOM node is mounted and then anotherRefCallback after the update.
 
 ```cpp
 VNode vnode1 =
@@ -253,16 +254,24 @@ VNode vnode2 =
 vdom.patch(vnode2);
 ```
 
-Please note that if the project wants to use a lambda as a ref wasm-dom will call it on every update, so, probably avoid something like this.
+> [!TIP]
+> The use of the function `f` is always necessary in case of raw function pointer to type it in `std::function`. A lambda holds a type.
+
+Please note that wasm-dom will call ref on every update, so, probably add a check like this.
 
 ```cpp
 VNode vnode1 =
   div()(
     input(("ref", [&](emscripten::val node) -> bool {
         if (!node.isNull()) {
-          // node mounted
-          // focus input
-          node.call<void>("focus");
+
+          emscripten::val oldNode = node[wasmdom::oldNodeKey];
+
+          if (!o.strictlyEquals(e)) {
+            // node mounted
+            // focus input
+            node.call<void>("focus");
+          }
         }
 
         return true;
@@ -271,8 +280,6 @@ VNode vnode1 =
   );
 ```
 
-> [!TIP]
-> The use of the function `f` is always necessary in case of raw function pointer to type it in `std::function`. A lambda holds a type.
 
 ### Fragments
 

@@ -162,7 +162,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
         REQUIRE(node["textContent"].as<std::string>().empty());
     }
 
-    SECTION("should clean asmDomRaws")
+    SECTION("should clean wasmDomRaws")
     {
         emscripten::val node = recycler.create("span");
 
@@ -183,7 +183,7 @@ TEST_CASE("domRecycler", "[domRecycler]")
         REQUIRE((node[nodeRawsKey].isNull() || node[nodeRawsKey].isUndefined()));
     }
 
-    SECTION("should clean asmDomEvents")
+    SECTION("should clean wasmDomEvents")
     {
         // calls counter in JS
         emscripten::val global = emscripten::val::global();
@@ -213,5 +213,17 @@ TEST_CASE("domRecycler", "[domRecycler]")
         // Trigger click event again, calls must remain 1
         node.call<void>("click");
         REQUIRE(global["calls"].as<int>() == 1);
+    }
+
+    SECTION("should clean wasmDomOldNode")
+    {
+        emscripten::val node = recycler.create("span");
+        emscripten::val oldNode = recycler.create("span");
+
+        node.set(oldNodeKey, oldNode);
+
+        recycler.collect(node);
+
+        REQUIRE((node[oldNodeKey].isNull() || node[oldNodeKey].isUndefined()));
     }
 }

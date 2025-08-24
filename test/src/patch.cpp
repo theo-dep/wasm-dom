@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "wasm-dom.hpp"
-#include "wasm-dom/domkeys.hpp"
 
 #include "jsdom.hpp"
 
@@ -1519,10 +1518,10 @@ TEST_CASE("patch", "[patch]")
         REQUIRE(fragment["nodeName"].strictlyEquals(emscripten::val("#document-fragment")));
     }
 
+    refCount = 1;
+
     SECTION("should call ref with DOM node")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div(("data-foo", "bar"s),
@@ -1549,8 +1548,6 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should call ref on add")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div(("ref", f(refCallback)))
@@ -1563,8 +1560,6 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should call ref on remove")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div(("ref", f(refCallback)))
@@ -1582,8 +1577,6 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should call ref on ref remove itself")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div(("ref", f(refCallback)))
@@ -1602,13 +1595,11 @@ TEST_CASE("patch", "[patch]")
         REQUIRE(refCount == 3);
     }
 
-    SECTION("should not call ref on update")
+    SECTION("should call ref on update")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
-                div(("ref", f(refCallback)))
+                div(("ref", f(refCallbackWithChecks)))
             );
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
@@ -1617,17 +1608,36 @@ TEST_CASE("patch", "[patch]")
 
         VNode vnode2 =
             div()(
-                div(("ref", f(refCallback)))
+                div(("ref", f(refCallbackWithChecks)))
             );
         vdom.patch(vnode2);
+
+        REQUIRE(refCount == 4);
+    }
+
+    SECTION("should not call ref on change if check")
+    {
+        VNode vnode1 =
+            div()(
+                div(("ref", [&](emscripten::val e) -> bool {
+                    emscripten::val o = e[oldNodeKey];
+                    if (!o.strictlyEquals(e))
+                        refCallback(e);
+                    return true;
+                }))
+            );
+        VDom vdom(jsDom.root());
+        vdom.patch(vnode1);
+
+        REQUIRE(refCount == 2);
+
+        vdom.patch(vnode1);
 
         REQUIRE(refCount == 2);
     }
 
     SECTION("should call ref on change (lambda - lambda)")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div(("ref", [&](emscripten::val e) -> bool {
@@ -1654,8 +1664,6 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should call ref on change (pointer - lambda)")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div(("ref", [&](emscripten::val e) -> bool {
@@ -1679,8 +1687,6 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should call ref on change (pointer - pointer)")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div(("ref", f(refCallbackWithChecks)))
@@ -1701,8 +1707,6 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should call ref on update if ref is added")
     {
-        refCount = 1;
-
         VNode vnode1 =
             div()(
                 div()
