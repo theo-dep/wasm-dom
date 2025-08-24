@@ -105,7 +105,10 @@ namespace wasmdom::internals
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
+        const emscripten::val& oldNode = oldVnode.node();
         emscripten::val& node = vnode.node();
+
+        node.set(oldNodeKey, oldNode);
 
         std::string eventKey;
 
@@ -130,19 +133,12 @@ namespace wasmdom::internals
             }
         }
 
-        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
         const Callback oldCallback = oldVnode.hash() & hasRef ? oldCallbacks.at("ref") : Callback();
-
-        // callback store a function pointer and it is the same, do nothing
-        const auto rawCallback = callback.target<bool (*)(emscripten::val)>();
-        const auto rawOldCallback = oldCallback.target<bool (*)(emscripten::val)>();
-        if (rawCallback && rawOldCallback && *rawCallback == *rawOldCallback)
-            return;
-
         if (oldCallback) {
             oldCallback(emscripten::val::null());
         }
 
+        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
         if (callback) {
             callback(node);
         }

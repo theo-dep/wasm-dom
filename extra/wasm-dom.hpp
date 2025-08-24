@@ -119,6 +119,7 @@ namespace wasmdom
     static inline constexpr const char* nodeEventsKey = "wasmDomEvents";
     static inline constexpr const char* nodeNSKey = "wasmDomNS";
     static inline constexpr const char* nodeRawsKey = "wasmDomRaws";
+    static inline constexpr const char* oldNodeKey = "wasmDomOldNode";
 
 }
 
@@ -773,7 +774,10 @@ namespace wasmdom::internals
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
+        const emscripten::val& oldNode = oldVnode.node();
         emscripten::val& node = vnode.node();
+
+        node.set(oldNodeKey, oldNode);
 
         std::string eventKey;
 
@@ -798,19 +802,12 @@ namespace wasmdom::internals
             }
         }
 
-        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
         const Callback oldCallback = oldVnode.hash() & hasRef ? oldCallbacks.at("ref") : Callback();
-
-        // callback store a function pointer and it is the same, do nothing
-        const auto rawCallback = callback.target<bool (*)(emscripten::val)>();
-        const auto rawOldCallback = oldCallback.target<bool (*)(emscripten::val)>();
-        if (rawCallback && rawOldCallback && *rawCallback == *rawOldCallback)
-            return;
-
         if (oldCallback) {
             oldCallback(emscripten::val::null());
         }
 
+        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
         if (callback) {
             callback(node);
         }
@@ -984,6 +981,10 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
             jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), eventProxy.as_handle());
         }
         node.set(nodeEventsKey, emscripten::val::undefined());
+    }
+
+    if (!node[oldNodeKey].isUndefined()) {
+        node.set(oldNodeKey, emscripten::val::undefined());
     }
 
     if (!node["nodeValue"].isNull() && !node["nodeValue"].as<std::string>().empty()) {

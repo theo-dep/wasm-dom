@@ -232,7 +232,7 @@ int main() {
 }
 ```
 
-ref callback is also invoked if it changes, in the following example wasm-dom will call refCallback after the DOM node is mounted and then anotherRefCallback after the update.
+ref callback is also invoked if it changes. In the following example, wasm-dom will call refCallback after the DOM node is mounted and then anotherRefCallback after the update.
 
 ```cpp
 VNode vnode1 =
@@ -253,16 +253,24 @@ VNode vnode2 =
 vdom.patch(vnode2);
 ```
 
-Please note that if the project wants to use a lambda as a ref wasm-dom will call it on every update, so, probably avoid something like this.
+> [!TIP]
+> The use of the function `f` is always necessary in case of raw function pointer to type it in `std::function`. A lambda holds a type.
+
+Please note that wasm-dom will call ref on every update, so, probably add a check like this.
 
 ```cpp
 VNode vnode1 =
   div()(
     input(("ref", [&](emscripten::val node) -> bool {
         if (!node.isNull()) {
-          // node mounted
-          // focus input
-          node.call<void>("focus");
+
+          emscripten::val oldNode = node[wasmdom::oldNodeKey];
+
+          if (!o.strictlyEquals(e)) {
+            // node mounted
+            // focus input
+            node.call<void>("focus");
+          }
         }
 
         return true;
@@ -271,8 +279,6 @@ VNode vnode1 =
   );
 ```
 
-> [!TIP]
-> The use of the function `f` is always necessary in case of raw function pointer to type it in `std::function`. A lambda holds a type.
 
 ### Fragments
 
