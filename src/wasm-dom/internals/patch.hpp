@@ -57,8 +57,12 @@ namespace wasmdom::internals
             if (*start) {
                 domapi::removeChild(start->node());
 
-                if (start->hash() & hasRef) {
-                    start->callbacks().at("ref")(emscripten::val::null());
+                if (start->hash() & hasEventCallbacks) {
+                    const EventCallbacks& eventCallbacks = start->eventCallbacks();
+                    const auto unmountCallbackIt = eventCallbacks.find(onUnmount);
+                    if (unmountCallbackIt != eventCallbacks.cend()) {
+                        unmountCallbackIt->second(start->node());
+                    }
                 }
             }
         }

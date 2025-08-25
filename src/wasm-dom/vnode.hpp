@@ -25,13 +25,13 @@ namespace wasmdom
         hasAttrs = 1 << 6,
         hasProps = 1 << 7,
         hasCallbacks = 1 << 8,
-        hasDirectChildren = 1 << 9,
-        hasChildren = hasDirectChildren | hasText,
-        hasRef = 1 << 10,
+        hasEventCallbacks = 1 << 9,
+        hasDirectChildren = 1 << 10,
         hasNS = 1 << 11,
         isNormalized = 1 << 12,
 
         // masks
+        hasChildren = hasDirectChildren | hasText,
         isElementOrFragment = isElement | isFragment,
         nodeType = isElement | isText | isComment | isFragment,
         removeNodeType = ~0 ^ nodeType,
@@ -61,7 +61,7 @@ namespace wasmdom
         VNode(std::nullptr_t);
         VNode(const std::string& nodeSel);
         VNode(text_tag_t, const std::string& nodeText);
-        template <Stringifiable... K, Attribute... V>
+        template <AttributeKey... K, AttributeValue... V>
         VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData);
         VNode(const std::string& nodeSel, const VNodeAttributes& nodeData);
 
@@ -82,6 +82,7 @@ namespace wasmdom
         const Attrs& attrs() const;
         const Props& props() const;
         const Callbacks& callbacks() const;
+        const EventCallbacks& eventCallbacks() const;
 
         const std::string& sel() const;
         const std::string& key() const;
@@ -117,7 +118,7 @@ namespace wasmdom
     };
 }
 
-template <wasmdom::Stringifiable... K, wasmdom::Attribute... V>
+template <wasmdom::AttributeKey... K, wasmdom::AttributeValue... V>
 inline wasmdom::VNode::VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData)
     : VNode(nodeSel)
 {

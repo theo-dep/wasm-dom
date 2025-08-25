@@ -75,6 +75,9 @@ WASMDOM_INLINE
 const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->data.callbacks; }
 
 WASMDOM_INLINE
+const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->data.eventCallbacks; }
+
+WASMDOM_INLINE
 const std::string& wasmdom::VNode::sel() const { return _data->sel; }
 
 WASMDOM_INLINE

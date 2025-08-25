@@ -105,15 +105,12 @@ namespace wasmdom::internals
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        const emscripten::val& oldNode = oldVnode.node();
         emscripten::val& node = vnode.node();
-
-        node.set(oldNodeKey, oldNode);
 
         std::string eventKey;
 
         for (const auto& [key, _] : oldCallbacks) {
-            if (!callbacks.contains(key) && key != "ref") {
+            if (!callbacks.contains(key)) {
                 eventKey = formatEventKey(key);
                 jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].delete_(eventKey);
@@ -126,21 +123,37 @@ namespace wasmdom::internals
         }
 
         for (const auto& [key, _] : callbacks) {
-            if (!oldCallbacks.contains(key) && key != "ref") {
+            if (!oldCallbacks.contains(key)) {
                 eventKey = formatEventKey(key);
                 jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
         }
+    }
 
-        const Callback oldCallback = oldVnode.hash() & hasRef ? oldCallbacks.at("ref") : Callback();
-        if (oldCallback) {
-            oldCallback(emscripten::val::null());
-        }
+    inline void diffEventCallbacks(const VNode& oldVnode, const VNode& vnode)
+    {
+        const EventCallbacks& oldEventCallbacks = oldVnode.eventCallbacks();
+        const EventCallbacks& eventCallbacks = vnode.eventCallbacks();
 
-        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
-        if (callback) {
-            callback(node);
+        const emscripten::val& oldNode = oldVnode.node();
+        const emscripten::val& node = vnode.node();
+
+        if (oldNode.strictlyEquals(node)) {
+            const auto updateCallbackIt = eventCallbacks.find(onUpdate);
+            if (updateCallbackIt != eventCallbacks.cend()) {
+                updateCallbackIt->second(node);
+            }
+        } else {
+            const auto unMountCallbackIt = oldEventCallbacks.find(onUnmount);
+            if (unMountCallbackIt != oldEventCallbacks.cend()) {
+                unMountCallbackIt->second(oldNode);
+            }
+
+            const auto mountCallbackIt = eventCallbacks.find(onMount);
+            if (mountCallbackIt != eventCallbacks.cend()) {
+                mountCallbackIt->second(node);
+            }
         }
     }
 }

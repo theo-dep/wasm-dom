@@ -214,16 +214,4 @@ TEST_CASE("domRecycler", "[domRecycler]")
         node.call<void>("click");
         REQUIRE(global["calls"].as<int>() == 1);
     }
-
-    SECTION("should clean wasmDomOldNode")
-    {
-        emscripten::val node = recycler.create("span");
-        emscripten::val oldNode = recycler.create("span");
-
-        node.set(oldNodeKey, oldNode);
-
-        recycler.collect(node);
-
-        REQUIRE((node[oldNodeKey].isNull() || node[oldNodeKey].isUndefined()));
-    }
 }
