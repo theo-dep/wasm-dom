@@ -89,7 +89,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                     hashes[_data->sel] = ++currentHash;
                 }
 
-                _data->hash |= (hashes[_data->sel] << 13) | Flag::isElement;
+                _data->hash |= (hashes[_data->sel] << Flag::MAX) | Flag::isElement;
 
                 if ((_data->hash & Flag::hasCallbacks) && _data->data.callbacks.contains("ref")) {
                     _data->hash |= Flag::hasRef;

@@ -32,11 +32,13 @@ namespace wasmdom
         hasNS = 1 << 11,
         isNormalized = 1 << 12,
 
+        MAX = 13,
+
         // masks
         isElementOrFragment = isElement | isFragment,
         nodeType = isElement | isText | isComment | isFragment,
         removeNodeType = ~0 ^ nodeType,
-        extractSel = ~0 << 13,
+        extractSel = ~0 << MAX,
         id = extractSel | hasKey | nodeType
     };
 
@@ -44,6 +46,7 @@ namespace wasmdom
     inline int operator&(int left, Flag right) { return left & std::to_underlying(right); }
     inline int& operator|=(int& left, Flag right) { return left = left | right; }
     inline int& operator&=(int& left, Flag right) { return left = left & right; }
+    inline int operator<<(int left, Flag right) { return left << std::to_underlying(right); }
 
     struct text_tag_t
     {
