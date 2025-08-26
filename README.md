@@ -60,7 +60,8 @@ emrun build/examples/0-console/Debug
 2. [Counter example](/examples/1-counter/main.cpp)
 3. [Routing example](/examples/2-routing/main.cpp)
 4. [WebComponent example](/examples/3-webcomponent/main.cpp)
-4. [Web Benchmarks](/examples/4-webbenchmarks/main.cpp)
+5. [Web Benchmarks](/examples/4-webbenchmarks/main.cpp)
+6. [Events](/examples/5-events/main.cpp)
 
 ### HTML like syntax
 
