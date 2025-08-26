@@ -25,7 +25,7 @@ TEST_CASE("dataset", "[dataset]")
 
     SECTION("should update dataset")
     {
-        VNodeAttributes data;
+        Attributes data;
         data.attrs = { { "data-foo", "foo" },
                        { "data-bar", "bar" } };
         VNode vnode = i(data);

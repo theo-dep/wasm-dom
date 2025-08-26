@@ -3,6 +3,7 @@
 #include "attribute.hpp"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace wasmdom
@@ -11,7 +12,7 @@ namespace wasmdom
     class VNode;
     using Children = std::vector<VNode>;
 
-    enum VNodeFlags
+    enum class Flag : int
     {
         // NodeType
         isElement = 1,
@@ -39,6 +40,11 @@ namespace wasmdom
         id = extractSel | hasKey | nodeType
     };
 
+    inline int operator|(int left, Flag right) { return left | std::to_underlying(right); }
+    inline int operator&(int left, Flag right) { return left & std::to_underlying(right); }
+    inline int& operator|=(int& left, Flag right) { return left = left | right; }
+    inline int& operator&=(int& left, Flag right) { return left = left & right; }
+
     struct text_tag_t
     {
     };
@@ -51,8 +57,8 @@ namespace wasmdom
             std::string sel;
             std::string key;
             std::string ns;
-            std::size_t hash{ 0 };
-            VNodeAttributes data;
+            int hash{ 0 };
+            Attributes data;
             emscripten::val node{ emscripten::val::null() };
             Children children;
         };
@@ -63,7 +69,7 @@ namespace wasmdom
         VNode(text_tag_t, const std::string& nodeText);
         template <Stringifiable... K, Attribute... V>
         VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData);
-        VNode(const std::string& nodeSel, const VNodeAttributes& nodeData);
+        VNode(const std::string& nodeSel, const Attributes& nodeData);
 
         VNode& operator()(const std::string& nodeText);
 

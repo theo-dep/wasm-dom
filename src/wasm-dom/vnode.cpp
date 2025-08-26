@@ -10,12 +10,12 @@
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
 
-wasmdom::VNodeAttributes::VNodeAttributes() = default;
-wasmdom::VNodeAttributes::VNodeAttributes(const VNodeAttributes& other) = default;
-wasmdom::VNodeAttributes::VNodeAttributes(VNodeAttributes&& other) = default;
-wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(const VNodeAttributes& other) = default;
-wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(VNodeAttributes&& other) = default;
-wasmdom::VNodeAttributes::~VNodeAttributes() = default;
+wasmdom::Attributes::Attributes() = default;
+wasmdom::Attributes::Attributes(const Attributes& other) = default;
+wasmdom::Attributes::Attributes(Attributes&& other) = default;
+wasmdom::Attributes& wasmdom::Attributes::operator=(const Attributes& other) = default;
+wasmdom::Attributes& wasmdom::Attributes::operator=(Attributes&& other) = default;
+wasmdom::Attributes::~Attributes() = default;
 
 wasmdom::VNode::VNode(const VNode& other) = default;
 wasmdom::VNode::VNode(VNode&& other) = default;
@@ -29,16 +29,16 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
     if (!_data)
         return;
 
-    if (!(_data->hash & isNormalized)) {
+    if (!(_data->hash & Flag::isNormalized)) {
         const auto attrsIt = _data->data.attrs.find("key");
         if (attrsIt != _data->data.attrs.cend()) {
-            _data->hash |= hasKey;
+            _data->hash |= Flag::hasKey;
             _data->key = attrsIt->second;
             _data->data.attrs.erase(attrsIt);
         }
 
         if (_data->sel[0] == '!') {
-            _data->hash |= isComment;
+            _data->hash |= Flag::isComment;
             _data->sel = "";
         } else {
             std::erase(_data->children, nullptr);
@@ -46,7 +46,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             Attrs::iterator it = _data->data.attrs.begin();
             while (it != _data->data.attrs.end()) {
                 if (it->first == "ns") {
-                    _data->hash |= hasNS;
+                    _data->hash |= Flag::hasNS;
                     _data->ns = it->second;
                     it = _data->data.attrs.erase(it);
                 } else if (it->second == "false") {
@@ -61,18 +61,18 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
 
             const bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
             if (addNS) {
-                _data->hash |= hasNS;
+                _data->hash |= Flag::hasNS;
                 _data->ns = "http://www.w3.org/2000/svg";
             }
 
             if (!_data->data.attrs.empty())
-                _data->hash |= hasAttrs;
+                _data->hash |= Flag::hasAttrs;
             if (!_data->data.props.empty())
-                _data->hash |= hasProps;
+                _data->hash |= Flag::hasProps;
             if (!_data->data.callbacks.empty())
-                _data->hash |= hasCallbacks;
+                _data->hash |= Flag::hasCallbacks;
             if (!_data->children.empty()) {
-                _data->hash |= hasDirectChildren;
+                _data->hash |= Flag::hasDirectChildren;
 
                 for (VNode& child : _data->children) {
                     child.normalize(addNS && _data->sel != "foreignObject");
@@ -80,7 +80,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             }
 
             if (_data->sel[0] == '\0') {
-                _data->hash |= isFragment;
+                _data->hash |= Flag::isFragment;
             } else {
                 static std::size_t currentHash = 0;
                 static std::unordered_map<std::string, std::size_t> hashes;
@@ -89,15 +89,15 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                     hashes[_data->sel] = ++currentHash;
                 }
 
-                _data->hash |= (hashes[_data->sel] << 13) | isElement;
+                _data->hash |= (hashes[_data->sel] << 13) | Flag::isElement;
 
-                if ((_data->hash & hasCallbacks) && _data->data.callbacks.contains("ref")) {
-                    _data->hash |= hasRef;
+                if ((_data->hash & Flag::hasCallbacks) && _data->data.callbacks.contains("ref")) {
+                    _data->hash |= Flag::hasRef;
                 }
             }
         }
 
-        _data->hash |= isNormalized;
+        _data->hash |= Flag::isNormalized;
     }
 }
 
@@ -110,7 +110,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
         std::string sel = node["tagName"].as<std::string>();
         internals::lower(sel);
 
-        VNodeAttributes data;
+        Attributes data;
         for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
             data.attrs.emplace(node["attributes"][i]["nodeName"].as<std::string>(), node["attributes"][i]["nodeValue"].as<std::string>());
         }
@@ -153,11 +153,11 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
 
     const std::size_t vnodes = _data->hash | oldVnode._data->hash;
 
-    if (vnodes & hasAttrs)
+    if (vnodes & Flag::hasAttrs)
         internals::diffAttrs(oldVnode, *this);
-    if (vnodes & hasProps)
+    if (vnodes & Flag::hasProps)
         internals::diffProps(oldVnode, *this);
-    if (vnodes & hasCallbacks)
+    if (vnodes & Flag::hasCallbacks)
         internals::diffCallbacks(oldVnode, *this);
 }
 

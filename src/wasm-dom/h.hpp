@@ -28,7 +28,7 @@ namespace wasmdom::dsl
     inline VNode X() { return VNode(N); }                                                                          \
     template <Stringifiable... K, Attribute... V>                                                                  \
     inline VNode X(std::pair<K, V>&&... nodeData) { return VNode(N, std::forward<std::pair<K, V>>(nodeData)...); } \
-    inline VNode X(const VNodeAttributes& nodeData) { return VNode(N, nodeData); }
+    inline VNode X(const Attributes& nodeData) { return VNode(N, nodeData); }
 
 #define WASMDOM_DSL_SEL(X) WASMDOM_DSL_SEL_NAME(X, #X)
 

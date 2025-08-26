@@ -33,26 +33,26 @@ namespace wasmdom
     using Props = std::unordered_map<std::string, emscripten::val>;
     using Callbacks = std::unordered_map<std::string, Callback>;
 
-    struct VNodeAttributes
+    struct Attributes
     {
         Attrs attrs;
         Props props;
         Callbacks callbacks;
 
 #ifdef WASMDOM_COVERAGE
-        VNodeAttributes();
-        VNodeAttributes(const VNodeAttributes& other);
-        VNodeAttributes(VNodeAttributes&& other);
-        VNodeAttributes& operator=(const VNodeAttributes& other);
-        VNodeAttributes& operator=(VNodeAttributes&& other);
-        ~VNodeAttributes();
+        Attributes();
+        Attributes(const Attributes& other);
+        Attributes(Attributes&& other);
+        Attributes& operator=(const Attributes& other);
+        Attributes& operator=(Attributes&& other);
+        ~Attributes();
 #endif
     };
 
     namespace internals
     {
         template <Stringifiable K, Attribute V>
-        inline void attributeToVNode(VNodeAttributes& attributes, std::pair<K, V>&& attribute)
+        inline void attributeToVNode(Attributes& attributes, std::pair<K, V>&& attribute)
         {
             auto&& [key, value]{ attribute };
             if constexpr (StringAttribute<V>) {
@@ -68,9 +68,9 @@ namespace wasmdom
     }
 
     template <Stringifiable... K, Attribute... V>
-    inline VNodeAttributes attributesToVNode(std::pair<K, V>&&... attributes)
+    inline Attributes attributesToVNode(std::pair<K, V>&&... attributes)
     {
-        VNodeAttributes vnodeAttributes;
+        Attributes vnodeAttributes;
         (internals::attributeToVNode(vnodeAttributes, std::forward<std::pair<K, V>>(attributes)), ...);
         return vnodeAttributes;
     }

@@ -137,16 +137,16 @@ namespace wasmdom::internals
         if (!vnode)
             return;
 
-        if (vnode.hash() & isText && !vnode.sel().empty()) {
+        if (vnode.hash() & Flag::isText && !vnode.sel().empty()) {
             html.append(encode(vnode.sel()));
-        } else if (vnode.hash() & isComment) {
+        } else if (vnode.hash() & Flag::isComment) {
             html.append("<!--" + vnode.sel() + "-->");
-        } else if (vnode.hash() & isFragment) {
+        } else if (vnode.hash() & Flag::isFragment) {
             for (const VNode& child : vnode) {
                 toHTML(child, html);
             }
         } else {
-            const bool isSvg = (vnode.hash() & hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
+            const bool isSvg = (vnode.hash() & Flag::hasNS) && vnode.ns() == "http://www.w3.org/2000/svg";
             const bool isSvgContainerElement = isSvg && std::ranges::find(containerElements, vnode.sel()) != containerElements.cend();
 
             html.append("<" + vnode.sel());

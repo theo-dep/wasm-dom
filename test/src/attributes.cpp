@@ -13,26 +13,26 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("can be copied")
     {
-        VNodeAttributes data;
+        Attributes data;
         data.attrs = {
             { "href", "/foo" },
             { "minlength", "1" },
             { "value", "foo" }
         };
-        VNodeAttributes other(data);
+        Attributes other(data);
         REQUIRE(data.attrs == other.attrs);
     }
 
     SECTION("can be moved")
     {
-        VNodeAttributes data;
+        Attributes data;
         data.attrs = {
             { "href", "/foo" },
             { "minlength", "1" },
             { "value", "foo" }
         };
-        VNodeAttributes moved(data);
-        VNodeAttributes other(std::move(moved));
+        Attributes moved(data);
+        Attributes other(std::move(moved));
         REQUIRE(data.attrs == other.attrs);
     }
 
@@ -55,7 +55,7 @@ TEST_CASE("attributes", "[attributes]")
 
     SECTION("can be memoized")
     {
-        VNodeAttributes data;
+        Attributes data;
         data.attrs = {
             { "href", "/foo" },
             { "minlength", "1" },

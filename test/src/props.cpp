@@ -37,7 +37,7 @@ TEST_CASE("props", "[props]")
 
     SECTION("preserves memorized props")
     {
-        VNodeAttributes data;
+        Attributes data;
         data.props = { { "src", emscripten::val("http://other/") } };
         VNode vnode = a(data);
         VNode vnode2 = a(data);

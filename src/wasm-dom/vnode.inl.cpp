@@ -21,11 +21,11 @@ wasmdom::VNode::VNode(text_tag_t, const std::string& nodeText)
     normalize();
     _data->sel = nodeText;
     // replace current type with text type
-    _data->hash = (_data->hash & removeNodeType) | isText;
+    _data->hash = (_data->hash & Flag::removeNodeType) | Flag::isText;
 }
 
 WASMDOM_INLINE
-wasmdom::VNode::VNode(const std::string& nodeSel, const VNodeAttributes& nodeData)
+wasmdom::VNode::VNode(const std::string& nodeSel, const Attributes& nodeData)
     : VNode(nodeSel)
 {
     _data->data = nodeData;
@@ -35,11 +35,11 @@ WASMDOM_INLINE
 wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
 {
     normalize();
-    if (_data->hash & isComment) {
+    if (_data->hash & Flag::isComment) {
         _data->sel = nodeText;
     } else {
         _data->children.emplace_back(text_tag, nodeText);
-        _data->hash |= hasText;
+        _data->hash |= Flag::hasText;
     }
     return *this;
 }

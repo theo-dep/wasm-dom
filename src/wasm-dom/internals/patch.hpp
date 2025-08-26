@@ -11,25 +11,25 @@ namespace wasmdom::internals
     {
         return
             // compare selector, nodeType and key existence
-            ((vnode1.hash() & id) == (vnode2.hash() & id)) &&
+            ((vnode1.hash() & Flag::id) == (vnode2.hash() & Flag::id)) &&
             // compare keys
-            (!(vnode1.hash() & hasKey) || (vnode1.key() == vnode2.key()));
+            (!(vnode1.hash() & Flag::hasKey) || (vnode1.key() == vnode2.key()));
     }
 
     inline void createNode(VNode& vnode)
     {
-        if (vnode.hash() & isElement) {
-            if (vnode.hash() & hasNS) {
+        if (vnode.hash() & Flag::isElement) {
+            if (vnode.hash() & Flag::hasNS) {
                 vnode.setNode(domapi::createElementNS(vnode.ns(), vnode.sel()));
             } else {
                 vnode.setNode(domapi::createElement(vnode.sel()));
             }
-        } else if (vnode.hash() & isText) {
+        } else if (vnode.hash() & Flag::isText) {
             vnode.setNode(domapi::createTextNode(vnode.sel()));
             return;
-        } else if (vnode.hash() & isFragment) {
+        } else if (vnode.hash() & Flag::isFragment) {
             vnode.setNode(domapi::createDocumentFragment());
-        } else if (vnode.hash() & isComment) {
+        } else if (vnode.hash() & Flag::isComment) {
             vnode.setNode(domapi::createComment(vnode.sel()));
             return;
         }
@@ -57,7 +57,7 @@ namespace wasmdom::internals
             if (*start) {
                 domapi::removeChild(start->node());
 
-                if (start->hash() & hasRef) {
+                if (start->hash() & Flag::hasRef) {
                     start->callbacks().at("ref")(emscripten::val::null());
                 }
             }
@@ -103,7 +103,7 @@ namespace wasmdom::internals
                     oldKeys = true;
 
                     for (Children::iterator begin = oldStart; begin <= oldEnd; ++begin) {
-                        if (begin->hash() & hasKey) {
+                        if (begin->hash() & Flag::hasKey) {
                             oldKeyTo.emplace(begin->key(), begin);
                         }
                     }
@@ -113,7 +113,7 @@ namespace wasmdom::internals
                     domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
                 } else {
                     const Children::iterator elmToMove = oldKeyTo[newStart->key()];
-                    if ((elmToMove->hash() & extractSel) != (newStart->hash() & extractSel)) {
+                    if ((elmToMove->hash() & Flag::extractSel) != (newStart->hash() & Flag::extractSel)) {
                         createNode(*newStart);
                         domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
                     } else {
@@ -139,13 +139,13 @@ namespace wasmdom::internals
 inline void wasmdom::internals::patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& parentNode)
 {
     vnode.setNode(oldVnode.node());
-    if (vnode.hash() & isElementOrFragment) {
-        const std::size_t childrenNotEmpty = vnode.hash() & hasChildren;
-        const std::size_t oldChildrenNotEmpty = oldVnode.hash() & hasChildren;
+    if (vnode.hash() & Flag::isElementOrFragment) {
+        const int childrenNotEmpty = vnode.hash() & Flag::hasChildren;
+        const int oldChildrenNotEmpty = oldVnode.hash() & Flag::hasChildren;
         if (childrenNotEmpty && oldChildrenNotEmpty) {
-            updateChildren(vnode.hash() & isFragment ? parentNode : vnode.node(), oldVnode.begin(), std::prev(oldVnode.end()), vnode.begin(), std::prev(vnode.end()), vnode.end());
+            updateChildren(vnode.hash() & Flag::isFragment ? parentNode : vnode.node(), oldVnode.begin(), std::prev(oldVnode.end()), vnode.begin(), std::prev(vnode.end()), vnode.end());
         } else if (childrenNotEmpty) {
-            addVNodes(vnode.hash() & isFragment ? parentNode : vnode.node(), emscripten::val::null(), vnode.begin(), std::prev(vnode.end()));
+            addVNodes(vnode.hash() & Flag::isFragment ? parentNode : vnode.node(), emscripten::val::null(), vnode.begin(), std::prev(vnode.end()));
         } else if (oldChildrenNotEmpty) {
             removeVNodes(oldVnode.begin(), std::prev(oldVnode.end()));
         }
