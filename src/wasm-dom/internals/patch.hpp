@@ -16,6 +16,12 @@ namespace wasmdom::internals
             (!(vnode1.hash() & hasKey) || (vnode1.key() == vnode2.key()));
     }
 
+    inline void diffNode(VNode& vnode)
+    {
+        static const VNode emptyNode("");
+        vnode.diff(emptyNode);
+    }
+
     inline void createNode(VNode& vnode)
     {
         if (vnode.hash() & isElement) {
@@ -37,10 +43,8 @@ namespace wasmdom::internals
         for (VNode& child : vnode) {
             createNode(child);
             domapi::appendChild(vnode.node(), child.node());
+            diffNode(child);
         }
-
-        static const VNode emptyNode("");
-        vnode.diff(emptyNode);
     }
 
     inline void addVNodes(const emscripten::val& parentNode, const emscripten::val& beforeNode, Children::iterator start, Children::iterator end)
@@ -48,6 +52,7 @@ namespace wasmdom::internals
         for (; start <= end; ++start) {
             createNode(*start);
             domapi::insertBefore(parentNode, start->node(), beforeNode);
+            diffNode(*start);
         }
     }
 
@@ -115,11 +120,13 @@ namespace wasmdom::internals
                 if (!oldKeyTo.contains(newStart->key())) {
                     createNode(*newStart);
                     domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                    diffNode(*newStart);
                 } else {
                     const Children::iterator elmToMove = oldKeyTo[newStart->key()];
                     if ((elmToMove->hash() & extractSel) != (newStart->hash() & extractSel)) {
                         createNode(*newStart);
                         domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                        diffNode(*newStart);
                     } else {
                         if (*elmToMove != *newStart)
                             patchVNode(*elmToMove, *newStart, parentNode);

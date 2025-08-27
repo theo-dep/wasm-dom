@@ -26,6 +26,15 @@
             "url": "http://localhost:6931",
             "webRoot": "${workspaceFolder}",
             "enableDWARF": true
+        },
+        {
+            "type": "chrome",
+            "runtimeExecutable": "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe",
+            "request": "launch",
+            "name": "Debug emrun (Windows)",
+            "url": "http://localhost:6931",
+            "webRoot": "${workspaceFolder}",
+            "enableDWARF": true
         }
     ]
 }
