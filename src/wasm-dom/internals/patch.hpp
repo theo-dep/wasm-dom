@@ -62,10 +62,19 @@ namespace wasmdom::internals
         }
     }
 
+    inline void unmountVNodeChildren(const VNode& vnode)
+    {
+        for (const VNode& child : vnode) {
+            unmountVNodeChildren(child);
+            onEvent(child, onUnmount);
+        }
+    }
+
     inline void removeVNodes(Children::iterator start, Children::iterator end)
     {
         for (; start <= end; ++start) {
             if (*start) {
+                unmountVNodeChildren(*start);
                 onEvent(*start, onUnmount);
                 domapi::removeChild(start->node());
             }
