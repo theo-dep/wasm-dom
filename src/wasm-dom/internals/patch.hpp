@@ -98,15 +98,15 @@ namespace wasmdom::internals
                 if (*oldStart != *newEnd)
                     patchVNode(*oldStart, *newEnd, parentNode);
                 const emscripten::val nextSiblingOldPtr = domapi::nextSibling(oldEnd->node());
-                domapi::insertBefore(parentNode, oldStart->node(), nextSiblingOldPtr);
-                onEvent(*oldStart, onMount);
+                domapi::insertBefore(parentNode, newEnd->node(), nextSiblingOldPtr);
+                onEvent(*newEnd, onMount);
                 ++oldStart;
                 --newEnd;
             } else if (sameVNode(*oldEnd, *newStart)) {
                 if (*oldEnd != *newStart)
                     patchVNode(*oldEnd, *newStart, parentNode);
-                domapi::insertBefore(parentNode, oldEnd->node(), oldStart->node());
-                onEvent(*oldEnd, onMount);
+                domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                onEvent(*newStart, onMount);
                 --oldEnd;
                 ++newStart;
             } else {
@@ -132,8 +132,8 @@ namespace wasmdom::internals
                     } else {
                         if (*elmToMove != *newStart)
                             patchVNode(*elmToMove, *newStart, parentNode);
-                        domapi::insertBefore(parentNode, elmToMove->node(), oldStart->node());
-                        onEvent(*elmToMove, onMount);
+                        domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                        onEvent(*newStart, onMount);
                         *elmToMove = nullptr;
                     }
                 }
