@@ -164,9 +164,6 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
     if (vnodes & hasCallbacks) {
         internals::diffCallbacks(oldVnode, *this);
     }
-    if (vnodes & hasEventCallbacks) {
-        internals::diffEventCallbacks(oldVnode, *this);
-    }
 }
 
 namespace wasmdom::internals

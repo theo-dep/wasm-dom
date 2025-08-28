@@ -130,30 +130,4 @@ namespace wasmdom::internals
             }
         }
     }
-
-    inline void diffEventCallbacks(const VNode& oldVnode, const VNode& vnode)
-    {
-        const EventCallbacks& oldEventCallbacks = oldVnode.eventCallbacks();
-        const EventCallbacks& eventCallbacks = vnode.eventCallbacks();
-
-        const emscripten::val& oldNode = oldVnode.node();
-        const emscripten::val& node = vnode.node();
-
-        if (oldNode.strictlyEquals(node)) {
-            const auto updateCallbackIt = eventCallbacks.find(onUpdate);
-            if (updateCallbackIt != eventCallbacks.cend()) {
-                updateCallbackIt->second(node);
-            }
-        } else {
-            const auto unMountCallbackIt = oldEventCallbacks.find(onUnmount);
-            if (unMountCallbackIt != oldEventCallbacks.cend()) {
-                unMountCallbackIt->second(oldNode);
-            }
-
-            const auto mountCallbackIt = eventCallbacks.find(onMount);
-            if (mountCallbackIt != eventCallbacks.cend()) {
-                mountCallbackIt->second(node);
-            }
-        }
-    }
 }

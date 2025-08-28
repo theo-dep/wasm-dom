@@ -19,11 +19,14 @@ const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 
     if (internals::sameVNode(_currentNode, vnode)) {
         internals::patchVNode(_currentNode, vnode, _currentNode.node());
+        internals::onEvent(vnode, onUpdate);
     } else {
         internals::createNode(vnode);
         const emscripten::val parentNode = domapi::parentNode(_currentNode.node());
         const emscripten::val nextSiblingNode = domapi::nextSibling(_currentNode.node());
         domapi::insertBefore(parentNode, vnode.node(), nextSiblingNode);
+        internals::onEvent(vnode, onMount);
+        internals::onEvent(_currentNode, onUnmount);
         domapi::removeChild(_currentNode.node());
     }
 
