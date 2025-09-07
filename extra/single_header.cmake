@@ -4,6 +4,29 @@
 separate_arguments(HEADER_FILES)
 separate_arguments(SOURCE_FILES)
 
+# clean jsapi.c content
+file(READ ${JSAPI_C_FILE} JSAPI_CONTENT)
+string(REGEX REPLACE "#include <.*>\n\n" "" JSAPI_CONTENT "${JSAPI_CONTENT}")
+string(REGEX REPLACE "#include \".*\"\n\n" "" JSAPI_CONTENT "${JSAPI_CONTENT}")
+string(REGEX REPLACE "typedef struct _EM_VAL\\* EM_VAL;\n" "" JSAPI_CONTENT "${JSAPI_CONTENT}")
+string(REGEX REPLACE "EM_VAL" "emscripten::EM_VAL" JSAPI_CONTENT "${JSAPI_CONTENT}")
+
+# add jsapi.c content in jsapi.hpp
+set(JSAPI_FILE ${BINARY_DIR}/src/wasm-dom/internals/jsapi.hpp)
+file(WRITE ${JSAPI_FILE}
+        "#pragma once\n"
+        "#include <emscripten/em_js.h>\n"
+        "#include <emscripten/val.h>\n"
+        "namespace wasmdom::internals::jsapi {\n"
+            "${JSAPI_CONTENT}\n"
+        "}"
+)
+
+# replace jsapi.hpp by the generated one
+list(FIND HEADER_FILES ${SOURCE_DIR}/src/wasm-dom/internals/jsapi.hpp JSAPI_INDEX)
+list(REMOVE_AT HEADER_FILES ${JSAPI_INDEX})
+list(INSERT HEADER_FILES ${JSAPI_INDEX} ${JSAPI_FILE})
+
 # Create filename to path mapping for all files
 set(ALL_FILES ${HEADER_FILES} ${SOURCE_FILES})
 foreach(FILE_PATH ${ALL_FILES})
@@ -114,12 +137,26 @@ endforeach()
 
 file(APPEND ${OUTPUT_FILE} "\n")
 
+# create WASMDOM_EM_JS macro
+file(APPEND ${OUTPUT_FILE} "// inline EM_JS macro\n")
+file(APPEND ${OUTPUT_FILE} "#define _WASMDOM_EM_JS(ret, c_name, js_name, params, code)                                    \\\n")
+file(APPEND ${OUTPUT_FILE} "_EM_BEGIN_CDECL                                                                               \\\n")
+file(APPEND ${OUTPUT_FILE} "ret c_name params EM_IMPORT(js_name);                                                         \\\n")
+file(APPEND ${OUTPUT_FILE} "__attribute__((visibility(\"hidden\"))) inline void* __em_js_ref_##c_name = (void*)&c_name;   \\\n")
+file(APPEND ${OUTPUT_FILE} "EMSCRIPTEN_KEEPALIVE                                                                          \\\n")
+file(APPEND ${OUTPUT_FILE} "__attribute__((section(\"em_js\"), aligned(1))) inline char __em_js__##js_name[] =            \\\n")
+file(APPEND ${OUTPUT_FILE} "    #params \"<::>\" code;                                                                    \\\n")
+file(APPEND ${OUTPUT_FILE} "_EM_END_CDECL\n")
+file(APPEND ${OUTPUT_FILE} "#define WASMDOM_EM_JS(ret, name, params, ...) _WASMDOM_EM_JS(ret, name, name, params, #__VA_ARGS__)\n")
+
+file(APPEND ${OUTPUT_FILE} "\n")
+
 # Process each file
 list(LENGTH SOURCE_FILES FILE_COUNT)
 message(DEBUG "Found ${FILE_COUNT} files to include:")
 
 foreach(FILE_PATH ${SOURCE_FILES})
-    file(RELATIVE_PATH REL_PATH ${CMAKE_SOURCE_DIR}/../.. ${FILE_PATH})
+    file(RELATIVE_PATH REL_PATH ${SOURCE_DIR} ${FILE_PATH})
     message(DEBUG "  Processing: ${REL_PATH}")
 
     file(READ ${FILE_PATH} CONTENT)
@@ -132,10 +169,12 @@ foreach(FILE_PATH ${SOURCE_FILES})
     string(REGEX REPLACE "#ifdef WASMDOM_COVERAGE.[^#]*#endif" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#ifndef WASMDOM_COVERAGE(.[^#]*)#else.[^#]*#endif" "\\1" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#ifdef WASMDOM_COVERAGE.[^#]*#else(.[^#]*)#endif" "\\1" CONTENT "${CONTENT}")
-    string(REGEX REPLACE "WASMDOM_INLINE" "inline" CONTENT "${CONTENT}")
     string(REGEX REPLACE "\n\n\n+" "\n\n" CONTENT "${CONTENT}")
     string(REGEX REPLACE "^[\n\r\t ]+" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "[\n\r\t ]+$" "" CONTENT "${CONTENT}")
+    string(REPLACE "EM_JS" "WASMDOM_EM_JS" CONTENT "${CONTENT}")
+    string(REPLACE "WASMDOM_INLINE" "inline" CONTENT "${CONTENT}")
+    string(REPLACE "WASMDOM_SH_INLINE" "inline" CONTENT "${CONTENT}")
 
     # Add cleaned content
     file(APPEND ${OUTPUT_FILE} "// -----------------------------------------------------------------------------\n")

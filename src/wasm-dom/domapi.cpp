@@ -1,6 +1,7 @@
 #include "domapi.hpp"
 
 #include "domrecycler.hpp"
+#include "internals/conf.h"
 #include "internals/jsapi.hpp"
 
 namespace wasmdom::internals
@@ -12,31 +13,37 @@ namespace wasmdom::internals
     }
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::domapi::createElement(const std::string& tag)
 {
     return internals::recycler().create(tag);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
     return internals::recycler().createNS(qualifiedName, namespaceURI);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::domapi::createTextNode(const std::string& text)
 {
     return internals::recycler().createText(text);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::domapi::createComment(const std::string& comment)
 {
     return internals::recycler().createComment(comment);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::domapi::createDocumentFragment()
 {
     return emscripten::val::take_ownership(internals::jsapi::createDocumentFragment());
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
 {
     if (parentNode.isNull() || parentNode.isUndefined())
@@ -45,6 +52,7 @@ void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emsc
     internals::jsapi::insertBefore(parentNode.as_handle(), newNode.as_handle(), referenceNode.as_handle());
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::domapi::removeChild(const emscripten::val& child)
 {
     if (child.isNull() || child.isUndefined())
@@ -57,16 +65,19 @@ void wasmdom::domapi::removeChild(const emscripten::val& child)
     internals::recycler().collect(child);
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
 {
     internals::jsapi::appendChild(parent.as_handle(), child.as_handle());
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
 {
     internals::jsapi::removeAttribute(node.as_handle(), attribute.c_str());
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
 {
     if (attribute.starts_with("xml:")) {
@@ -78,11 +89,13 @@ void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::strin
     }
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::domapi::setNodeValue(emscripten::val& node, const std::string& text)
 {
     node.set("nodeValue", text);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::domapi::parentNode(const emscripten::val& node)
 {
     if (!node.isNull() && !node.isUndefined() && !node["parentNode"].isNull())
@@ -90,6 +103,7 @@ emscripten::val wasmdom::domapi::parentNode(const emscripten::val& node)
     return emscripten::val::null();
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::domapi::nextSibling(const emscripten::val& node)
 {
     if (!node.isNull() && !node.isUndefined() && !node["nextSibling"].isNull())

@@ -18,6 +18,7 @@ wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other) = default;
 wasmdom::VNode::~VNode() = default;
 #endif
 
+WASMDOM_SH_INLINE
 void wasmdom::VNode::normalize(bool injectSvgNamespace)
 {
     if (!_data)
@@ -97,6 +98,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
     }
 }
 
+WASMDOM_SH_INLINE
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
     VNode vnode = nullptr;
@@ -130,6 +132,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     return vnode;
 }
 
+WASMDOM_SH_INLINE
 std::string wasmdom::VNode::toHTML() const
 {
     VNode vnode = *this;
@@ -142,6 +145,7 @@ std::string wasmdom::VNode::toHTML() const
     return html;
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::VNode::diff(const VNode& oldVnode)
 {
     if (!*this || !oldVnode || *this == oldVnode)
