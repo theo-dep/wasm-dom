@@ -33,6 +33,7 @@ Initial version of wasm-dom is a fork of [asm-dom](https://github.com/mbasso/asm
 - Add [WebAssembly Garbage Collector](https://github.com/WebAssembly/gc) support but keep DOM recycler for old browser ([very recent feature](https://webassembly.org/features/#table-row-gc)).
 - Improve performance by 50%. See [PR #14](https://github.com/theo-dep/wasm-dom/pull/14) to follow.
 - Can be used without exceptions and RTTI to [optimize code size](https://emscripten.org/docs/optimizing/Optimizing-Code.html#c-rtti).
+- Replace `"ref"` callbacks by `onMount`, `onUpdate` and `onUnmount` event callbacks.
 
 ## Motivation
 
@@ -145,6 +146,17 @@ int main() {
 
 ## Getting started
 
+- [Installation](#installation)
+- [Memory Management](#memory-management)
+- [Boolean Attributes](#boolean-attributes)
+- [String Encoding](#string-encoding)
+- [SVG](#svg)
+- [Events](#events)
+- [Fragments](#fragments)
+- [Server Side Rendering](#server-side-rendering-1)
+- [Web Components](#web-components)
+- [API](#api)
+
 ### Installation
 
 The project uses the latest version of Emscripten 4.0.10.
@@ -197,29 +209,27 @@ VNode vnode =
   });
 ```
 
-### Ref
+### Events
 
-To access directly DOM nodes created by wasm-dom, for example to manage focus, text selection, or integrating with third-party DOM libraries, use ref callbacks. ref is a special callback that takes the DOM node as param and can return true or false unconditionally, this is just for simplicity, to maintain the same signatures of other events. ref is called after the DOM node is mounted, if the ref callback changes or after the DOM node is removed from the DOM tree, in this case the param is `emscripten::val::null()`. Here is an example of the first and the last case.
+To access directly DOM nodes created by wasm-dom, for example to manage focus, text selection, or integrating with third-party DOM libraries, use events callbacks. An event is a special callback that takes the DOM node as param and can return true or false unconditionally, this is just for simplicity, to maintain the same signatures of other events.
+
+1. `onMount` is called after the DOM node is mounted.
+2. `onUpdate` is called when it is updated
+3. `onUnmount` is called before the DOM node is removed from the DOM tree.
+
+Here is an example of the first and the last case.
 
 ```cpp
-bool refCallback(emscripten::val node) {
-  // check if node === null
-  if (node.isNull()) {
-    // node unmounted
-    // do nothing
-  } else {
-    // node mounted
-    // focus input
-    node.call<void>("focus");
-  }
-
+bool onMountCallback(emscripten::val node) {
+  // focus input
+  node.call<void>("focus");
   return true;
 };
 
 int main() {
   VNode vnode1 =
     div()(
-      input(("ref", f(refCallback)))
+      input((onMount, f(onMountCallback)))
     );
 
   VDom vdom(
@@ -234,12 +244,12 @@ int main() {
 }
 ```
 
-ref callback is also invoked if it changes. In the following example, wasm-dom will call refCallback after the DOM node is mounted and then anotherRefCallback after the update.
+In the following example, wasm-dom will call onMountCallback after the DOM node is mounted and onUpdateCallback after the update.
 
 ```cpp
 VNode vnode1 =
   div()(
-    input(("ref", f(refCallback)))
+    input((onMount, f(onMountCallback)))
   );
 
 VDom vdom(
@@ -249,7 +259,7 @@ vdom.patch(vnode1);
 
 VNode vnode2 =
   div()(
-    input(("ref", f(anotherRefCallback)))
+    input((onUpdate, f(onUpdateCallback)))
   );
 
 vdom.patch(vnode2);
@@ -257,30 +267,6 @@ vdom.patch(vnode2);
 
 > [!TIP]
 > The use of the function `f` is always necessary in case of raw function pointer to type it in `std::function`. A lambda holds a type.
-
-Please note that wasm-dom will call ref on every update, so, probably add a check like this.
-
-```cpp
-VNode vnode1 =
-  div()(
-    input(("ref", [&](emscripten::val node) -> bool {
-        if (!node.isNull()) {
-
-          emscripten::val oldNode = node[wasmdom::oldNodeKey];
-
-          if (!o.strictlyEquals(e)) {
-            // node mounted
-            // focus input
-            node.call<void>("focus");
-          }
-        }
-
-        return true;
-      })
-    )
-  );
-```
-
 
 ### Fragments
 
