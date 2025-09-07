@@ -24,10 +24,15 @@ namespace wasmdom
         { f(std::declval<emscripten::val>()) } -> std::convertible_to<bool>;
     };
 
+    template <typename T>
+    concept EventCallbackAttribute = requires(T f) {
+        { f(std::declval<emscripten::val>()) } -> std::same_as<void>;
+    };
+
     struct Event
     {
         std::size_t e{};
-        bool operator==(const Event&) const = default;
+        bool operator==(const Event&) const;
     };
     static inline constexpr Event onMount{ 0 };
     static inline constexpr Event onUpdate{ 1 };
@@ -35,10 +40,7 @@ namespace wasmdom
 
     struct EventHash
     {
-        inline std::size_t operator()(const Event& e) const
-        {
-            return std::hash<std::size_t>{}(e.e);
-        }
+        std::size_t operator()(const Event& e) const;
     };
 
     template <typename T>
@@ -48,14 +50,15 @@ namespace wasmdom
     concept AttributeKey = Stringifiable<T> || EventAttribute<T>;
 
     template <typename T>
-    concept AttributeValue = StringAttribute<T> || ValAttribute<T> || CallbackAttribute<T>;
+    concept AttributeValue = StringAttribute<T> || ValAttribute<T> || CallbackAttribute<T> || EventCallbackAttribute<T>;
 
     using Callback = std::function<bool(emscripten::val)>;
+    using EventCallback = std::function<void(emscripten::val)>;
 
     using Attrs = std::unordered_map<std::string, std::string>;
     using Props = std::unordered_map<std::string, emscripten::val>;
     using Callbacks = std::unordered_map<std::string, Callback>;
-    using EventCallbacks = std::unordered_map<Event, Callback, EventHash>;
+    using EventCallbacks = std::unordered_map<Event, EventCallback, EventHash>;
 
     struct VNodeAttributes
     {
@@ -80,7 +83,7 @@ namespace wasmdom
         inline void attributeToVNode(VNodeAttributes& attributes, std::pair<K, V>&& attribute)
         {
             auto&& [key, value]{ attribute };
-            if constexpr (EventAttribute<K> && CallbackAttribute<V>) {
+            if constexpr (EventAttribute<K> && EventCallbackAttribute<V>) {
                 attributes.eventCallbacks.emplace(key, value);
             } else if constexpr (StringAttribute<V>) {
                 attributes.attrs.emplace(key, value);
@@ -103,3 +106,7 @@ namespace wasmdom
     }
 
 }
+
+#ifndef WASMDOM_COVERAGE
+#include "attribute.inl.cpp"
+#endif

@@ -3,6 +3,7 @@ set(TARGET_NAME wasm-dom)
 add_library(wasm-dom-internals-jsapi OBJECT wasm-dom/internals/jsapi.c)
 
 add_library(wasm-dom
+    wasm-dom/attribute.cpp
     wasm-dom/domapi.cpp
     wasm-dom/domrecycler.cpp
     wasm-dom/vdom.cpp

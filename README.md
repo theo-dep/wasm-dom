@@ -211,7 +211,7 @@ VNode vnode =
 
 ### Events
 
-To access directly DOM nodes created by wasm-dom, for example to manage focus, text selection, or integrating with third-party DOM libraries, use events callbacks. An event is a special callback that takes the DOM node as param and can return true or false unconditionally, this is just for simplicity, to maintain the same signatures of other events.
+To access directly DOM nodes created by wasm-dom, for example to manage focus, text selection, or integrating with third-party DOM libraries, use events callbacks. An event is a special callback that takes the DOM node as param.
 
 1. `onMount` is called after the DOM node is mounted.
 2. `onUpdate` is called when it is updated
@@ -223,7 +223,6 @@ Here is an example of the first and the last case.
 bool onMountCallback(emscripten::val node) {
   // focus input
   node.call<void>("focus");
-  return true;
 };
 
 int main() {

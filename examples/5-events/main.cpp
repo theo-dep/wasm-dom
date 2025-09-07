@@ -83,7 +83,6 @@ void render()
                            (onMount,
                             [](emscripten::val e) {
                                 focus(e.as_handle());
-                                return true;
                             })
                        ),
                        p()(

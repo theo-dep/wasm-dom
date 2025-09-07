@@ -1,8 +1,4 @@
-#ifdef WASMDOM_COVERAGE
-#define WASMDOM_INLINE
-#else
-#define WASMDOM_INLINE inline
-#endif
+#include "internals/conf.h"
 
 WASMDOM_INLINE
 wasmdom::VNode::VNode(std::nullptr_t) {}

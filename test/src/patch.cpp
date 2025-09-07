@@ -1503,7 +1503,6 @@ TEST_CASE("patch", "[patch]")
     auto checkNode = [&](emscripten::val node) {
         REQUIRE(isHTMLElement(node.as_handle()));
         ++refCount;
-        return true;
     };
 
     SECTION("should call onMount when a node is added in DOM")
