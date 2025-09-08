@@ -7,6 +7,15 @@ namespace wasmdom::internals
 {
     void patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& parentNode);
 
+    inline void onEvent(const VNode& vnode, const Event& event)
+    {
+        const EventCallbacks& eventCallbacks = vnode.eventCallbacks();
+        const auto callbackIt = eventCallbacks.find(event);
+        if (callbackIt != eventCallbacks.cend()) {
+            callbackIt->second(vnode.node());
+        }
+    }
+
     inline bool sameVNode(const VNode& vnode1, const VNode& vnode2)
     {
         return
@@ -37,6 +46,7 @@ namespace wasmdom::internals
         for (VNode& child : vnode) {
             createNode(child);
             domapi::appendChild(vnode.node(), child.node());
+            onEvent(child, onMount);
         }
 
         static const VNode emptyNode("");
@@ -48,6 +58,15 @@ namespace wasmdom::internals
         for (; start <= end; ++start) {
             createNode(*start);
             domapi::insertBefore(parentNode, start->node(), beforeNode);
+            onEvent(*start, onMount);
+        }
+    }
+
+    inline void unmountVNodeChildren(const VNode& vnode)
+    {
+        for (const VNode& child : vnode) {
+            unmountVNodeChildren(child);
+            onEvent(child, onUnmount);
         }
     }
 
@@ -55,11 +74,9 @@ namespace wasmdom::internals
     {
         for (; start <= end; ++start) {
             if (*start) {
+                unmountVNodeChildren(*start);
+                onEvent(*start, onUnmount);
                 domapi::removeChild(start->node());
-
-                if (start->hash() & hasRef) {
-                    start->callbacks().at("ref")(emscripten::val::null());
-                }
             }
         }
     }
@@ -77,25 +94,28 @@ namespace wasmdom::internals
             } else if (sameVNode(*oldStart, *newStart)) {
                 if (*oldStart != *newStart)
                     patchVNode(*oldStart, *newStart, parentNode);
+                onEvent(*newStart, onUpdate);
                 ++oldStart;
                 ++newStart;
             } else if (sameVNode(*oldEnd, *newEnd)) {
                 if (*oldEnd != *newEnd)
                     patchVNode(*oldEnd, *newEnd, parentNode);
+                onEvent(*newEnd, onUpdate);
                 --oldEnd;
                 --newEnd;
             } else if (sameVNode(*oldStart, *newEnd)) {
                 if (*oldStart != *newEnd)
                     patchVNode(*oldStart, *newEnd, parentNode);
                 const emscripten::val nextSiblingOldPtr = domapi::nextSibling(oldEnd->node());
-                domapi::insertBefore(parentNode, oldStart->node(), nextSiblingOldPtr);
+                domapi::insertBefore(parentNode, newEnd->node(), nextSiblingOldPtr);
+                onEvent(*newEnd, onMount);
                 ++oldStart;
                 --newEnd;
             } else if (sameVNode(*oldEnd, *newStart)) {
                 if (*oldEnd != *newStart)
                     patchVNode(*oldEnd, *newStart, parentNode);
-
-                domapi::insertBefore(parentNode, oldEnd->node(), oldStart->node());
+                domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                onEvent(*newStart, onMount);
                 --oldEnd;
                 ++newStart;
             } else {
@@ -111,15 +131,18 @@ namespace wasmdom::internals
                 if (!oldKeyTo.contains(newStart->key())) {
                     createNode(*newStart);
                     domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                    onEvent(*newStart, onMount);
                 } else {
                     const Children::iterator elmToMove = oldKeyTo[newStart->key()];
                     if ((elmToMove->hash() & extractSel) != (newStart->hash() & extractSel)) {
                         createNode(*newStart);
                         domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                        onEvent(*newStart, onMount);
                     } else {
                         if (*elmToMove != *newStart)
                             patchVNode(*elmToMove, *newStart, parentNode);
-                        domapi::insertBefore(parentNode, elmToMove->node(), oldStart->node());
+                        domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                        onEvent(*newStart, onMount);
                         *elmToMove = nullptr;
                     }
                 }

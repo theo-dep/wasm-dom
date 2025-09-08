@@ -9,7 +9,7 @@ namespace wasmdom::dsl
     using namespace std::string_literals;
 
     // helper to write VNode((key, val), (key, val)...)
-    template <Stringifiable K, Attribute V>
+    template <AttributeKey K, AttributeValue V>
     inline std::pair<K, V> operator,(K&& key, V&& val)
     {
         return { std::forward<K>(key), std::forward<V>(val) };
@@ -26,7 +26,7 @@ namespace wasmdom::dsl
 
 #define WASMDOM_DSL_SEL_NAME(X, N)                                                                                 \
     inline VNode X() { return VNode(N); }                                                                          \
-    template <Stringifiable... K, Attribute... V>                                                                  \
+    template <AttributeKey... K, AttributeValue... V>                                                              \
     inline VNode X(std::pair<K, V>&&... nodeData) { return VNode(N, std::forward<std::pair<K, V>>(nodeData)...); } \
     inline VNode X(const VNodeAttributes& nodeData) { return VNode(N, nodeData); }
 

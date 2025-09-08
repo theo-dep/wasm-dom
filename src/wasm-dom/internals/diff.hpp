@@ -105,15 +105,12 @@ namespace wasmdom::internals
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        const emscripten::val& oldNode = oldVnode.node();
         emscripten::val& node = vnode.node();
-
-        node.set(oldNodeKey, oldNode);
 
         std::string eventKey;
 
         for (const auto& [key, _] : oldCallbacks) {
-            if (!callbacks.contains(key) && key != "ref") {
+            if (!callbacks.contains(key)) {
                 eventKey = formatEventKey(key);
                 jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].delete_(eventKey);
@@ -126,21 +123,11 @@ namespace wasmdom::internals
         }
 
         for (const auto& [key, _] : callbacks) {
-            if (!oldCallbacks.contains(key) && key != "ref") {
+            if (!oldCallbacks.contains(key)) {
                 eventKey = formatEventKey(key);
                 jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
-        }
-
-        const Callback oldCallback = oldVnode.hash() & hasRef ? oldCallbacks.at("ref") : Callback();
-        if (oldCallback) {
-            oldCallback(emscripten::val::null());
-        }
-
-        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
-        if (callback) {
-            callback(node);
         }
     }
 }

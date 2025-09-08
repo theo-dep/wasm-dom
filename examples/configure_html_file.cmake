@@ -1,6 +1,9 @@
 function(configure_html_file EXAMPLE_TARGET EXAMPLE_TITLE)
     set(CONFIGS Debug Release RelWithDebInfo MinSizeRel)
 
+    get_filename_component(EXAMPLE_DIR ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+    set(EXAMPLE_REF https://github.com/theo-dep/wasm-dom/blob/main/examples/${EXAMPLE_DIR}/main.cpp)
+
     foreach(config ${CONFIGS})
         set(EXAMPLE_TARGET_PATH ${config}/${EXAMPLE_TARGET})
 

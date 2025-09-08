@@ -1,8 +1,4 @@
-#ifdef WASMDOM_COVERAGE
-#define WASMDOM_INLINE
-#else
-#define WASMDOM_INLINE inline
-#endif
+#include "internals/conf.h"
 
 WASMDOM_INLINE
 wasmdom::VNode::VNode(std::nullptr_t) {}
@@ -73,6 +69,9 @@ const wasmdom::Props& wasmdom::VNode::props() const { return _data->data.props; 
 
 WASMDOM_INLINE
 const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->data.callbacks; }
+
+WASMDOM_INLINE
+const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->data.eventCallbacks; }
 
 WASMDOM_INLINE
 const std::string& wasmdom::VNode::sel() const { return _data->sel; }

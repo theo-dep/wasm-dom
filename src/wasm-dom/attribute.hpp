@@ -25,19 +25,47 @@ namespace wasmdom
     };
 
     template <typename T>
-    concept Attribute = StringAttribute<T> || ValAttribute<T> || CallbackAttribute<T>;
+    concept EventCallbackAttribute = requires(T f) {
+        { f(std::declval<emscripten::val>()) } -> std::same_as<void>;
+    };
+
+    struct Event
+    {
+        std::size_t e{};
+        bool operator==(const Event&) const;
+    };
+    static inline constexpr Event onMount{ 0 };
+    static inline constexpr Event onUpdate{ 1 };
+    static inline constexpr Event onUnmount{ 2 };
+
+    struct EventHash
+    {
+        std::size_t operator()(const Event& e) const;
+    };
+
+    template <typename T>
+    concept EventAttribute = std::convertible_to<T, Event>;
+
+    template <typename T>
+    concept AttributeKey = Stringifiable<T> || EventAttribute<T>;
+
+    template <typename T>
+    concept AttributeValue = StringAttribute<T> || ValAttribute<T> || CallbackAttribute<T> || EventCallbackAttribute<T>;
 
     using Callback = std::function<bool(emscripten::val)>;
+    using EventCallback = std::function<void(emscripten::val)>;
 
     using Attrs = std::unordered_map<std::string, std::string>;
     using Props = std::unordered_map<std::string, emscripten::val>;
     using Callbacks = std::unordered_map<std::string, Callback>;
+    using EventCallbacks = std::unordered_map<Event, EventCallback, EventHash>;
 
     struct VNodeAttributes
     {
         Attrs attrs;
         Props props;
         Callbacks callbacks;
+        EventCallbacks eventCallbacks;
 
 #ifdef WASMDOM_COVERAGE
         VNodeAttributes();
@@ -51,11 +79,13 @@ namespace wasmdom
 
     namespace internals
     {
-        template <Stringifiable K, Attribute V>
+        template <AttributeKey K, AttributeValue V>
         inline void attributeToVNode(VNodeAttributes& attributes, std::pair<K, V>&& attribute)
         {
             auto&& [key, value]{ attribute };
-            if constexpr (StringAttribute<V>) {
+            if constexpr (EventAttribute<K> && EventCallbackAttribute<V>) {
+                attributes.eventCallbacks.emplace(key, value);
+            } else if constexpr (StringAttribute<V>) {
                 attributes.attrs.emplace(key, value);
             } else if constexpr (ValAttribute<V>) {
                 attributes.props.emplace(key, value);
@@ -67,7 +97,7 @@ namespace wasmdom
         }
     }
 
-    template <Stringifiable... K, Attribute... V>
+    template <AttributeKey... K, AttributeValue... V>
     inline VNodeAttributes attributesToVNode(std::pair<K, V>&&... attributes)
     {
         VNodeAttributes vnodeAttributes;
@@ -76,3 +106,7 @@ namespace wasmdom
     }
 
 }
+
+#ifndef WASMDOM_COVERAGE
+#include "attribute.inl.cpp"
+#endif

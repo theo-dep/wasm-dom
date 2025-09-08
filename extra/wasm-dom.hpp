@@ -39,28 +39,58 @@ namespace wasmdom
     };
 
     template <typename T>
-    concept Attribute = StringAttribute<T> || ValAttribute<T> || CallbackAttribute<T>;
+    concept EventCallbackAttribute = requires(T f) {
+        { f(std::declval<emscripten::val>()) } -> std::same_as<void>;
+    };
+
+    struct Event
+    {
+        std::size_t e{};
+        bool operator==(const Event&) const;
+    };
+    static inline constexpr Event onMount{ 0 };
+    static inline constexpr Event onUpdate{ 1 };
+    static inline constexpr Event onUnmount{ 2 };
+
+    struct EventHash
+    {
+        std::size_t operator()(const Event& e) const;
+    };
+
+    template <typename T>
+    concept EventAttribute = std::convertible_to<T, Event>;
+
+    template <typename T>
+    concept AttributeKey = Stringifiable<T> || EventAttribute<T>;
+
+    template <typename T>
+    concept AttributeValue = StringAttribute<T> || ValAttribute<T> || CallbackAttribute<T> || EventCallbackAttribute<T>;
 
     using Callback = std::function<bool(emscripten::val)>;
+    using EventCallback = std::function<void(emscripten::val)>;
 
     using Attrs = std::unordered_map<std::string, std::string>;
     using Props = std::unordered_map<std::string, emscripten::val>;
     using Callbacks = std::unordered_map<std::string, Callback>;
+    using EventCallbacks = std::unordered_map<Event, EventCallback, EventHash>;
 
     struct VNodeAttributes
     {
         Attrs attrs;
         Props props;
         Callbacks callbacks;
+        EventCallbacks eventCallbacks;
     };
 
     namespace internals
     {
-        template <Stringifiable K, Attribute V>
+        template <AttributeKey K, AttributeValue V>
         inline void attributeToVNode(VNodeAttributes& attributes, std::pair<K, V>&& attribute)
         {
             auto&& [key, value]{ attribute };
-            if constexpr (StringAttribute<V>) {
+            if constexpr (EventAttribute<K> && EventCallbackAttribute<V>) {
+                attributes.eventCallbacks.emplace(key, value);
+            } else if constexpr (StringAttribute<V>) {
                 attributes.attrs.emplace(key, value);
             } else if constexpr (ValAttribute<V>) {
                 attributes.props.emplace(key, value);
@@ -72,7 +102,7 @@ namespace wasmdom
         }
     }
 
-    template <Stringifiable... K, Attribute... V>
+    template <AttributeKey... K, AttributeValue... V>
     inline VNodeAttributes attributesToVNode(std::pair<K, V>&&... attributes)
     {
         VNodeAttributes vnodeAttributes;
@@ -119,7 +149,6 @@ namespace wasmdom
     static inline constexpr const char* nodeEventsKey = "wasmDomEvents";
     static inline constexpr const char* nodeNSKey = "wasmDomNS";
     static inline constexpr const char* nodeRawsKey = "wasmDomRaws";
-    static inline constexpr const char* oldNodeKey = "wasmDomOldNode";
 
 }
 
@@ -184,13 +213,13 @@ namespace wasmdom
         hasAttrs = 1 << 6,
         hasProps = 1 << 7,
         hasCallbacks = 1 << 8,
-        hasDirectChildren = 1 << 9,
-        hasChildren = hasDirectChildren | hasText,
-        hasRef = 1 << 10,
+        hasEventCallbacks = 1 << 9,
+        hasDirectChildren = 1 << 10,
         hasNS = 1 << 11,
         isNormalized = 1 << 12,
 
         // masks
+        hasChildren = hasDirectChildren | hasText,
         isElementOrFragment = isElement | isFragment,
         nodeType = isElement | isText | isComment | isFragment,
         removeNodeType = ~0 ^ nodeType,
@@ -220,7 +249,7 @@ namespace wasmdom
         VNode(std::nullptr_t);
         VNode(const std::string& nodeSel);
         VNode(text_tag_t, const std::string& nodeText);
-        template <Stringifiable... K, Attribute... V>
+        template <AttributeKey... K, AttributeValue... V>
         VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData);
         VNode(const std::string& nodeSel, const VNodeAttributes& nodeData);
 
@@ -233,6 +262,7 @@ namespace wasmdom
         const Attrs& attrs() const;
         const Props& props() const;
         const Callbacks& callbacks() const;
+        const EventCallbacks& eventCallbacks() const;
 
         const std::string& sel() const;
         const std::string& key() const;
@@ -268,7 +298,7 @@ namespace wasmdom
     };
 }
 
-template <wasmdom::Stringifiable... K, wasmdom::Attribute... V>
+template <wasmdom::AttributeKey... K, wasmdom::AttributeValue... V>
 inline wasmdom::VNode::VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData)
     : VNode(nodeSel)
 {
@@ -285,7 +315,7 @@ namespace wasmdom::dsl
     using namespace std::string_literals;
 
     // helper to write VNode((key, val), (key, val)...)
-    template <Stringifiable K, Attribute V>
+    template <AttributeKey K, AttributeValue V>
     inline std::pair<K, V> operator,(K&& key, V&& val)
     {
         return { std::forward<K>(key), std::forward<V>(val) };
@@ -302,7 +332,7 @@ namespace wasmdom::dsl
 
 #define WASMDOM_DSL_SEL_NAME(X, N)                                                                                 \
     inline VNode X() { return VNode(N); }                                                                          \
-    template <Stringifiable... K, Attribute... V>                                                                  \
+    template <AttributeKey... K, AttributeValue... V>                                                              \
     inline VNode X(std::pair<K, V>&&... nodeData) { return VNode(N, std::forward<std::pair<K, V>>(nodeData)...); } \
     inline VNode X(const VNodeAttributes& nodeData) { return VNode(N, nodeData); }
 
@@ -774,15 +804,12 @@ namespace wasmdom::internals
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        const emscripten::val& oldNode = oldVnode.node();
         emscripten::val& node = vnode.node();
-
-        node.set(oldNodeKey, oldNode);
 
         std::string eventKey;
 
         for (const auto& [key, _] : oldCallbacks) {
-            if (!callbacks.contains(key) && key != "ref") {
+            if (!callbacks.contains(key)) {
                 eventKey = formatEventKey(key);
                 jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].delete_(eventKey);
@@ -795,21 +822,11 @@ namespace wasmdom::internals
         }
 
         for (const auto& [key, _] : callbacks) {
-            if (!oldCallbacks.contains(key) && key != "ref") {
+            if (!oldCallbacks.contains(key)) {
                 eventKey = formatEventKey(key);
                 jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
                 node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
             }
-        }
-
-        const Callback oldCallback = oldVnode.hash() & hasRef ? oldCallbacks.at("ref") : Callback();
-        if (oldCallback) {
-            oldCallback(emscripten::val::null());
-        }
-
-        const Callback callback = vnode.hash() & hasRef ? callbacks.at("ref") : Callback();
-        if (callback) {
-            callback(node);
         }
     }
 }
@@ -983,10 +1000,6 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         node.set(nodeEventsKey, emscripten::val::undefined());
     }
 
-    if (!node[oldNodeKey].isUndefined()) {
-        node.set(oldNodeKey, emscripten::val::undefined());
-    }
-
     if (!node["nodeValue"].isNull() && !node["nodeValue"].as<std::string>().empty()) {
         node.set("nodeValue", std::string{});
     }
@@ -1018,6 +1031,15 @@ namespace wasmdom::internals
 {
     void patchVNode(VNode& oldVnode, VNode& vnode, const emscripten::val& parentNode);
 
+    inline void onEvent(const VNode& vnode, const Event& event)
+    {
+        const EventCallbacks& eventCallbacks = vnode.eventCallbacks();
+        const auto callbackIt = eventCallbacks.find(event);
+        if (callbackIt != eventCallbacks.cend()) {
+            callbackIt->second(vnode.node());
+        }
+    }
+
     inline bool sameVNode(const VNode& vnode1, const VNode& vnode2)
     {
         return
@@ -1048,6 +1070,7 @@ namespace wasmdom::internals
         for (VNode& child : vnode) {
             createNode(child);
             domapi::appendChild(vnode.node(), child.node());
+            onEvent(child, onMount);
         }
 
         static const VNode emptyNode("");
@@ -1059,6 +1082,15 @@ namespace wasmdom::internals
         for (; start <= end; ++start) {
             createNode(*start);
             domapi::insertBefore(parentNode, start->node(), beforeNode);
+            onEvent(*start, onMount);
+        }
+    }
+
+    inline void unmountVNodeChildren(const VNode& vnode)
+    {
+        for (const VNode& child : vnode) {
+            unmountVNodeChildren(child);
+            onEvent(child, onUnmount);
         }
     }
 
@@ -1066,11 +1098,9 @@ namespace wasmdom::internals
     {
         for (; start <= end; ++start) {
             if (*start) {
+                unmountVNodeChildren(*start);
+                onEvent(*start, onUnmount);
                 domapi::removeChild(start->node());
-
-                if (start->hash() & hasRef) {
-                    start->callbacks().at("ref")(emscripten::val::null());
-                }
             }
         }
     }
@@ -1088,25 +1118,28 @@ namespace wasmdom::internals
             } else if (sameVNode(*oldStart, *newStart)) {
                 if (*oldStart != *newStart)
                     patchVNode(*oldStart, *newStart, parentNode);
+                onEvent(*newStart, onUpdate);
                 ++oldStart;
                 ++newStart;
             } else if (sameVNode(*oldEnd, *newEnd)) {
                 if (*oldEnd != *newEnd)
                     patchVNode(*oldEnd, *newEnd, parentNode);
+                onEvent(*newEnd, onUpdate);
                 --oldEnd;
                 --newEnd;
             } else if (sameVNode(*oldStart, *newEnd)) {
                 if (*oldStart != *newEnd)
                     patchVNode(*oldStart, *newEnd, parentNode);
                 const emscripten::val nextSiblingOldPtr = domapi::nextSibling(oldEnd->node());
-                domapi::insertBefore(parentNode, oldStart->node(), nextSiblingOldPtr);
+                domapi::insertBefore(parentNode, newEnd->node(), nextSiblingOldPtr);
+                onEvent(*newEnd, onMount);
                 ++oldStart;
                 --newEnd;
             } else if (sameVNode(*oldEnd, *newStart)) {
                 if (*oldEnd != *newStart)
                     patchVNode(*oldEnd, *newStart, parentNode);
-
-                domapi::insertBefore(parentNode, oldEnd->node(), oldStart->node());
+                domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                onEvent(*newStart, onMount);
                 --oldEnd;
                 ++newStart;
             } else {
@@ -1122,15 +1155,18 @@ namespace wasmdom::internals
                 if (!oldKeyTo.contains(newStart->key())) {
                     createNode(*newStart);
                     domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                    onEvent(*newStart, onMount);
                 } else {
                     const Children::iterator elmToMove = oldKeyTo[newStart->key()];
                     if ((elmToMove->hash() & extractSel) != (newStart->hash() & extractSel)) {
                         createNode(*newStart);
                         domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                        onEvent(*newStart, onMount);
                     } else {
                         if (*elmToMove != *newStart)
                             patchVNode(*elmToMove, *newStart, parentNode);
-                        domapi::insertBefore(parentNode, elmToMove->node(), oldStart->node());
+                        domapi::insertBefore(parentNode, newStart->node(), oldStart->node());
+                        onEvent(*newStart, onMount);
                         *elmToMove = nullptr;
                     }
                 }
@@ -1362,6 +1398,20 @@ namespace wasmdom
 }
 
 // -----------------------------------------------------------------------------
+// src/wasm-dom/attribute.cpp
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// src/wasm-dom/attribute.inl.cpp
+// -----------------------------------------------------------------------------
+inline bool wasmdom::Event::operator==(const Event&) const = default;
+
+inline std::size_t wasmdom::EventHash::operator()(const Event& e) const
+{
+    return std::hash<std::size_t>{}(e.e);
+}
+
+// -----------------------------------------------------------------------------
 // src/wasm-dom/domapi.cpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
@@ -1549,11 +1599,15 @@ const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 
     if (internals::sameVNode(_currentNode, vnode)) {
         internals::patchVNode(_currentNode, vnode, _currentNode.node());
+        internals::onEvent(vnode, onUpdate);
     } else {
         internals::createNode(vnode);
         const emscripten::val parentNode = domapi::parentNode(_currentNode.node());
         const emscripten::val nextSiblingNode = domapi::nextSibling(_currentNode.node());
         domapi::insertBefore(parentNode, vnode.node(), nextSiblingNode);
+        internals::onEvent(vnode, onMount);
+        internals::unmountVNodeChildren(_currentNode);
+        internals::onEvent(_currentNode, onUnmount);
         domapi::removeChild(_currentNode.node());
     }
 
@@ -1606,12 +1660,18 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 _data->ns = "http://www.w3.org/2000/svg";
             }
 
-            if (!_data->data.attrs.empty())
+            if (!_data->data.attrs.empty()) {
                 _data->hash |= hasAttrs;
-            if (!_data->data.props.empty())
+            }
+            if (!_data->data.props.empty()) {
                 _data->hash |= hasProps;
-            if (!_data->data.callbacks.empty())
+            }
+            if (!_data->data.callbacks.empty()) {
                 _data->hash |= hasCallbacks;
+            }
+            if (!_data->data.eventCallbacks.empty()) {
+                _data->hash |= hasEventCallbacks;
+            }
             if (!_data->children.empty()) {
                 _data->hash |= hasDirectChildren;
 
@@ -1631,10 +1691,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
 
                 _data->hash |= (hashes[_data->sel] << 13) | isElement;
-
-                if ((_data->hash & hasCallbacks) && _data->data.callbacks.contains("ref")) {
-                    _data->hash |= hasRef;
-                }
             }
         }
 
@@ -1694,12 +1750,15 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
 
     const std::size_t vnodes = _data->hash | oldVnode._data->hash;
 
-    if (vnodes & hasAttrs)
+    if (vnodes & hasAttrs) {
         internals::diffAttrs(oldVnode, *this);
-    if (vnodes & hasProps)
+    }
+    if (vnodes & hasProps) {
         internals::diffProps(oldVnode, *this);
-    if (vnodes & hasCallbacks)
+    }
+    if (vnodes & hasCallbacks) {
         internals::diffCallbacks(oldVnode, *this);
+    }
 }
 
 namespace wasmdom::internals
@@ -1784,6 +1843,8 @@ inline const wasmdom::Attrs& wasmdom::VNode::attrs() const { return _data->data.
 inline const wasmdom::Props& wasmdom::VNode::props() const { return _data->data.props; }
 
 inline const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->data.callbacks; }
+
+inline const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->data.eventCallbacks; }
 
 inline const std::string& wasmdom::VNode::sel() const { return _data->sel; }
 

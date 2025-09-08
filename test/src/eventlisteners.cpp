@@ -188,29 +188,4 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(count == 3);
     }
-
-    SECTION("should not attach ref event handler to element")
-    {
-        VNode vnode =
-            div(("ref", [](emscripten::val /*e*/) -> bool {
-                return false;
-            }));
-
-        VDom vdom(jsDom.root());
-        vdom.patch(vnode);
-
-        emscripten::val node = jsDom.bodyFirstChild();
-
-        emscripten::val keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
-
-        REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
-
-        VNode vnode2 = div();
-
-        vdom.patch(vnode2);
-
-        keys = emscripten::val::global("Object").call<emscripten::val>("keys", node[nodeEventsKey]);
-
-        REQUIRE(keys["length"].strictlyEquals(emscripten::val(0)));
-    }
 }

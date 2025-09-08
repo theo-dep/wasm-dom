@@ -2,6 +2,7 @@
 
 #include "domapi.hpp"
 #include "domkeys.hpp"
+#include "internals/conf.h"
 #include "internals/diff.hpp"
 #include "internals/tohtml.hpp"
 
@@ -9,13 +10,6 @@
 
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
-
-wasmdom::VNodeAttributes::VNodeAttributes() = default;
-wasmdom::VNodeAttributes::VNodeAttributes(const VNodeAttributes& other) = default;
-wasmdom::VNodeAttributes::VNodeAttributes(VNodeAttributes&& other) = default;
-wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(const VNodeAttributes& other) = default;
-wasmdom::VNodeAttributes& wasmdom::VNodeAttributes::operator=(VNodeAttributes&& other) = default;
-wasmdom::VNodeAttributes::~VNodeAttributes() = default;
 
 wasmdom::VNode::VNode(const VNode& other) = default;
 wasmdom::VNode::VNode(VNode&& other) = default;
@@ -65,12 +59,18 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 _data->ns = "http://www.w3.org/2000/svg";
             }
 
-            if (!_data->data.attrs.empty())
+            if (!_data->data.attrs.empty()) {
                 _data->hash |= hasAttrs;
-            if (!_data->data.props.empty())
+            }
+            if (!_data->data.props.empty()) {
                 _data->hash |= hasProps;
-            if (!_data->data.callbacks.empty())
+            }
+            if (!_data->data.callbacks.empty()) {
                 _data->hash |= hasCallbacks;
+            }
+            if (!_data->data.eventCallbacks.empty()) {
+                _data->hash |= hasEventCallbacks;
+            }
             if (!_data->children.empty()) {
                 _data->hash |= hasDirectChildren;
 
@@ -90,10 +90,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
 
                 _data->hash |= (hashes[_data->sel] << 13) | isElement;
-
-                if ((_data->hash & hasCallbacks) && _data->data.callbacks.contains("ref")) {
-                    _data->hash |= hasRef;
-                }
             }
         }
 
@@ -153,12 +149,15 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
 
     const std::size_t vnodes = _data->hash | oldVnode._data->hash;
 
-    if (vnodes & hasAttrs)
+    if (vnodes & hasAttrs) {
         internals::diffAttrs(oldVnode, *this);
-    if (vnodes & hasProps)
+    }
+    if (vnodes & hasProps) {
         internals::diffProps(oldVnode, *this);
-    if (vnodes & hasCallbacks)
+    }
+    if (vnodes & hasCallbacks) {
         internals::diffCallbacks(oldVnode, *this);
+    }
 }
 
 namespace wasmdom::internals
