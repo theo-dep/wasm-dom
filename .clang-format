@@ -32,4 +32,5 @@ WhitespaceSensitiveMacros:
     "MAIN_THREAD_EM_ASM_DOUBLE",
     "MAIN_THREAD_EM_ASM_DOUBLE",
     "MAIN_THREAD_ASYNC_EM_ASM",
+    "WASMDOM_EM_JS",
   ]

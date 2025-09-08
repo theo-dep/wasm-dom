@@ -18,6 +18,17 @@
 #include <unordered_map>
 #include <vector>
 
+// inline EM_JS macro
+#define _WASMDOM_EM_JS(ret, c_name, js_name, params, code)                                    \
+    _EM_BEGIN_CDECL                                                                           \
+    ret c_name params EM_IMPORT(js_name);                                                     \
+    __attribute__((visibility("hidden"))) inline void* __em_js_ref_##c_name = (void*)&c_name; \
+    EMSCRIPTEN_KEEPALIVE                                                                      \
+    __attribute__((section("em_js"), aligned(1))) inline char __em_js__##js_name[] =          \
+        #params "<::>" code;                                                                  \
+    _EM_END_CDECL
+#define WASMDOM_EM_JS(ret, name, params, ...) _WASMDOM_EM_JS(ret, name, name, params, #__VA_ARGS__)
+
 // -----------------------------------------------------------------------------
 // src/wasm-dom/attribute.hpp
 // -----------------------------------------------------------------------------
@@ -661,43 +672,43 @@ namespace wasmdom::dsl
 namespace wasmdom::internals::jsapi
 {
 
-    EM_JS(emscripten::EM_VAL, createElement, (const char* name),
+    WASMDOM_EM_JS(emscripten::EM_VAL, createElement, (const char* name),
     { return Emval.toHandle(document.createElement(UTF8ToString(name))); })
 
-    EM_JS(emscripten::EM_VAL, createElementNS, (const char* ns, const char* name),
+    WASMDOM_EM_JS(emscripten::EM_VAL, createElementNS, (const char* ns, const char* name),
     { return Emval.toHandle(document.createElementNS(UTF8ToString(ns), UTF8ToString(name))); })
 
-    EM_JS(emscripten::EM_VAL, createTextNode, (const char* text),
+    WASMDOM_EM_JS(emscripten::EM_VAL, createTextNode, (const char* text),
     { return Emval.toHandle(document.createTextNode(UTF8ToString(text))); })
 
-    EM_JS(emscripten::EM_VAL, createComment, (const char* comment),
+    WASMDOM_EM_JS(emscripten::EM_VAL, createComment, (const char* comment),
     { return Emval.toHandle(document.createComment(UTF8ToString(comment))); })
 
-    EM_JS(emscripten::EM_VAL, createDocumentFragment, (void),
+    WASMDOM_EM_JS(emscripten::EM_VAL, createDocumentFragment, (void),
     { return Emval.toHandle(document.createDocumentFragment()); })
 
-    EM_JS(void, insertBefore, (emscripten::EM_VAL parentNode, emscripten::EM_VAL newNode, emscripten::EM_VAL referenceNode),
+    WASMDOM_EM_JS(void, insertBefore, (emscripten::EM_VAL parentNode, emscripten::EM_VAL newNode, emscripten::EM_VAL referenceNode),
     { Emval.toValue(parentNode).insertBefore(Emval.toValue(newNode), Emval.toValue(referenceNode)); })
 
-    EM_JS(void, removeChild, (emscripten::EM_VAL parentNode, emscripten::EM_VAL child),
+    WASMDOM_EM_JS(void, removeChild, (emscripten::EM_VAL parentNode, emscripten::EM_VAL child),
     { Emval.toValue(parentNode).removeChild(Emval.toValue(child)); })
 
-    EM_JS(void, appendChild, (emscripten::EM_VAL parentNode, emscripten::EM_VAL child),
+    WASMDOM_EM_JS(void, appendChild, (emscripten::EM_VAL parentNode, emscripten::EM_VAL child),
     { Emval.toValue(parentNode).appendChild(Emval.toValue(child)); })
 
-    EM_JS(void, removeAttribute, (emscripten::EM_VAL node, const char * attribute),
+    WASMDOM_EM_JS(void, removeAttribute, (emscripten::EM_VAL node, const char * attribute),
     { Emval.toValue(node).removeAttribute(UTF8ToString(attribute)); })
 
-    EM_JS(void, setAttributeNS, (emscripten::EM_VAL node, const char* ns, const char * attribute, const char * value),
+    WASMDOM_EM_JS(void, setAttributeNS, (emscripten::EM_VAL node, const char* ns, const char * attribute, const char * value),
     { Emval.toValue(node).setAttributeNS(UTF8ToString(ns), UTF8ToString(attribute), UTF8ToString(value)); })
 
-    EM_JS(void, setAttribute, (emscripten::EM_VAL node, const char * attribute, const char * value),
+    WASMDOM_EM_JS(void, setAttribute, (emscripten::EM_VAL node, const char * attribute, const char * value),
     { Emval.toValue(node).setAttribute(UTF8ToString(attribute), UTF8ToString(value)); })
 
-    EM_JS(void, addEventListener_, (emscripten::EM_VAL node, const char * event, emscripten::EM_VAL listener),
+    WASMDOM_EM_JS(void, addEventListener_, (emscripten::EM_VAL node, const char * event, emscripten::EM_VAL listener),
     { Emval.toValue(node).addEventListener(UTF8ToString(event), Emval.toValue(listener), false); })
 
-    EM_JS(void, removeEventListener_, (emscripten::EM_VAL node, const char * event, emscripten::EM_VAL listener),
+    WASMDOM_EM_JS(void, removeEventListener_, (emscripten::EM_VAL node, const char * event, emscripten::EM_VAL listener),
     { Emval.toValue(node).removeEventListener(UTF8ToString(event), Emval.toValue(listener), false); })
 
 }
@@ -1423,32 +1434,32 @@ namespace wasmdom::internals
     }
 }
 
-emscripten::val wasmdom::domapi::createElement(const std::string& tag)
+inline emscripten::val wasmdom::domapi::createElement(const std::string& tag)
 {
     return internals::recycler().create(tag);
 }
 
-emscripten::val wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
+inline emscripten::val wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
     return internals::recycler().createNS(qualifiedName, namespaceURI);
 }
 
-emscripten::val wasmdom::domapi::createTextNode(const std::string& text)
+inline emscripten::val wasmdom::domapi::createTextNode(const std::string& text)
 {
     return internals::recycler().createText(text);
 }
 
-emscripten::val wasmdom::domapi::createComment(const std::string& comment)
+inline emscripten::val wasmdom::domapi::createComment(const std::string& comment)
 {
     return internals::recycler().createComment(comment);
 }
 
-emscripten::val wasmdom::domapi::createDocumentFragment()
+inline emscripten::val wasmdom::domapi::createDocumentFragment()
 {
     return emscripten::val::take_ownership(internals::jsapi::createDocumentFragment());
 }
 
-void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
+inline void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
 {
     if (parentNode.isNull() || parentNode.isUndefined())
         return;
@@ -1456,7 +1467,7 @@ void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emsc
     internals::jsapi::insertBefore(parentNode.as_handle(), newNode.as_handle(), referenceNode.as_handle());
 }
 
-void wasmdom::domapi::removeChild(const emscripten::val& child)
+inline void wasmdom::domapi::removeChild(const emscripten::val& child)
 {
     if (child.isNull() || child.isUndefined())
         return;
@@ -1468,17 +1479,17 @@ void wasmdom::domapi::removeChild(const emscripten::val& child)
     internals::recycler().collect(child);
 }
 
-void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
+inline void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
 {
     internals::jsapi::appendChild(parent.as_handle(), child.as_handle());
 }
 
-void wasmdom::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
+inline void wasmdom::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
 {
     internals::jsapi::removeAttribute(node.as_handle(), attribute.c_str());
 }
 
-void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
+inline void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
 {
     if (attribute.starts_with("xml:")) {
         internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", attribute.c_str(), value.c_str());
@@ -1489,19 +1500,19 @@ void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::strin
     }
 }
 
-void wasmdom::domapi::setNodeValue(emscripten::val& node, const std::string& text)
+inline void wasmdom::domapi::setNodeValue(emscripten::val& node, const std::string& text)
 {
     node.set("nodeValue", text);
 }
 
-emscripten::val wasmdom::domapi::parentNode(const emscripten::val& node)
+inline emscripten::val wasmdom::domapi::parentNode(const emscripten::val& node)
 {
     if (!node.isNull() && !node.isUndefined() && !node["parentNode"].isNull())
         return node["parentNode"];
     return emscripten::val::null();
 }
 
-emscripten::val wasmdom::domapi::nextSibling(const emscripten::val& node)
+inline emscripten::val wasmdom::domapi::nextSibling(const emscripten::val& node)
 {
     if (!node.isNull() && !node.isUndefined() && !node["nextSibling"].isNull())
         return node["nextSibling"];
@@ -1513,7 +1524,7 @@ emscripten::val wasmdom::domapi::nextSibling(const emscripten::val& node)
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
-    EM_JS(bool, testGC, (), {
+    WASMDOM_EM_JS(bool, testGC, (), {
         // https://github.com/GoogleChromeLabs/wasm-feature-detect/blob/main/src/detectors/gc/index.js
         return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]));
     })
@@ -1528,7 +1539,7 @@ namespace wasmdom::internals
     };
 
     template <typename T>
-    consteval DomFactoryVTable makeDomVTable()
+    inline consteval DomFactoryVTable makeDomVTable()
     {
         return {
             &T::create,
@@ -1543,37 +1554,37 @@ namespace wasmdom::internals
     static inline constexpr DomFactoryVTable domRecyclerFactoryVTable = makeDomVTable<internals::DomRecyclerFactory>();
 }
 
-wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
+inline wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
     : _factory{ internals::testGC() && useWasmGC ? &internals::domFactoryVTable : &internals::domRecyclerFactoryVTable }
 {
 }
 
-emscripten::val wasmdom::DomRecycler::create(const std::string& name)
+inline emscripten::val wasmdom::DomRecycler::create(const std::string& name)
 {
     return _factory->create(*this, name);
 }
 
-emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
+inline emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
 {
     return _factory->createNS(*this, name, ns);
 }
 
-emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
+inline emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
 {
     return _factory->createText(*this, text);
 }
 
-emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
+inline emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
 {
     return _factory->createComment(*this, comment);
 }
 
-void wasmdom::DomRecycler::collect(emscripten::val node)
+inline void wasmdom::DomRecycler::collect(emscripten::val node)
 {
     _factory->collect(*this, node);
 }
 
-std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
+inline std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
 {
     const auto nodeIt = _nodes.find(name);
     if (nodeIt != _nodes.cend())
@@ -1584,13 +1595,13 @@ std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name
 // -----------------------------------------------------------------------------
 // src/wasm-dom/vdom.cpp
 // -----------------------------------------------------------------------------
-wasmdom::VDom::VDom(const emscripten::val& element)
+inline wasmdom::VDom::VDom(const emscripten::val& element)
     : _currentNode(VNode::toVNode(element))
 {
     _currentNode.normalize();
 }
 
-const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
+inline const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 {
     if (!vnode || _currentNode == vnode)
         return _currentNode;
@@ -1619,7 +1630,7 @@ const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 // -----------------------------------------------------------------------------
 // src/wasm-dom/vnode.cpp
 // -----------------------------------------------------------------------------
-void wasmdom::VNode::normalize(bool injectSvgNamespace)
+inline void wasmdom::VNode::normalize(bool injectSvgNamespace)
 {
     if (!_data)
         return;
@@ -1698,7 +1709,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
     }
 }
 
-wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
+inline wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
     VNode vnode = nullptr;
     const int nodeType = node["nodeType"].as<int>();
@@ -1731,7 +1742,7 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     return vnode;
 }
 
-std::string wasmdom::VNode::toHTML() const
+inline std::string wasmdom::VNode::toHTML() const
 {
     VNode vnode = *this;
 
@@ -1743,7 +1754,7 @@ std::string wasmdom::VNode::toHTML() const
     return html;
 }
 
-void wasmdom::VNode::diff(const VNode& oldVnode)
+inline void wasmdom::VNode::diff(const VNode& oldVnode)
 {
     if (!*this || !oldVnode || *this == oldVnode)
         return;

@@ -1,6 +1,7 @@
 #include "domrecycler.hpp"
 
 #include "domkeys.hpp"
+#include "internals/conf.h"
 #include "internals/domfactory.hpp"
 #include "internals/domrecyclerfactory.hpp"
 #include "internals/utils.hpp"
@@ -24,7 +25,7 @@ namespace wasmdom::internals
     };
 
     template <typename T>
-    consteval DomFactoryVTable makeDomVTable()
+    inline consteval DomFactoryVTable makeDomVTable()
     {
         return {
             &T::create,
@@ -39,6 +40,7 @@ namespace wasmdom::internals
     static inline constexpr DomFactoryVTable domRecyclerFactoryVTable = makeDomVTable<internals::DomRecyclerFactory>();
 }
 
+WASMDOM_SH_INLINE
 wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
     : _factory{ internals::testGC() && useWasmGC ? &internals::domFactoryVTable : &internals::domRecyclerFactoryVTable }
 {
@@ -48,31 +50,37 @@ wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
 wasmdom::DomRecycler::~DomRecycler() = default;
 #endif
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::DomRecycler::create(const std::string& name)
 {
     return _factory->create(*this, name);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
 {
     return _factory->createNS(*this, name, ns);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
 {
     return _factory->createText(*this, text);
 }
 
+WASMDOM_SH_INLINE
 emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
 {
     return _factory->createComment(*this, comment);
 }
 
+WASMDOM_SH_INLINE
 void wasmdom::DomRecycler::collect(emscripten::val node)
 {
     _factory->collect(*this, node);
 }
 
+WASMDOM_SH_INLINE
 std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
 {
     const auto nodeIt = _nodes.find(name);
