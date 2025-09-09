@@ -1,4 +1,7 @@
-file(GLOB_RECURSE HEADER_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp")
+file(GLOB_RECURSE HEADER_FILES
+    "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.h"
+    "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp"
+)
 file(GLOB_RECURSE SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.cpp")
 
 set(JSAPI_C_FILE ${CMAKE_SOURCE_DIR}/src/wasm-dom/internals/jsapi.c)
