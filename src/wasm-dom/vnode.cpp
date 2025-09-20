@@ -178,9 +178,10 @@ namespace wasmdom::internals
         }
         return callbackIt->second(event);
     }
-}
 
-EMSCRIPTEN_BINDINGS(wasmdomEventModule)
-{
-    emscripten::function("eventProxy", wasmdom::internals::eventProxy);
+    // in single header mode, the binding function must be registered only once
+    // see https://github.com/emscripten-core/emscripten/issues/25219
+    __attribute__((weak)) emscripten::internal::InitFunc wasmdomInitEventProxyFunc([] {
+        emscripten::function("eventProxy", wasmdom::internals::eventProxy);
+    });
 }

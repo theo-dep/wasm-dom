@@ -1,4 +1,4 @@
-name: Build with Emscripten 4.0.13
+name: Build with Emscripten 4.0.15
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     container:
-      image: emscripten/emsdk:4.0.13
+      image: emscripten/emsdk:4.0.15
     permissions:
       checks: write
       id-token: write
@@ -41,14 +41,15 @@ jobs:
 
     - name: Run tests
       run: |
-        node build/test/Release/tests.js -r junit > tests.xml
-        node build/test/Release/benchmarks.js -r junit > benchmarks.xml
+        node build/test/src/Release/tests.js -r junit > tests.xml
+        node build/test/single_header/Release/single_header_test.js -r junit > single_header.xml
+        node build/test/benchmark/Release/benchmarks.js -r junit > benchmarks.xml
 
     - name: Publish test results
       uses: mikepenz/action-junit-report@v5
       if: ${{ !cancelled() }}
       with:
-        report_paths: tests.xml
+        report_paths: '*.xml'
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload test results
@@ -62,7 +63,7 @@ jobs:
   build-coverage:
     runs-on: ubuntu-24.04
     container:
-      image: emscripten/emsdk:4.0.13
+      image: emscripten/emsdk:4.0.15
     permissions:
       pull-requests: write
       id-token: write
@@ -96,7 +97,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        node build/coverage/test/tests.js
+        node build/coverage/test/src/tests.js
 
     - name: Generate coverage data
       if: ${{ !cancelled() }}

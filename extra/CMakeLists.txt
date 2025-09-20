@@ -1,4 +1,7 @@
-file(GLOB_RECURSE HEADER_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp")
+file(GLOB_RECURSE HEADER_FILES
+    "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.h"
+    "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp"
+)
 file(GLOB_RECURSE SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.cpp")
 
 set(JSAPI_C_FILE ${CMAKE_SOURCE_DIR}/src/wasm-dom/internals/jsapi.c)
@@ -34,33 +37,3 @@ add_custom_command(
 )
 
 add_custom_target(single_header ALL DEPENDS ${OUTPUT_FILE})
-
-set(TEST_TEST_CPP ${CMAKE_CURRENT_BINARY_DIR}/test.cpp)
-file(WRITE ${TEST_TEST_CPP}
-        "#include <${OUTPUT_FILE}>\n"
-        "wasmdom::VNode test() {\n"
-        "     return wasmdom::dsl::div();\n"
-        "}\n"
-)
-
-set(TEST_TEST_HPP ${CMAKE_CURRENT_BINARY_DIR}/test.hpp)
-file(WRITE ${TEST_TEST_HPP}
-        "namespace wasmdom { class VNode; }\n"
-        "wasmdom::VNode test();\n"
-)
-
-set(TEST_MAIN ${CMAKE_CURRENT_BINARY_DIR}/main.cpp)
-file(WRITE ${TEST_MAIN}
-        "#include \"${TEST_TEST_HPP}\"\n"
-        "#include <${OUTPUT_FILE}>\n"
-        "int main() {\n"
-        "     wasmdom::VNode vnode = test();\n"
-        "     wasmdom::VDom vdom(emscripten::val(\"\"));\n"
-        "     vdom.patch(vnode);\n"
-        "     return 0;\n"
-        "}\n"
-)
-
-add_executable(single_header_test ${TEST_MAIN} ${TEST_TEST_CPP})
-target_link_options(single_header_test PRIVATE -lembind)
-add_dependencies(single_header_test single_header)
