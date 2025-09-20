@@ -1,4 +1,4 @@
-name: Build with Emscripten 4.0.13
+name: Build with Emscripten 4.0.15
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     container:
-      image: emscripten/emsdk:4.0.13
+      image: emscripten/emsdk:4.0.15
     permissions:
       checks: write
       id-token: write
@@ -63,7 +63,7 @@ jobs:
   build-coverage:
     runs-on: ubuntu-24.04
     container:
-      image: emscripten/emsdk:4.0.13
+      image: emscripten/emsdk:4.0.15
     permissions:
       pull-requests: write
       id-token: write
