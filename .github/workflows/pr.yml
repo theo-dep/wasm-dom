@@ -42,6 +42,7 @@ jobs:
     - name: Run tests
       run: |
         node build/test/Release/tests.js -r junit > tests.xml
+        node build/test/Release/single_header_test.js -r junit > single_header.xml
         node build/test/Release/benchmarks.js -r junit > benchmarks.xml
 
     - name: Publish test results

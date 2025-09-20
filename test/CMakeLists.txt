@@ -21,6 +21,8 @@ set(LINK_OPTIONS -sENVIRONMENT=node -sEXIT_RUNTIME -sNO_DISABLE_EXCEPTION_CATCHI
     $<$<CONFIG:Debug>:-gsource-map -fsanitize=address -sALLOW_MEMORY_GROWTH>
 )
 
+add_subdirectory(single_header)
+
 add_executable(tests jsdom.cpp)
 
 target_include_directories(tests PRIVATE .)
