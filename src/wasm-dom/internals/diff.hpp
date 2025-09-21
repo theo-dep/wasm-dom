@@ -1,7 +1,12 @@
 #pragma once
 
+#include "wasm-dom/attribute.hpp"
+#include "wasm-dom/domapi.hpp"
+#include "wasm-dom/domkeys.hpp"
 #include "wasm-dom/internals/jsapi.hpp"
 #include "wasm-dom/vnode.hpp"
+
+#include <emscripten/bind.h>
 
 #include <ranges>
 #include <unordered_map>
@@ -58,40 +63,6 @@ namespace wasmdom::internals
         }
     }
 
-    // store callbacks addresses to be called in functionCallback
-    inline std::unordered_map<std::size_t, Callbacks>& vnodeCallbacks()
-    {
-        static std::unordered_map<std::size_t, Callbacks> vnodeCallbacks;
-        return vnodeCallbacks;
-    }
-
-    inline std::size_t incrementCallbackKey()
-    {
-        static std::size_t lastCallbackKey = 0;
-        return ++lastCallbackKey;
-    }
-
-    inline void storeCallbacks(const VNode& oldVnode, VNode& vnode)
-    {
-        const emscripten::val& oldNode = oldVnode.node();
-
-        std::size_t callbackKey = 0;
-        if (oldNode.isNull()) {
-            callbackKey = incrementCallbackKey();
-        } else {
-            const emscripten::val oldNodeCallbacksKey = oldNode[nodeCallbacksKey];
-            if (oldNodeCallbacksKey.isUndefined()) {
-                callbackKey = incrementCallbackKey();
-            } else {
-                callbackKey = oldNodeCallbacksKey.as<std::size_t>();
-            }
-        }
-
-        emscripten::val& node = vnode.node();
-        node.set(nodeCallbacksKey, callbackKey);
-        vnodeCallbacks()[callbackKey] = vnode.callbacks();
-    }
-
     inline std::string formatEventKey(const std::string& key)
     {
         static constexpr std::string_view eventPrefix = "on";
@@ -112,22 +83,34 @@ namespace wasmdom::internals
         for (const auto& [key, _] : oldCallbacks) {
             if (!callbacks.contains(key)) {
                 eventKey = formatEventKey(key);
-                jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
+                jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property(nodeEventProxyKey).as_handle());
                 node[nodeEventsKey].delete_(eventKey);
             }
         }
 
-        storeCallbacks(oldVnode, vnode);
         if (node[nodeEventsKey].isUndefined()) {
             node.set(nodeEventsKey, emscripten::val::object());
         }
 
-        for (const auto& [key, _] : callbacks) {
-            if (!oldCallbacks.contains(key)) {
-                eventKey = formatEventKey(key);
-                jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
-                node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
-            }
+        for (const auto& [key, value] : callbacks) {
+            // can't compare callbacks, add all
+            eventKey = formatEventKey(key);
+            jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property(nodeEventProxyKey).as_handle());
+            node[nodeEventsKey].set(eventKey, value);
         }
     }
+
+    inline bool eventProxy(emscripten::val event)
+    {
+        const emscripten::val callbacks = event["currentTarget"][nodeEventsKey];
+        return callbacks[event["type"]].as<Callback>()(event);
+    }
+
+    // in single header mode, the binding function must be registered only once
+    // see https://github.com/emscripten-core/emscripten/issues/25219
+    __attribute__((weak)) emscripten::internal::InitFunc wasmdomInitEventProxyFunc([] {
+        emscripten::class_<Callback>("Callback");
+        emscripten::function(nodeEventProxyKey, eventProxy);
+    });
+
 }

@@ -1,12 +1,8 @@
 #include "vnode.hpp"
 
-#include "domapi.hpp"
-#include "domkeys.hpp"
 #include "internals/conf.h"
 #include "internals/diff.hpp"
 #include "internals/tohtml.hpp"
-
-#include <emscripten/bind.h>
 
 #ifdef WASMDOM_COVERAGE
 #include "vnode.inl.cpp"
@@ -162,26 +158,4 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
     if (vnodes & hasCallbacks) {
         internals::diffCallbacks(oldVnode, *this);
     }
-}
-
-namespace wasmdom::internals
-{
-    inline bool eventProxy(emscripten::val event)
-    {
-        const std::size_t callbackKey = event["currentTarget"][nodeCallbacksKey].as<std::size_t>();
-        const std::string eventType = event["type"].as<std::string>();
-
-        const Callbacks& callbacks = vnodeCallbacks()[callbackKey];
-        auto callbackIt = callbacks.find(eventType);
-        if (callbackIt == callbacks.cend()) {
-            callbackIt = callbacks.find("on" + eventType);
-        }
-        return callbackIt->second(event);
-    }
-
-    // in single header mode, the binding function must be registered only once
-    // see https://github.com/emscripten-core/emscripten/issues/25219
-    __attribute__((weak)) emscripten::internal::InitFunc wasmdomInitEventProxyFunc([] {
-        emscripten::function("eventProxy", wasmdom::internals::eventProxy);
-    });
 }
