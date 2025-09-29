@@ -12,7 +12,7 @@ add_library(wasm-dom
 
 target_include_directories(wasm-dom PUBLIC .)
 target_link_libraries(wasm-dom PUBLIC $<TARGET_OBJECTS:wasm-dom-internals-jsapi>)
-target_link_libraries(wasm-dom PRIVATE compile_flags optimization_flags disable_exceptions)
+target_link_libraries(wasm-dom PRIVATE address_sanitizer_compile compile_flags optimization_flags disable_exceptions)
 
 if(WASM_DOM_COVERAGE)
     target_compile_definitions(wasm-dom PUBLIC WASMDOM_COVERAGE)

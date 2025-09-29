@@ -1,6 +1,6 @@
 add_executable(events main.cpp)
 
-target_link_libraries(events PRIVATE wasm-dom compile_flags disable_exceptions optimization_flags)
+target_link_libraries(events PRIVATE wasm-dom address_sanitizer_link compile_flags disable_exceptions optimization_flags)
 target_link_options(events PRIVATE -sENVIRONMENT=web)
 
 set(EXAMPLE_TARGET events.js PARENT_SCOPE)

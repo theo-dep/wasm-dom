@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(WASM_DOM_TESTS "Build and add tests to test runner" ON)
 option(WASM_DOM_EXAMPLES "Build examples" ON)
+option(WASM_DOM_ASAN "Enable Address Sanitizer flags in debug" ON)
 
 set(WASM_DOM_COVERAGE OFF CACHE BOOL "Enable code coverage instrumentation")
 
+include(cmake/address_sanitizer.cmake)
 include(cmake/compile_flags.cmake)
 include(cmake/disable_exceptions.cmake)
 include(cmake/optimization_flags.cmake)
