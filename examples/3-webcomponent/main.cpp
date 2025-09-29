@@ -5,6 +5,8 @@
 
 #include <string>
 
+wasmdom::VDom vdom;
+
 EM_JS(void, createHelloComponent, (), {
     class HelloComponent extends HTMLElement
     {
@@ -81,7 +83,7 @@ int main()
               ) }
         );
 
-    wasmdom::VDom vdom(
+    vdom = wasmdom::VDom(
         emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root"))
     );
     vdom.patch(oldVnode);

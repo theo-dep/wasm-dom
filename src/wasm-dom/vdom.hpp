@@ -13,12 +13,13 @@ namespace wasmdom
     class VDom
     {
     public:
+        VDom() = default;
         VDom(const emscripten::val& element);
 
         const VNode& patch(VNode vnode);
 
     private:
-        VNode _currentNode;
+        VNode _currentNode = nullptr;
     };
 
 }

@@ -58,6 +58,13 @@ TEST_CASE("patch", "[patch]")
 {
     const JSDom jsDom;
 
+    SECTION("should first handle nullptr VNode")
+    {
+        VNode vnode = span();
+        VDom vdom;
+        vdom.patch(vnode);
+    }
+
     SECTION("should handle nullptr VNode")
     {
         REQUIRE(jsDom.document()["body"]["children"]["length"].strictlyEquals(emscripten::val(1)));

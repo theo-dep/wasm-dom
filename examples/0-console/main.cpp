@@ -3,9 +3,7 @@ using namespace wasmdom::dsl;
 
 #include <emscripten/val.h>
 
-#include <memory>
-
-std::unique_ptr<wasmdom::VDom> vdom = nullptr;
+wasmdom::VDom vdom;
 
 int main()
 {
@@ -28,10 +26,10 @@ int main()
         );
 
     // Patch into empty DOM element – this modifies the DOM as a side effect
-    vdom = std::make_unique<wasmdom::VDom>(
+    vdom = wasmdom::VDom(
         emscripten::val::global("document").call<emscripten::val>("getElementById", "root"s)
     );
-    vdom->patch(vnode);
+    vdom.patch(vnode);
 
     return 0;
 }

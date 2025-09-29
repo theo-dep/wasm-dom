@@ -15,7 +15,7 @@ wasmdom::VDom::VDom(const emscripten::val& element)
 WASMDOM_SH_INLINE
 const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 {
-    if (!vnode || _currentNode == vnode)
+    if (!_currentNode || !vnode || _currentNode == vnode)
         return _currentNode;
 
     vnode.normalize();

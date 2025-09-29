@@ -2,12 +2,11 @@
 
 #include <emscripten/val.h>
 
-#include <memory>
-
-void render();
-std::unique_ptr<wasmdom::VDom> vdom = nullptr;
+wasmdom::VDom vdom;
 
 int counter = 1;
+
+void render();
 
 bool decrease(emscripten::val)
 {
@@ -32,12 +31,12 @@ void render()
             t(std::to_string(counter)),
             a(("class", "button"s), ("onclick", f(increase)))("+"),
         });
-    vdom->patch(newNode);
+    vdom.patch(newNode);
 };
 
 int main()
 {
-    vdom = std::make_unique<wasmdom::VDom>(
+    vdom = wasmdom::VDom(
         emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root"))
     );
 
