@@ -99,13 +99,15 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         node.set(nodeRawsKey, emscripten::val::undefined());
     }
 
-    static const emscripten::val objectKeys = emscripten::val::global("Object")["keys"];
+    static const emscripten::val objectEntries = emscripten::val::global("Object")["entries"];
 
     if (!node[nodeEventsKey].isUndefined()) {
-        const emscripten::val eventKeys = objectKeys(node[nodeEventsKey]);
-        for (int i : std::views::iota(0, eventKeys["length"].as<int>())) {
-            const emscripten::val event = eventKeys[i];
-            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), emscripten::val::module_property(nodeEventProxyKey).as_handle());
+        const emscripten::val entries = objectEntries(node[nodeEventsKey]);
+        for (int i : std::views::iota(0, entries["length"].as<int>())) {
+            const emscripten::val pair = entries[i];
+            const emscripten::val event = pair[0];
+            const emscripten::val eventCallback = pair[1];
+            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), eventCallback.as_handle());
         }
         node.set(nodeEventsKey, emscripten::val::undefined());
     }
@@ -113,6 +115,8 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
     if (!node["nodeValue"].isNull() && node["nodeValue"].isString()) {
         node.set("nodeValue", std::string{});
     }
+
+    static const emscripten::val objectKeys = emscripten::val::global("Object")["keys"];
 
     const emscripten::val nodeKeys = objectKeys(node);
     for (int i : std::views::iota(0, nodeKeys["length"].as<int>())) {

@@ -1,3 +1,5 @@
+set(LINK_OPTIONS -sENVIRONMENT=web -sNO_EXIT_RUNTIME)
+
 set(EXAMPLE_DIRS
     0-console
     1-counter

@@ -188,4 +188,27 @@ TEST_CASE("eventListeners", "[eventListeners]")
 
         REQUIRE(count == 3);
     }
+
+    SECTION("should update handlers after deletion")
+    {
+        int count = 1;
+
+        VDom vdom(jsDom.root());
+
+        {
+            VNode vnode =
+                div(("onclick", [&count](emscripten::val /*e*/) -> bool {
+                    ++count;
+                    return false;
+                }));
+
+            vdom.patch(vnode);
+        } // vnode is deleted here
+
+        emscripten::val node = jsDom.bodyFirstChild();
+
+        node.call<void>("click");
+
+        REQUIRE(count == 2);
+    }
 }

@@ -1,9 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "wasm-dom/attribute.hpp"
 #include "wasm-dom/domkeys.hpp"
 #include "wasm-dom/domrecycler.hpp"
-#include "wasm-dom/internals/diff.hpp"
 
 #include "jsdom.hpp"
 
@@ -168,8 +166,8 @@ TEST_CASE("domRecycler", "[domRecycler]")
     {
         emscripten::val node = recycler.create("span");
 
-        // Create an empty function callback
-        emscripten::val callback(Callback{});
+        // Create an empty JS function callback
+        emscripten::val callback = emscripten::val::global("Function").new_();
 
         node.set("onclick", callback);
         node.set("onkeydown", callback);
@@ -187,26 +185,26 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
     SECTION("should clean wasmDomEvents")
     {
-        // calls counter
-        int calls = 0;
+        // calls counter in JS
+        emscripten::val global = emscripten::val::global();
+        global.set("calls", 0);
 
         // Create callbacks incrementing calls
-        emscripten::val callback(Callback([&](emscripten::val) { ++calls; return true; }));
         emscripten::val callbacks = emscripten::val::object();
-        callbacks.set("click", callback);
-        callbacks.set("keydown", callback);
+        callbacks.set("click", emscripten::val::global("Function").new_(std::string("calls++;")));
+        callbacks.set("keydown", emscripten::val::global("Function").new_(std::string("calls++;")));
 
         emscripten::val node = recycler.create("div");
 
         // Add event listeners
-        node.call<void>("addEventListener", std::string("click"), emscripten::val::module_property(nodeEventProxyKey));
-        node.call<void>("addEventListener", std::string("keydown"), emscripten::val::module_property(nodeEventProxyKey));
+        node.call<void>("addEventListener", std::string("click"), callbacks["click"]);
+        node.call<void>("addEventListener", std::string("keydown"), callbacks["keydown"]);
 
         node.set(nodeEventsKey, callbacks);
 
         // Trigger click event and check calls == 1
         node.call<void>("click");
-        REQUIRE(calls == 1);
+        REQUIRE(global["calls"].as<int>() == 1);
 
         // Collect and check asmDomEvents cleared
         recycler.collect(node);
@@ -214,6 +212,6 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         // Trigger click event again, calls must remain 1
         node.call<void>("click");
-        REQUIRE(calls == 1);
+        REQUIRE(global["calls"].as<int>() == 1);
     }
 }

@@ -50,7 +50,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            const bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
+            const bool addNS = injectSvgNamespace || (_data->sel == "svg");
             if (addNS) {
                 _data->hash |= hasNS;
                 _data->ns = "http://www.w3.org/2000/svg";
@@ -76,14 +76,14 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            if (_data->sel[0] == '\0') {
+            if (_data->sel.empty()) {
                 _data->hash |= isFragment;
             } else {
                 static std::size_t currentHash = 0;
                 static std::unordered_map<std::string, std::size_t> hashes;
 
-                if (hashes[_data->sel] == 0) {
-                    hashes[_data->sel] = ++currentHash;
+                if (!hashes.contains(_data->sel)) {
+                    hashes.emplace(_data->sel, ++currentHash);
                 }
 
                 _data->hash |= (hashes[_data->sel] << 13) | isElement;
