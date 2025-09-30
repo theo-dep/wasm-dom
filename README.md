@@ -52,7 +52,7 @@ From asm-dom author:
 
 ## Examples
 
-The library provides runnable example with a static file server, [emrun](https://emscripten.org/docs/compiling/Running-html-files-with-emrun.html) for example.
+The library provides runnable example with a static file server, [emrun](https://emscripten.org/docs/compiling/Running-html-files-with-emrun.html) for example. See also the [live example](https://theo-dep.github.io/wasm-dom/).
 
 For all examples:
 
