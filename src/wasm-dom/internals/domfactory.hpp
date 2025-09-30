@@ -1,16 +1,14 @@
 #pragma once
 
+#include "wasm-dom/internals/domkeys.hpp"
 #include "wasm-dom/internals/jsapi.hpp"
 
 #include <emscripten/val.h>
 
-namespace wasmdom
-{
-    class DomRecycler;
-}
-
 namespace wasmdom::internals
 {
+    class DomRecycler;
+
     struct DomFactory
     {
         static inline emscripten::val create(DomRecycler&, const std::string& name)

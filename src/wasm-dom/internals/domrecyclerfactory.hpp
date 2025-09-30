@@ -1,7 +1,7 @@
 #pragma once
 
-#include "wasm-dom/domrecycler.hpp"
 #include "wasm-dom/internals/domfactory.hpp"
+#include "wasm-dom/internals/domrecycler.hpp"
 #include "wasm-dom/internals/jsapi.hpp"
 #include "wasm-dom/internals/utils.hpp"
 

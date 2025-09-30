@@ -2,10 +2,11 @@ set(TARGET_NAME wasm-dom)
 
 add_library(wasm-dom-internals-jsapi OBJECT wasm-dom/internals/jsapi.c)
 
-add_library(wasm-dom
+add_library(wasm-dom STATIC
+    wasm-dom/internals/domapi.cpp
+    wasm-dom/internals/domrecycler.cpp
+    wasm-dom/internals/wire.cpp
     wasm-dom/attribute.cpp
-    wasm-dom/domapi.cpp
-    wasm-dom/domrecycler.cpp
     wasm-dom/vdom.cpp
     wasm-dom/vnode.cpp
 )

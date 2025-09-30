@@ -1,7 +1,7 @@
 #include "vdom.hpp"
 
-#include "domapi.hpp"
 #include "internals/conf.h"
+#include "internals/domapi.hpp"
 #include "internals/patch.hpp"
 #include "vnode.hpp"
 
@@ -25,13 +25,13 @@ const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
         internals::onEvent(vnode, onUpdate);
     } else {
         internals::createNode(vnode);
-        const emscripten::val parentNode = domapi::parentNode(_currentNode.node());
-        const emscripten::val nextSiblingNode = domapi::nextSibling(_currentNode.node());
-        domapi::insertBefore(parentNode, vnode.node(), nextSiblingNode);
+        const emscripten::val parentNode = internals::domapi::parentNode(_currentNode.node());
+        const emscripten::val nextSiblingNode = internals::domapi::nextSibling(_currentNode.node());
+        internals::domapi::insertBefore(parentNode, vnode.node(), nextSiblingNode);
         internals::onEvent(vnode, onMount);
         internals::unmountVNodeChildren(_currentNode);
         internals::onEvent(_currentNode, onUnmount);
-        domapi::removeChild(_currentNode.node());
+        internals::domapi::removeChild(_currentNode.node());
     }
 
     _currentNode = vnode;

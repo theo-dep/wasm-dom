@@ -1,13 +1,14 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "wasm-dom.hpp"
-#include "wasm-dom/domkeys.hpp"
+#include "wasm-dom/internals/domkeys.hpp"
 
 #include "jsdom.hpp"
 
 #include <emscripten.h>
 
 using namespace wasmdom;
+using namespace wasmdom::internals;
 using namespace wasmdom::dsl;
 
 inline bool onClick(emscripten::val /*event*/)

@@ -1,12 +1,11 @@
 #pragma once
 
 #include "wasm-dom/attribute.hpp"
-#include "wasm-dom/domapi.hpp"
-#include "wasm-dom/domkeys.hpp"
+#include "wasm-dom/internals/domapi.hpp"
+#include "wasm-dom/internals/domkeys.hpp"
 #include "wasm-dom/internals/jsapi.hpp"
+#include "wasm-dom/internals/wire.hpp"
 #include "wasm-dom/vnode.hpp"
-
-#include <emscripten/bind.h>
 
 #include <ranges>
 #include <unordered_map>
@@ -80,7 +79,7 @@ namespace wasmdom::internals
 
         std::string eventKey;
 
-        for (const auto& [key, val] : oldCallbacks) {
+        for (const auto& [key, _] : oldCallbacks) {
             eventKey = formatEventKey(key);
             jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), node[nodeEventsKey][eventKey].as_handle());
             node[nodeEventsKey].delete_(eventKey);
@@ -92,39 +91,11 @@ namespace wasmdom::internals
 
         for (auto& [key, val] : callbacks) {
             eventKey = formatEventKey(key);
-            const emscripten::val jsCallback(val);
+            const emscripten::val jsCallback = toJsCallback(val);
             const emscripten::val functorAdapter = jsCallback["opcall"].call<emscripten::val>("bind", jsCallback);
             jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), functorAdapter.as_handle());
             node[nodeEventsKey].set(eventKey, functorAdapter);
         }
     }
 
-    // in single header mode, the binding function must be registered only once
-    // see https://github.com/emscripten-core/emscripten/issues/25219
-    __attribute__((weak)) emscripten::internal::InitFunc wasmdomInitEventProxyFunc([] {
-        emscripten::class_<Callback>(nodeCallbackName)
-            .constructor<>()
-            .function("opcall", &Callback::operator());
-    });
-}
-
-// Callback binding template specialization, address are owned by VNode
-// see https://github.com/emscripten-core/emscripten/issues/25399
-namespace emscripten::internal
-{
-    template <>
-    struct BindingType<wasmdom::Callback>
-    {
-        using WireType = const wasmdom::Callback*;
-
-        static WireType toWireType(const wasmdom::Callback& c, rvp::default_tag)
-        {
-            return &c;
-        }
-
-        static const wasmdom::Callback& fromWireType(WireType wt, rvp::default_tag)
-        {
-            return *wt;
-        }
-    };
 }

@@ -1,20 +1,19 @@
 #pragma once
 
-#include <emscripten/val.h>
-
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-namespace wasmdom
+namespace emscripten
 {
+    class val;
+}
 
-    namespace internals
-    {
-        struct DomFactoryVTable;
-        struct DomFactory;
-        struct DomRecyclerFactory;
-    }
+namespace wasmdom::internals
+{
+    struct DomFactoryVTable;
+    struct DomFactory;
+    struct DomRecyclerFactory;
 
     class DomRecycler
     {

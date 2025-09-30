@@ -1,6 +1,6 @@
 #pragma once
 
-namespace wasmdom
+namespace wasmdom::internals
 {
 
     static inline constexpr const char* nodeKeyPrefix = "wasmDom";
