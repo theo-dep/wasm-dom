@@ -3,5 +3,5 @@ add_executable(events main.cpp)
 target_link_libraries(events PRIVATE wasm-dom compile_flags disable_exceptions optimization_flags)
 target_link_options(events PRIVATE -sENVIRONMENT=web)
 
-include(../configure_html_file.cmake)
-configure_html_file(events.js Events)
+set(EXAMPLE_TARGET events.js PARENT_SCOPE)
+set(EXAMPLE_TITLE Events PARENT_SCOPE)

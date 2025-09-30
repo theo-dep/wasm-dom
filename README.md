@@ -1,4 +1,5 @@
 <a name="top"></a>
+
 # wasm-dom
 
 ![experimental](https://img.shields.io/badge/Stability-experimental-orange)
@@ -53,8 +54,16 @@ From asm-dom author:
 
 The library provides runnable example with a static file server, [emrun](https://emscripten.org/docs/compiling/Running-html-files-with-emrun.html) for example.
 
+For all examples:
+
 ```sh
-emrun build/examples/0-console/Debug
+emrun build/examples/Release/
+```
+
+For a single example:
+
+```sh
+emrun build/examples/Debug/0-console
 ```
 
 1. [Console example](/examples/0-console/main.cpp)
@@ -164,8 +173,9 @@ The project uses the latest version of Emscripten 4.0.10.
 To start using wasm-dom without configuration, consider the single header in the [extra](/extra) folder. Just download and include it!
 
 Otherwise, consider a CMake project with these cases:
-  - Add wasm-dom as submodule and use `add_subdirectory`
-  - Use CMake [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html)
+
+- Add wasm-dom as submodule and use `add_subdirectory`
+- Use CMake [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html)
 
 ### Memory Management
 
