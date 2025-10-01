@@ -18,6 +18,7 @@ BraceWrapping:
   AfterNamespace: true
   AfterUnion: true
   SplitEmptyRecord: true
+LineEnding: LF
 NamespaceIndentation: All
 FixNamespaceComments: false
 WhitespaceSensitiveMacros:

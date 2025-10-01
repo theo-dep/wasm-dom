@@ -113,84 +113,6 @@ namespace wasmdom
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/domapi.hpp
-// -----------------------------------------------------------------------------
-namespace wasmdom
-{
-
-    namespace domapi
-    {
-        emscripten::val createElement(const std::string& tag);
-        emscripten::val createElementNS(const std::string& namespaceURI, const std::string& qualifiedName);
-        emscripten::val createTextNode(const std::string& text);
-        emscripten::val createComment(const std::string& comment);
-        emscripten::val createDocumentFragment();
-
-        void insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode);
-        void removeChild(const emscripten::val& child);
-        void appendChild(const emscripten::val& parent, const emscripten::val& child);
-        void removeAttribute(const emscripten::val& node, const std::string& attribute);
-        void setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value);
-        void setNodeValue(emscripten::val& node, const std::string& text);
-
-        emscripten::val parentNode(const emscripten::val& node);
-        emscripten::val nextSibling(const emscripten::val& node);
-    }
-}
-
-// -----------------------------------------------------------------------------
-// src/wasm-dom/domkeys.hpp
-// -----------------------------------------------------------------------------
-namespace wasmdom
-{
-
-    static inline constexpr const char* nodeKeyPrefix = "wasmDom";
-    static inline constexpr const char* nodeCallbacksKey = "wasmDomNodeCallbacksKey";
-    static inline constexpr const char* nodeEventsKey = "wasmDomEvents";
-    static inline constexpr const char* nodeNSKey = "wasmDomNS";
-    static inline constexpr const char* nodeRawsKey = "wasmDomRaws";
-
-}
-
-// -----------------------------------------------------------------------------
-// src/wasm-dom/domrecycler.hpp
-// -----------------------------------------------------------------------------
-namespace wasmdom
-{
-
-    namespace internals
-    {
-        struct DomFactoryVTable;
-        struct DomFactory;
-        struct DomRecyclerFactory;
-    }
-
-    class DomRecycler
-    {
-    public:
-        DomRecycler(bool useWasmGC);
-
-        emscripten::val create(const std::string& name);
-        emscripten::val createNS(const std::string& name, const std::string& ns);
-        emscripten::val createText(const std::string& text);
-        emscripten::val createComment(const std::string& comment);
-
-        void collect(emscripten::val node);
-
-        // valid if no garbage collector
-        std::vector<emscripten::val> nodes(const std::string& name) const;
-
-    private:
-        friend struct internals::DomFactory;
-        friend struct internals::DomRecyclerFactory;
-        const internals::DomFactoryVTable* _factory;
-
-        std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
-    };
-
-}
-
-// -----------------------------------------------------------------------------
 // src/wasm-dom/vnode.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom
@@ -674,6 +596,47 @@ namespace wasmdom::dsl
 #define WASMDOM_EM_JS(ret, name, params, ...) _WASMDOM_EM_JS(ret, name, name, params, #__VA_ARGS__)
 
 // -----------------------------------------------------------------------------
+// src/wasm-dom/internals/domapi.hpp
+// -----------------------------------------------------------------------------
+namespace emscripten
+{
+    class val;
+}
+
+namespace wasmdom::internals::domapi
+{
+    emscripten::val createElement(const std::string& tag);
+    emscripten::val createElementNS(const std::string& namespaceURI, const std::string& qualifiedName);
+    emscripten::val createTextNode(const std::string& text);
+    emscripten::val createComment(const std::string& comment);
+    emscripten::val createDocumentFragment();
+
+    void insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode);
+    void removeChild(const emscripten::val& child);
+    void appendChild(const emscripten::val& parent, const emscripten::val& child);
+    void removeAttribute(const emscripten::val& node, const std::string& attribute);
+    void setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value);
+    void setNodeValue(emscripten::val& node, const std::string& text);
+
+    emscripten::val parentNode(const emscripten::val& node);
+    emscripten::val nextSibling(const emscripten::val& node);
+}
+
+// -----------------------------------------------------------------------------
+// src/wasm-dom/internals/domkeys.hpp
+// -----------------------------------------------------------------------------
+namespace wasmdom::internals
+{
+
+    static inline constexpr const char* nodeKeyPrefix = "wasmDom";
+    static inline constexpr const char* nodeEventsKey = "wasmDomEvents";
+    static inline constexpr const char* nodeCallbackName = "wasmdomCallback";
+    static inline constexpr const char* nodeNSKey = "wasmDomNS";
+    static inline constexpr const char* nodeRawsKey = "wasmDomRaws";
+
+}
+
+// -----------------------------------------------------------------------------
 // build/src/wasm-dom/internals/jsapi.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals::jsapi
@@ -718,6 +681,14 @@ namespace wasmdom::internals::jsapi
     WASMDOM_EM_JS(void, removeEventListener_, (emscripten::EM_VAL node, const char * event, emscripten::EM_VAL listener),
     { Emval.toValue(node).removeEventListener(UTF8ToString(event), Emval.toValue(listener), false); })
 
+}
+
+// -----------------------------------------------------------------------------
+// src/wasm-dom/internals/wire.hpp
+// -----------------------------------------------------------------------------
+namespace wasmdom::internals
+{
+    emscripten::val toJsCallback(const Callback& callback);
 }
 
 // -----------------------------------------------------------------------------
@@ -775,40 +746,6 @@ namespace wasmdom::internals
         }
     }
 
-    // store callbacks addresses to be called in functionCallback
-    inline std::unordered_map<std::size_t, Callbacks>& vnodeCallbacks()
-    {
-        static std::unordered_map<std::size_t, Callbacks> vnodeCallbacks;
-        return vnodeCallbacks;
-    }
-
-    inline std::size_t incrementCallbackKey()
-    {
-        static std::size_t lastCallbackKey = 0;
-        return ++lastCallbackKey;
-    }
-
-    inline void storeCallbacks(const VNode& oldVnode, VNode& vnode)
-    {
-        const emscripten::val& oldNode = oldVnode.node();
-
-        std::size_t callbackKey = 0;
-        if (oldNode.isNull()) {
-            callbackKey = incrementCallbackKey();
-        } else {
-            const emscripten::val oldNodeCallbacksKey = oldNode[nodeCallbacksKey];
-            if (oldNodeCallbacksKey.isUndefined()) {
-                callbackKey = incrementCallbackKey();
-            } else {
-                callbackKey = oldNodeCallbacksKey.as<std::size_t>();
-            }
-        }
-
-        emscripten::val& node = vnode.node();
-        node.set(nodeCallbacksKey, callbackKey);
-        vnodeCallbacks()[callbackKey] = vnode.callbacks();
-    }
-
     inline std::string formatEventKey(const std::string& key)
     {
         static constexpr std::string_view eventPrefix = "on";
@@ -827,38 +764,33 @@ namespace wasmdom::internals
         std::string eventKey;
 
         for (const auto& [key, _] : oldCallbacks) {
-            if (!callbacks.contains(key)) {
-                eventKey = formatEventKey(key);
-                jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
-                node[nodeEventsKey].delete_(eventKey);
-            }
+            eventKey = formatEventKey(key);
+            jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), node[nodeEventsKey][eventKey].as_handle());
+            node[nodeEventsKey].delete_(eventKey);
         }
 
-        storeCallbacks(oldVnode, vnode);
         if (node[nodeEventsKey].isUndefined()) {
             node.set(nodeEventsKey, emscripten::val::object());
         }
 
-        for (const auto& [key, _] : callbacks) {
-            if (!oldCallbacks.contains(key)) {
-                eventKey = formatEventKey(key);
-                jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), emscripten::val::module_property("eventProxy").as_handle());
-                node[nodeEventsKey].set(eventKey, emscripten::val::module_property("eventProxy"));
-            }
+        for (auto& [key, val] : callbacks) {
+            eventKey = formatEventKey(key);
+            const emscripten::val jsCallback = toJsCallback(val);
+            const emscripten::val functorAdapter = jsCallback["opcall"].call<emscripten::val>("bind", jsCallback);
+            jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), functorAdapter.as_handle());
+            node[nodeEventsKey].set(eventKey, functorAdapter);
         }
     }
+
 }
 
 // -----------------------------------------------------------------------------
 // src/wasm-dom/internals/domfactory.hpp
 // -----------------------------------------------------------------------------
-namespace wasmdom
-{
-    class DomRecycler;
-}
-
 namespace wasmdom::internals
 {
+    class DomRecycler;
+
     struct DomFactory
     {
         static inline emscripten::val create(DomRecycler&, const std::string& name)
@@ -882,6 +814,45 @@ namespace wasmdom::internals
 
         static inline void collect(DomRecycler&, emscripten::val /*node*/) {} // // LCOV_EXCL_LINE
     };
+}
+
+// -----------------------------------------------------------------------------
+// src/wasm-dom/internals/domrecycler.hpp
+// -----------------------------------------------------------------------------
+namespace emscripten
+{
+    class val;
+}
+
+namespace wasmdom::internals
+{
+    struct DomFactoryVTable;
+    struct DomFactory;
+    struct DomRecyclerFactory;
+
+    class DomRecycler
+    {
+    public:
+        DomRecycler(bool useWasmGC);
+
+        emscripten::val create(const std::string& name);
+        emscripten::val createNS(const std::string& name, const std::string& ns);
+        emscripten::val createText(const std::string& text);
+        emscripten::val createComment(const std::string& comment);
+
+        void collect(emscripten::val node);
+
+        // valid if no garbage collector
+        std::vector<emscripten::val> nodes(const std::string& name) const;
+
+    private:
+        friend struct internals::DomFactory;
+        friend struct internals::DomRecyclerFactory;
+        const internals::DomFactoryVTable* _factory;
+
+        std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
+    };
+
 }
 
 // -----------------------------------------------------------------------------
@@ -1012,13 +983,13 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         for (int i : std::views::iota(0, entries["length"].as<int>())) {
             const emscripten::val pair = entries[i];
             const emscripten::val event = pair[0];
-            const emscripten::val eventProxy = pair[1];
-            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), eventProxy.as_handle());
+            const emscripten::val eventCallback = pair[1];
+            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), eventCallback.as_handle());
         }
         node.set(nodeEventsKey, emscripten::val::undefined());
     }
 
-    if (!node["nodeValue"].isNull() && !node["nodeValue"].as<std::string>().empty()) {
+    if (!node["nodeValue"].isNull() && node["nodeValue"].isString()) {
         node.set("nodeValue", std::string{});
     }
 
@@ -1405,12 +1376,13 @@ namespace wasmdom
     class VDom
     {
     public:
+        VDom() = default;
         VDom(const emscripten::val& element);
 
         const VNode& patch(VNode vnode);
 
     private:
-        VNode _currentNode;
+        VNode _currentNode = nullptr;
     };
 
 }
@@ -1430,7 +1402,7 @@ inline std::size_t wasmdom::EventHash::operator()(const Event& e) const
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/domapi.cpp
+// src/wasm-dom/internals/domapi.cpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -1441,85 +1413,85 @@ namespace wasmdom::internals
     }
 }
 
-inline emscripten::val wasmdom::domapi::createElement(const std::string& tag)
+inline emscripten::val wasmdom::internals::domapi::createElement(const std::string& tag)
 {
-    return internals::recycler().create(tag);
+    return recycler().create(tag);
 }
 
-inline emscripten::val wasmdom::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
+inline emscripten::val wasmdom::internals::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
-    return internals::recycler().createNS(qualifiedName, namespaceURI);
+    return recycler().createNS(qualifiedName, namespaceURI);
 }
 
-inline emscripten::val wasmdom::domapi::createTextNode(const std::string& text)
+inline emscripten::val wasmdom::internals::domapi::createTextNode(const std::string& text)
 {
-    return internals::recycler().createText(text);
+    return recycler().createText(text);
 }
 
-inline emscripten::val wasmdom::domapi::createComment(const std::string& comment)
+inline emscripten::val wasmdom::internals::domapi::createComment(const std::string& comment)
 {
-    return internals::recycler().createComment(comment);
+    return recycler().createComment(comment);
 }
 
-inline emscripten::val wasmdom::domapi::createDocumentFragment()
+inline emscripten::val wasmdom::internals::domapi::createDocumentFragment()
 {
-    return emscripten::val::take_ownership(internals::jsapi::createDocumentFragment());
+    return emscripten::val::take_ownership(jsapi::createDocumentFragment());
 }
 
-inline void wasmdom::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
+inline void wasmdom::internals::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
 {
     if (parentNode.isNull() || parentNode.isUndefined())
         return;
 
-    internals::jsapi::insertBefore(parentNode.as_handle(), newNode.as_handle(), referenceNode.as_handle());
+    jsapi::insertBefore(parentNode.as_handle(), newNode.as_handle(), referenceNode.as_handle());
 }
 
-inline void wasmdom::domapi::removeChild(const emscripten::val& child)
+inline void wasmdom::internals::domapi::removeChild(const emscripten::val& child)
 {
     if (child.isNull() || child.isUndefined())
         return;
 
     const emscripten::val parentNode(child["parentNode"]);
     if (!parentNode.isNull())
-        internals::jsapi::removeChild(parentNode.as_handle(), child.as_handle());
+        jsapi::removeChild(parentNode.as_handle(), child.as_handle());
 
-    internals::recycler().collect(child);
+    recycler().collect(child);
 }
 
-inline void wasmdom::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
+inline void wasmdom::internals::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
 {
-    internals::jsapi::appendChild(parent.as_handle(), child.as_handle());
+    jsapi::appendChild(parent.as_handle(), child.as_handle());
 }
 
-inline void wasmdom::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
+inline void wasmdom::internals::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
 {
-    internals::jsapi::removeAttribute(node.as_handle(), attribute.c_str());
+    jsapi::removeAttribute(node.as_handle(), attribute.c_str());
 }
 
-inline void wasmdom::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
+inline void wasmdom::internals::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
 {
     if (attribute.starts_with("xml:")) {
-        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", attribute.c_str(), value.c_str());
+        jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", attribute.c_str(), value.c_str());
     } else if (attribute.starts_with("xlink:")) {
-        internals::jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/1999/xlink", attribute.c_str(), value.c_str());
+        jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/1999/xlink", attribute.c_str(), value.c_str());
     } else {
-        internals::jsapi::setAttribute(node.as_handle(), attribute.c_str(), value.c_str());
+        jsapi::setAttribute(node.as_handle(), attribute.c_str(), value.c_str());
     }
 }
 
-inline void wasmdom::domapi::setNodeValue(emscripten::val& node, const std::string& text)
+inline void wasmdom::internals::domapi::setNodeValue(emscripten::val& node, const std::string& text)
 {
     node.set("nodeValue", text);
 }
 
-inline emscripten::val wasmdom::domapi::parentNode(const emscripten::val& node)
+inline emscripten::val wasmdom::internals::domapi::parentNode(const emscripten::val& node)
 {
     if (!node.isNull() && !node.isUndefined() && !node["parentNode"].isNull())
         return node["parentNode"];
     return emscripten::val::null();
 }
 
-inline emscripten::val wasmdom::domapi::nextSibling(const emscripten::val& node)
+inline emscripten::val wasmdom::internals::domapi::nextSibling(const emscripten::val& node)
 {
     if (!node.isNull() && !node.isUndefined() && !node["nextSibling"].isNull())
         return node["nextSibling"];
@@ -1527,7 +1499,7 @@ inline emscripten::val wasmdom::domapi::nextSibling(const emscripten::val& node)
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/domrecycler.cpp
+// src/wasm-dom/internals/domrecycler.cpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -1561,42 +1533,82 @@ namespace wasmdom::internals
     static inline constexpr DomFactoryVTable domRecyclerFactoryVTable = makeDomVTable<internals::DomRecyclerFactory>();
 }
 
-inline wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
-    : _factory{ internals::testGC() && useWasmGC ? &internals::domFactoryVTable : &internals::domRecyclerFactoryVTable }
+inline wasmdom::internals::DomRecycler::DomRecycler(bool useWasmGC)
+    : _factory{ testGC() && useWasmGC ? &domFactoryVTable : &domRecyclerFactoryVTable }
 {
 }
 
-inline emscripten::val wasmdom::DomRecycler::create(const std::string& name)
+inline emscripten::val wasmdom::internals::DomRecycler::create(const std::string& name)
 {
     return _factory->create(*this, name);
 }
 
-inline emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
+inline emscripten::val wasmdom::internals::DomRecycler::createNS(const std::string& name, const std::string& ns)
 {
     return _factory->createNS(*this, name, ns);
 }
 
-inline emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
+inline emscripten::val wasmdom::internals::DomRecycler::createText(const std::string& text)
 {
     return _factory->createText(*this, text);
 }
 
-inline emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
+inline emscripten::val wasmdom::internals::DomRecycler::createComment(const std::string& comment)
 {
     return _factory->createComment(*this, comment);
 }
 
-inline void wasmdom::DomRecycler::collect(emscripten::val node)
+inline void wasmdom::internals::DomRecycler::collect(emscripten::val node)
 {
     _factory->collect(*this, node);
 }
 
-inline std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
+inline std::vector<emscripten::val> wasmdom::internals::DomRecycler::nodes(const std::string& name) const
 {
     const auto nodeIt = _nodes.find(name);
     if (nodeIt != _nodes.cend())
         return nodeIt->second;
     return {};
+}
+
+// -----------------------------------------------------------------------------
+// src/wasm-dom/internals/wire.cpp
+// -----------------------------------------------------------------------------
+inline emscripten::val wasmdom::internals::toJsCallback(const Callback& callback)
+{
+    return emscripten::val(callback);
+}
+
+// Callback binding template specialization, address are owned by VNode
+// see https://github.com/emscripten-core/emscripten/issues/25399
+namespace emscripten::internal
+{
+    template <>
+    struct BindingType<wasmdom::Callback>
+    {
+        using WireType = const wasmdom::Callback*;
+
+        static inline WireType toWireType(const wasmdom::Callback& c, rvp::default_tag)
+        {
+            return &c;
+        }
+
+        static inline const wasmdom::Callback& fromWireType(WireType wt, rvp::default_tag)
+        {
+            return *wt;
+        }
+    };
+}
+
+namespace wasmdom::internals
+{
+    // in single header mode, the binding function must be registered only once
+    // see https://github.com/emscripten-core/emscripten/issues/25219
+    __attribute__((weak)) emscripten::internal::InitFunc wasmdomInitEventProxyFunc([] {
+        emscripten::class_<Callback>(nodeCallbackName)
+            .constructor<>()
+            .function("opcall", &Callback::operator());
+    });
 }
 
 // -----------------------------------------------------------------------------
@@ -1610,7 +1622,7 @@ inline wasmdom::VDom::VDom(const emscripten::val& element)
 
 inline const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 {
-    if (!vnode || _currentNode == vnode)
+    if (!_currentNode || !vnode || _currentNode == vnode)
         return _currentNode;
 
     vnode.normalize();
@@ -1620,13 +1632,13 @@ inline const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
         internals::onEvent(vnode, onUpdate);
     } else {
         internals::createNode(vnode);
-        const emscripten::val parentNode = domapi::parentNode(_currentNode.node());
-        const emscripten::val nextSiblingNode = domapi::nextSibling(_currentNode.node());
-        domapi::insertBefore(parentNode, vnode.node(), nextSiblingNode);
+        const emscripten::val parentNode = internals::domapi::parentNode(_currentNode.node());
+        const emscripten::val nextSiblingNode = internals::domapi::nextSibling(_currentNode.node());
+        internals::domapi::insertBefore(parentNode, vnode.node(), nextSiblingNode);
         internals::onEvent(vnode, onMount);
         internals::unmountVNodeChildren(_currentNode);
         internals::onEvent(_currentNode, onUnmount);
-        domapi::removeChild(_currentNode.node());
+        internals::domapi::removeChild(_currentNode.node());
     }
 
     _currentNode = vnode;
@@ -1672,7 +1684,7 @@ inline void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            const bool addNS = injectSvgNamespace || (_data->sel[0] == 's' && _data->sel[1] == 'v' && _data->sel[2] == 'g');
+            const bool addNS = injectSvgNamespace || (_data->sel == "svg");
             if (addNS) {
                 _data->hash |= hasNS;
                 _data->ns = "http://www.w3.org/2000/svg";
@@ -1698,14 +1710,14 @@ inline void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            if (_data->sel[0] == '\0') {
+            if (_data->sel.empty()) {
                 _data->hash |= isFragment;
             } else {
                 static std::size_t currentHash = 0;
                 static std::unordered_map<std::string, std::size_t> hashes;
 
-                if (hashes[_data->sel] == 0) {
-                    hashes[_data->sel] = ++currentHash;
+                if (!hashes.contains(_data->sel)) {
+                    hashes.emplace(_data->sel, ++currentHash);
                 }
 
                 _data->hash |= (hashes[_data->sel] << 13) | isElement;
@@ -1777,28 +1789,6 @@ inline void wasmdom::VNode::diff(const VNode& oldVnode)
     if (vnodes & hasCallbacks) {
         internals::diffCallbacks(oldVnode, *this);
     }
-}
-
-namespace wasmdom::internals
-{
-    inline bool eventProxy(emscripten::val event)
-    {
-        const std::size_t callbackKey = event["currentTarget"][nodeCallbacksKey].as<std::size_t>();
-        const std::string eventType = event["type"].as<std::string>();
-
-        const Callbacks& callbacks = vnodeCallbacks()[callbackKey];
-        auto callbackIt = callbacks.find(eventType);
-        if (callbackIt == callbacks.cend()) {
-            callbackIt = callbacks.find("on" + eventType);
-        }
-        return callbackIt->second(event);
-    }
-
-    // in single header mode, the binding function must be registered only once
-    // see https://github.com/emscripten-core/emscripten/issues/25219
-    __attribute__((weak)) emscripten::internal::InitFunc wasmdomInitEventProxyFunc([] {
-        emscripten::function("eventProxy", wasmdom::internals::eventProxy);
-    });
 }
 
 // -----------------------------------------------------------------------------
