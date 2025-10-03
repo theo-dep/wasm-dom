@@ -1,10 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "wasm-dom/domapi.hpp"
+#include "wasm-dom/internals/domapi.hpp"
 
 #include "jsdom.hpp"
 
-using namespace wasmdom;
+using namespace wasmdom::internals;
 
 TEST_CASE("domApi", "[domApi]")
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wasm-dom/domapi.hpp"
+#include "wasm-dom/internals/domapi.hpp"
 #include "wasm-dom/vnode.hpp"
 
 namespace wasmdom::internals

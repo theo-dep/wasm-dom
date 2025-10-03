@@ -1,12 +1,10 @@
 #include <wasm-dom.hpp>
 
-#include <memory>
-
 using namespace wasmdom;
 using namespace wasmdom::dsl;
 
 int runs = 100;
-std::unique_ptr<VDom> vdom = nullptr;
+VDom vdom;
 
 std::vector<VNode> noChangesStorage(runs, nullptr);
 std::vector<VNode> changesStorage(runs, nullptr);
@@ -59,7 +57,7 @@ void preparePatchWithoutChanges()
 bool patchWithoutChanges(emscripten::val)
 {
     for (const VNode& vnode : noChangesStorage) {
-        vdom->patch(vnode);
+        vdom.patch(vnode);
     }
 
     end();
@@ -100,7 +98,7 @@ void preparePatchWithChanges()
 bool patchWithChanges(emscripten::val)
 {
     for (const VNode& vnode : changesStorage) {
-        vdom->patch(vnode);
+        vdom.patch(vnode);
     }
 
     end();
@@ -134,7 +132,7 @@ void preparePatchWithAdditions()
 bool patchWithAdditions(emscripten::val)
 {
     for (const VNode& vnode : additionStorage) {
-        vdom->patch(vnode);
+        vdom.patch(vnode);
     }
 
     end();
@@ -151,7 +149,7 @@ void render()
               div()(a(("style", "cursor: pointer"s), ("onclick", f(patchWithAdditions)))("Benchmark Patch With Additions")) }
         );
 
-    vdom->patch(vnode);
+    vdom.patch(vnode);
 }
 
 void end()
@@ -161,12 +159,12 @@ void end()
         return true;
     };
     VNode vnode = a(("style", "cursor: pointer"s), ("onclick", onClickRender))("Home");
-    vdom->patch(vnode);
+    vdom.patch(vnode);
 }
 
 int main()
 {
-    vdom = std::make_unique<wasmdom::VDom>(
+    vdom = VDom(
         emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root"))
     );
 

@@ -1,17 +1,17 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "wasm-dom/domkeys.hpp"
-#include "wasm-dom/domrecycler.hpp"
+#include "wasm-dom/internals/domkeys.hpp"
+#include "wasm-dom/internals/domrecycler.hpp"
 
 #include "jsdom.hpp"
 
-using namespace wasmdom;
+using namespace wasmdom::internals;
 
 TEST_CASE("domRecycler", "[domRecycler]")
 {
     const JSDom jsDom;
 
-    wasmdom::DomRecycler recycler(false);
+    DomRecycler recycler(false);
 
     SECTION("should access an unknown node")
     {

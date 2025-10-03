@@ -4,7 +4,6 @@
 #include <emscripten/bind.h>
 
 #include <functional>
-#include <memory>
 #include <unordered_map>
 
 using namespace wasmdom;
@@ -14,7 +13,7 @@ bool handleHomeClick(const emscripten::val& e);
 bool handleAboutClick(const emscripten::val& e);
 bool handleContactClick(const emscripten::val& e);
 
-std::unique_ptr<VDom> vdom = nullptr;
+VDom vdom;
 
 VNode root()
 {
@@ -69,14 +68,14 @@ public:
             path = "/";
 
         if (_routes.contains(path)) {
-            vdom->patch(_routes.at(path)());
+            vdom.patch(_routes.at(path)());
             emscripten::val::global("console").call<void>("log", "Render to " + path);
         } else {
             static const VNode notFound = root()(
                 { h1()("404 - Page Not Found"),
                   createButton("/", handleHomeClick, "Go Home") }
             );
-            vdom->patch(notFound);
+            vdom.patch(notFound);
         }
     }
 
@@ -87,16 +86,14 @@ public:
 };
 
 // Global router instance
-std::unique_ptr<Router> router = nullptr;
+Router router;
 
 // Handle browser back/forward buttons
 EMSCRIPTEN_BINDINGS(routerBindings)
 {
     emscripten::function("onPopState", emscripten::optional_override([](emscripten::val) {
                              // Handle hash change
-                             if (router) {
-                                 router->render();
-                             }
+                             router.render();
                          }));
 }
 
@@ -140,38 +137,37 @@ VNode contactPage()
 bool handleHomeClick(const emscripten::val& e)
 {
     e.call<void>("preventDefault");
-    router->navigate("/");
+    router.navigate("/");
     return true;
 }
 
 bool handleAboutClick(const emscripten::val& e)
 {
     e.call<void>("preventDefault");
-    router->navigate("/about");
+    router.navigate("/about");
     return true;
 }
 
 bool handleContactClick(const emscripten::val& e)
 {
     e.call<void>("preventDefault");
-    router->navigate("/contact");
+    router.navigate("/contact");
     return true;
 }
 
 int main()
 {
-    vdom = std::make_unique<wasmdom::VDom>(
+    vdom = VDom(
         emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root"))
     );
 
     // Initialize router
-    router = std::make_unique<Router>();
-    router->addRoute("/", homePage);
-    router->addRoute("/about", aboutPage);
-    router->addRoute("/contact", contactPage);
+    router.addRoute("/", homePage);
+    router.addRoute("/about", aboutPage);
+    router.addRoute("/contact", contactPage);
 
     // Render initial route
-    router->navigate("/");
+    router.navigate("/");
 
     return 0;
 }

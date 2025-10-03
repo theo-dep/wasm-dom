@@ -1,7 +1,7 @@
 #pragma once
 
-#include "wasm-dom/domrecycler.hpp"
 #include "wasm-dom/internals/domfactory.hpp"
+#include "wasm-dom/internals/domrecycler.hpp"
 #include "wasm-dom/internals/jsapi.hpp"
 #include "wasm-dom/internals/utils.hpp"
 
@@ -106,13 +106,13 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
         for (int i : std::views::iota(0, entries["length"].as<int>())) {
             const emscripten::val pair = entries[i];
             const emscripten::val event = pair[0];
-            const emscripten::val eventProxy = pair[1];
-            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), eventProxy.as_handle());
+            const emscripten::val eventCallback = pair[1];
+            jsapi::removeEventListener_(node.as_handle(), event.as<std::string>().c_str(), eventCallback.as_handle());
         }
         node.set(nodeEventsKey, emscripten::val::undefined());
     }
 
-    if (!node["nodeValue"].isNull() && !node["nodeValue"].as<std::string>().empty()) {
+    if (!node["nodeValue"].isNull() && node["nodeValue"].isString()) {
         node.set("nodeValue", std::string{});
     }
 

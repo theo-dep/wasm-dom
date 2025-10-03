@@ -1,12 +1,13 @@
 #include "domrecycler.hpp"
 
-#include "domkeys.hpp"
-#include "internals/conf.h"
-#include "internals/domfactory.hpp"
-#include "internals/domrecyclerfactory.hpp"
-#include "internals/utils.hpp"
+#include "wasm-dom/internals/conf.h"
+#include "wasm-dom/internals/domfactory.hpp"
+#include "wasm-dom/internals/domkeys.hpp"
+#include "wasm-dom/internals/domrecyclerfactory.hpp"
+#include "wasm-dom/internals/utils.hpp"
 
 #include <emscripten/em_js.h>
+#include <emscripten/val.h>
 
 namespace wasmdom::internals
 {
@@ -41,47 +42,47 @@ namespace wasmdom::internals
 }
 
 WASMDOM_SH_INLINE
-wasmdom::DomRecycler::DomRecycler(bool useWasmGC)
-    : _factory{ internals::testGC() && useWasmGC ? &internals::domFactoryVTable : &internals::domRecyclerFactoryVTable }
+wasmdom::internals::DomRecycler::DomRecycler(bool useWasmGC)
+    : _factory{ testGC() && useWasmGC ? &domFactoryVTable : &domRecyclerFactoryVTable }
 {
 }
 
 #ifdef WASMDOM_COVERAGE
-wasmdom::DomRecycler::~DomRecycler() = default;
+wasmdom::internals::DomRecycler::~DomRecycler() = default;
 #endif
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::DomRecycler::create(const std::string& name)
+emscripten::val wasmdom::internals::DomRecycler::create(const std::string& name)
 {
     return _factory->create(*this, name);
 }
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::DomRecycler::createNS(const std::string& name, const std::string& ns)
+emscripten::val wasmdom::internals::DomRecycler::createNS(const std::string& name, const std::string& ns)
 {
     return _factory->createNS(*this, name, ns);
 }
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::DomRecycler::createText(const std::string& text)
+emscripten::val wasmdom::internals::DomRecycler::createText(const std::string& text)
 {
     return _factory->createText(*this, text);
 }
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::DomRecycler::createComment(const std::string& comment)
+emscripten::val wasmdom::internals::DomRecycler::createComment(const std::string& comment)
 {
     return _factory->createComment(*this, comment);
 }
 
 WASMDOM_SH_INLINE
-void wasmdom::DomRecycler::collect(emscripten::val node)
+void wasmdom::internals::DomRecycler::collect(emscripten::val node)
 {
     _factory->collect(*this, node);
 }
 
 WASMDOM_SH_INLINE
-std::vector<emscripten::val> wasmdom::DomRecycler::nodes(const std::string& name) const
+std::vector<emscripten::val> wasmdom::internals::DomRecycler::nodes(const std::string& name) const
 {
     const auto nodeIt = _nodes.find(name);
     if (nodeIt != _nodes.cend())

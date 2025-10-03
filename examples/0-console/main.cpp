@@ -3,6 +3,8 @@ using namespace wasmdom::dsl;
 
 #include <emscripten/val.h>
 
+wasmdom::VDom vdom;
+
 int main()
 {
     auto onClickCallback = [](emscripten::val /*e*/) -> bool {
@@ -24,7 +26,9 @@ int main()
         );
 
     // Patch into empty DOM element – this modifies the DOM as a side effect
-    wasmdom::VDom vdom(emscripten::val::global("document").call<emscripten::val>("getElementById", "root"s));
+    vdom = wasmdom::VDom(
+        emscripten::val::global("document").call<emscripten::val>("getElementById", "root"s)
+    );
     vdom.patch(vnode);
 
     return 0;

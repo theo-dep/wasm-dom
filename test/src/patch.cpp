@@ -1,13 +1,14 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "wasm-dom.hpp"
-#include "wasm-dom/domkeys.hpp"
+#include "wasm-dom/internals/domkeys.hpp"
 
 #include "jsdom.hpp"
 
 #include <emscripten.h>
 
 using namespace wasmdom;
+using namespace wasmdom::internals;
 using namespace wasmdom::dsl;
 
 inline bool onClick(emscripten::val /*event*/)
@@ -57,6 +58,13 @@ std::vector<int> shuffle(std::vector<int>& arr, int nodes)
 TEST_CASE("patch", "[patch]")
 {
     const JSDom jsDom;
+
+    SECTION("should first handle nullptr VNode")
+    {
+        VNode vnode = span();
+        VDom vdom;
+        vdom.patch(vnode);
+    }
 
     SECTION("should handle nullptr VNode")
     {

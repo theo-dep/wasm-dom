@@ -2,8 +2,6 @@
 
 #include <emscripten/em_js.h>
 
-#include <memory>
-
 using namespace wasmdom;
 using namespace wasmdom::dsl;
 
@@ -41,7 +39,7 @@ public:
 Property<bool> show = false;
 Property<std::string> name = "Taylor";
 
-std::unique_ptr<VDom> vdom = nullptr;
+VDom vdom;
 
 EM_JS(void, focus, (emscripten::EM_VAL handle), {
     const node = Emval.toValue(handle);
@@ -92,12 +90,12 @@ void render()
                : fragment()) }
     );
 
-    vdom->patch(vnode);
+    vdom.patch(vnode);
 }
 
 int main()
 {
-    vdom = std::make_unique<wasmdom::VDom>(
+    vdom = VDom(
         emscripten::val::global("document").call<emscripten::val>("getElementById", std::string("root"))
     );
 
