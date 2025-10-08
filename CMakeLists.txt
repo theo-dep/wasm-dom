@@ -15,6 +15,9 @@ option(WASM_DOM_TESTS "Build and add tests to test runner" ${WASM_DOM_NOT_SUBPRO
 option(WASM_DOM_EXAMPLES "Build examples" ${WASM_DOM_NOT_SUBPROJECT})
 option(WASM_DOM_ASAN "Enable Address Sanitizer flags in debug" ${WASM_DOM_NOT_SUBPROJECT})
 option(WASM_DOM_SINGLE_HEADER "Construct the single header" ${WASM_DOM_NOT_SUBPROJECT})
+option(WASM_DOM_STRICT "Enable strict compilation" ${WASM_DOM_NOT_SUBPROJECT})
+option(WASM_DOM_NO_EXCEPTION "Disable exceptions" ${WASM_DOM_NOT_SUBPROJECT})
+option(WASM_DOM_FULL_OPTIMISATION "Disable RTTI and filesystem, enable clojure compiler" ${WASM_DOM_NOT_SUBPROJECT})
 
 set(WASM_DOM_COVERAGE OFF CACHE BOOL "Enable code coverage instrumentation")
 set(WASM_DOM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
