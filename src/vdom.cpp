@@ -1,9 +1,9 @@
-#include "vdom.hpp"
-
-#include "internals/conf.h"
 #include "internals/domapi.hpp"
 #include "internals/patch.hpp"
-#include "vnode.hpp"
+
+#include <wasm-dom/conf.h>
+#include <wasm-dom/vdom.hpp>
+#include <wasm-dom/vnode.hpp>
 
 WASMDOM_SH_INLINE
 wasmdom::VDom::VDom(const emscripten::val& element)

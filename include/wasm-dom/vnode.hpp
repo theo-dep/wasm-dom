@@ -1,6 +1,6 @@
 #pragma once
 
-#include "attribute.hpp"
+#include "wasm-dom/attribute.hpp"
 
 #include <memory>
 #include <vector>
@@ -126,5 +126,5 @@ inline wasmdom::VNode::VNode(const std::string& nodeSel, std::pair<K, V>&&... no
 }
 
 #ifndef WASMDOM_COVERAGE
-#include "vnode.inl.cpp"
+#include "vnode.inl.hpp"
 #endif

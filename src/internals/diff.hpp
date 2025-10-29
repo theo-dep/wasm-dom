@@ -1,11 +1,12 @@
 #pragma once
 
-#include "wasm-dom/attribute.hpp"
-#include "wasm-dom/internals/domapi.hpp"
-#include "wasm-dom/internals/domkeys.hpp"
-#include "wasm-dom/internals/jsapi.hpp"
-#include "wasm-dom/internals/wire.hpp"
-#include "wasm-dom/vnode.hpp"
+#include "internals/domapi.hpp"
+#include "internals/domkeys.hpp"
+#include "internals/jsapi.hpp"
+#include "internals/wire.hpp"
+
+#include <wasm-dom/attribute.hpp>
+#include <wasm-dom/vnode.hpp>
 
 #include <ranges>
 #include <unordered_map>

@@ -1,4 +1,4 @@
-#include "internals/conf.h"
+#include "wasm-dom/conf.h"
 
 WASMDOM_INLINE
 wasmdom::VNode::VNode(std::nullptr_t) {}

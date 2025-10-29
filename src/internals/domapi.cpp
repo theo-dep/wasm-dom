@@ -1,8 +1,9 @@
 #include "domapi.hpp"
 
-#include "wasm-dom/internals/conf.h"
-#include "wasm-dom/internals/domrecycler.hpp"
-#include "wasm-dom/internals/jsapi.hpp"
+#include "domrecycler.hpp"
+#include "jsapi.hpp"
+
+#include <wasm-dom/conf.h>
 
 namespace wasmdom::internals
 {

@@ -1,7 +1,8 @@
 #include "wire.hpp"
 
-#include "wasm-dom/internals/conf.h"
-#include "wasm-dom/internals/domkeys.hpp"
+#include "domkeys.hpp"
+
+#include <wasm-dom/conf.h>
 
 #include <emscripten/bind.h>
 

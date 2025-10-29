@@ -1,7 +1,7 @@
-#include "attribute.hpp"
+#include <wasm-dom/attribute.hpp>
 
 #ifdef WASMDOM_COVERAGE
-#include "attribute.inl.cpp"
+#include <wasm-dom/attribute.inl.hpp>
 
 wasmdom::VNodeAttributes::VNodeAttributes() = default;
 wasmdom::VNodeAttributes::VNodeAttributes(const VNodeAttributes& other) = default;
