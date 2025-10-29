@@ -50,6 +50,8 @@ From asm-dom author:
 >
 > At the beginning asm-dom was born from the idea to test the power of WebAssembly in a common use case that is not gaming, VR, AR or Image / video editing. Unfortunately, at the moment, [GC/DOM Integration](http://webassembly.org/docs/future-features/) is a future feature, so, asm-dom isn't totally developed in wasm. All interactions with the DOM are written in JavaScript. This is a big disadvantage because of the overhead of the binding between JS and WASM, in the future asm-dom will be even more powerful, anyway results are satisfying.
 
+From me: I love c++ to do anything.
+
 ## Examples
 
 The library provides runnable example with a static file server, [emrun](https://emscripten.org/docs/compiling/Running-html-files-with-emrun.html) for example. See also the [live example](https://theo-dep.github.io/wasm-dom/).
