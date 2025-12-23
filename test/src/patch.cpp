@@ -1401,4 +1401,83 @@ TEST_CASE("patch", "[patch]")
         emscripten::val fragment = tmpl["content"].call<emscripten::val>("cloneNode", emscripten::val(true));
         REQUIRE_THAT(fragment["nodeName"], StrictlyEquals(emscripten::val("#document-fragment")));
     }
+
+    SECTION("should support empty children")
+    {
+        wasmdom::Children children;
+        VNode vnode1 = div()(children);
+        children.push_back(span()(std::string("foo")));
+        children.push_back(span()(std::string("bar")));
+        VNode vnode2 = div()(children);
+        VDom vdom(jsDom.root());
+        vdom.patch(vnode1);
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(0)));
+        vdom.patch(vnode2);
+        node = jsDom.bodyFirstChild();
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["1"]["textContent"], StrictlyEquals(emscripten::val("bar")));
+    }
+
+    SECTION("should support adding children in children")
+    {
+        VNode vnode1 = div();
+        VNode vnode2 =
+            div()(
+                { div(),
+                  div(),
+                  div() }
+            );
+        VNode vnode3 =
+            div()(
+                { div(),
+                  div()({ div()({ span()(std::string("foo1")),
+                                  span()(std::string("bar1")) }),
+                          div()({ span()(std::string("foo2")),
+                                  span()(std::string("bar2")) }) }),
+                  div() }
+            );
+        VDom vdom(jsDom.root());
+        vdom.patch(vnode1);
+        emscripten::val node = jsDom.bodyFirstChild();
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(0)));
+        vdom.patch(vnode2);
+        node = jsDom.bodyFirstChild();
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(3)));
+        REQUIRE_THAT(node["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["0"]["children"]["length"], StrictlyEquals(emscripten::val(0)));
+        REQUIRE_THAT(node["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["length"], StrictlyEquals(emscripten::val(0)));
+        REQUIRE_THAT(node["children"]["2"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["2"]["children"]["length"], StrictlyEquals(emscripten::val(0)));
+        vdom.patch(vnode3);
+        node = jsDom.bodyFirstChild();
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(3)));
+        REQUIRE_THAT(node["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["0"]["children"]["length"], StrictlyEquals(emscripten::val(0)));
+        REQUIRE_THAT(node["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["children"]["1"]["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["0"]["children"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["children"]["1"]["children"]["0"]["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["0"]["children"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo1")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["0"]["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["0"]["children"]["1"]["textContent"], StrictlyEquals(emscripten::val("bar1")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["1"]["children"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["children"]["1"]["children"]["1"]["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["1"]["children"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo2")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["1"]["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["1"]["children"]["1"]["children"]["1"]["textContent"], StrictlyEquals(emscripten::val("bar2")));
+        REQUIRE_THAT(node["children"]["2"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["2"]["children"]["length"], StrictlyEquals(emscripten::val(0)));
+    }
 }

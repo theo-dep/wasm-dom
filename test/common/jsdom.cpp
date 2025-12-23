@@ -30,7 +30,12 @@ emscripten::val JSDom::root() const
     return document().call<emscripten::val>("getElementById", emscripten::val("root"));
 }
 
+emscripten::val JSDom::body() const
+{
+    return document()["body"];
+}
+
 emscripten::val JSDom::bodyFirstChild() const
 {
-    return document()["body"]["firstChild"];
+    return body()["firstChild"];
 }

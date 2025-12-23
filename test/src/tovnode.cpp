@@ -146,8 +146,7 @@ TEST_CASE("toVNode", "[toVNode]")
         prevNode.call<void>("appendChild", h2);
 
         VNode nextVNode =
-            div(("id", "id"s),
-                ("class", "class"s))(
+            div(("id", "id"s), ("class", "class"s))(
                 { span()(
                     std::string("Hi")
                 ) }
@@ -167,9 +166,41 @@ TEST_CASE("toVNode", "[toVNode]")
         REQUIRE_THAT(node["childNodes"]["0"]["textContent"], StrictlyEquals(emscripten::val("Hi")));
     }
 
-    SECTION("should support patching in a DocumentFragment")
+    SECTION("should support patching in a DocumentFragment without children")
     {
         emscripten::val prevNode = jsDom.document().call<emscripten::val>("createDocumentFragment");
+
+        VNode nextVNode =
+            fragment()(
+                { div(("id", "id"s), ("class", "class"s))(
+                    { span()(
+                        std::string("Hi")
+                    ) }
+                ) }
+            );
+
+        VDom vdom(prevNode);
+        vdom.patch(nextVNode);
+
+        emscripten::val node = nextVNode.node();
+
+        REQUIRE_THAT(node, StrictlyEquals(prevNode));
+        REQUIRE_THAT(node["nodeType"], StrictlyEquals(emscripten::val(11)));
+        REQUIRE_THAT(node["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["childNodes"]["0"]["id"], StrictlyEquals(emscripten::val("id")));
+        REQUIRE_THAT(node["childNodes"]["0"]["className"], StrictlyEquals(emscripten::val("class")));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["0"]["textContent"], StrictlyEquals(emscripten::val("Hi")));
+    }
+
+    SECTION("should support patching in a DocumentFragment with children")
+    {
+        emscripten::val h2 = jsDom.document().call<emscripten::val>("createElement", emscripten::val("h2"));
+        h2.set("textContent", emscripten::val("Hello"));
+        emscripten::val prevNode = jsDom.document().call<emscripten::val>("createDocumentFragment");
+        prevNode.call<void>("appendChild", h2);
 
         VNode nextVNode =
             fragment()(
