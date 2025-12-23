@@ -12,7 +12,7 @@ string(REGEX REPLACE "typedef struct _EM_VAL\\* EM_VAL;\n" "" JSAPI_CONTENT "${J
 string(REGEX REPLACE "EM_VAL" "emscripten::EM_VAL" JSAPI_CONTENT "${JSAPI_CONTENT}")
 
 # add jsapi.c content in jsapi.hpp
-set(JSAPI_FILE ${BINARY_DIR}/src/wasm-dom/internals/jsapi.hpp)
+set(JSAPI_FILE ${BINARY_DIR}/src/internals/jsapi.hpp)
 file(WRITE ${JSAPI_FILE}
         "#pragma once\n"
         "#include <emscripten/em_js.h>\n"
@@ -23,7 +23,7 @@ file(WRITE ${JSAPI_FILE}
 )
 
 # replace jsapi.hpp by the generated one
-list(FIND HEADER_FILES ${SOURCE_DIR}/src/wasm-dom/internals/jsapi.hpp JSAPI_INDEX)
+list(FIND HEADER_FILES ${SOURCE_DIR}/src/internals/jsapi.hpp JSAPI_INDEX)
 list(REMOVE_AT HEADER_FILES ${JSAPI_INDEX})
 list(INSERT HEADER_FILES ${JSAPI_INDEX} ${JSAPI_FILE})
 
@@ -55,7 +55,11 @@ foreach(FILE_PATH ${HEADER_FILES})
         # If this include is one of our header files, add dependency
         foreach(HEADER_PATH ${HEADER_FILES})
             get_filename_component(HEADER_NAME ${HEADER_PATH} NAME)
-            if(HEADER_NAME STREQUAL INCLUDE_BASENAME)
+            if(INCLUDE_BASENAME MATCHES ".*\\.inl\\.hpp" AND HEADER_NAME STREQUAL INCLUDE_BASENAME)
+                # Dependency inverse order for *.inl.hpp files
+                list(APPEND DEPS_${INCLUDE_BASENAME} ${FILENAME})
+                break()
+            elseif(HEADER_NAME STREQUAL INCLUDE_BASENAME)
                 list(APPEND DEPS_${FILENAME} ${INCLUDE_BASENAME})
                 break()
             endif()
@@ -119,7 +123,9 @@ foreach(FILE_PATH ${SOURCE_FILES})
     string(REGEX MATCHALL "#include[ \t]*<[^>]*>" SYSTEM_INCLUDES "${CONTENT}")
     # Only keep includes that are not in our source files
     foreach(INCLUDE ${SYSTEM_INCLUDES})
-        string(APPEND ALL_INCLUDES "${INCLUDE}\n")
+        if(NOT INCLUDE MATCHES "wasm-dom/.*")
+            string(APPEND ALL_INCLUDES "${INCLUDE}\n")
+        endif()
     endforeach()
 endforeach()
 
