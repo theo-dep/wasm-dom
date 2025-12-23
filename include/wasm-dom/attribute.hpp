@@ -108,5 +108,5 @@ namespace wasmdom
 }
 
 #ifndef WASMDOM_COVERAGE
-#include "attribute.inl.cpp"
+#include "attribute.inl.hpp"
 #endif

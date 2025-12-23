@@ -19,7 +19,7 @@
 #include <vector>
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/attribute.hpp
+// include/wasm-dom/attribute.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom
 {
@@ -113,7 +113,21 @@ namespace wasmdom
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/vnode.hpp
+// include/wasm-dom/conf.h
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// include/wasm-dom/attribute.inl.hpp
+// -----------------------------------------------------------------------------
+inline bool wasmdom::Event::operator==(const Event&) const = default;
+
+inline std::size_t wasmdom::EventHash::operator()(const Event& e) const
+{
+    return std::hash<std::size_t>{}(e.e);
+}
+
+// -----------------------------------------------------------------------------
+// include/wasm-dom/vnode.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom
 {
@@ -228,7 +242,7 @@ inline wasmdom::VNode::VNode(const std::string& nodeSel, std::pair<K, V>&&... no
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/h.hpp
+// include/wasm-dom/h.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::dsl
 {
@@ -578,9 +592,127 @@ namespace wasmdom::dsl
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/conf.h
+// include/wasm-dom/vdom.hpp
 // -----------------------------------------------------------------------------
+namespace emscripten
+{
+    class val;
+}
 
+namespace wasmdom
+{
+
+    class VDom
+    {
+    public:
+        VDom() = default;
+        VDom(const emscripten::val& element);
+
+        const VNode& patch(VNode vnode);
+
+    private:
+        VNode _currentNode = nullptr;
+    };
+
+}
+
+// -----------------------------------------------------------------------------
+// include/wasm-dom/vnode.inl.hpp
+// -----------------------------------------------------------------------------
+inline wasmdom::VNode::VNode(std::nullptr_t) {}
+
+inline wasmdom::VNode::VNode(const std::string& nodeSel)
+    : _data(std::make_shared<SharedData>())
+{
+    _data->sel = nodeSel;
+}
+
+inline wasmdom::VNode::VNode(text_tag_t, const std::string& nodeText)
+    : _data(std::make_shared<SharedData>())
+{
+    normalize();
+    _data->sel = nodeText;
+    // replace current type with text type
+    _data->hash = (_data->hash & removeNodeType) | isText;
+}
+
+inline wasmdom::VNode::VNode(const std::string& nodeSel, const VNodeAttributes& nodeData)
+    : VNode(nodeSel)
+{
+    _data->data = nodeData;
+}
+
+inline wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
+{
+    normalize();
+    if (_data->hash & isComment) {
+        _data->sel = nodeText;
+    } else {
+        _data->children.emplace_back(text_tag, nodeText);
+        _data->hash |= hasText;
+    }
+    return *this;
+}
+
+inline wasmdom::VNode& wasmdom::VNode::operator()(const VNode& child)
+{
+    _data->children.push_back(child);
+    return *this;
+}
+
+inline wasmdom::VNode& wasmdom::VNode::operator()(const Children& nodeChildren)
+{
+    _data->children = nodeChildren;
+    return *this;
+}
+
+inline wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<VNode> nodeChildren)
+{
+    _data->children = nodeChildren;
+    return *this;
+}
+
+inline const wasmdom::Attrs& wasmdom::VNode::attrs() const { return _data->data.attrs; }
+
+inline const wasmdom::Props& wasmdom::VNode::props() const { return _data->data.props; }
+
+inline const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->data.callbacks; }
+
+inline const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->data.eventCallbacks; }
+
+inline const std::string& wasmdom::VNode::sel() const { return _data->sel; }
+
+inline const std::string& wasmdom::VNode::key() const { return _data->key; }
+
+inline const std::string& wasmdom::VNode::ns() const { return _data->ns; }
+
+inline std::size_t wasmdom::VNode::hash() const { return _data->hash; }
+
+inline const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
+
+inline emscripten::val& wasmdom::VNode::node() { return _data->node; }
+
+inline void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
+
+inline void wasmdom::VNode::normalize() { normalize(false); }
+
+inline wasmdom::VNode::operator bool() const { return _data != nullptr; }
+
+inline bool wasmdom::VNode::operator!() const { return _data == nullptr; }
+
+inline bool wasmdom::VNode::operator==(const VNode& other) const { return _data == other._data; }
+
+inline wasmdom::Children::iterator wasmdom::VNode::begin() { return _data->children.begin(); }
+
+inline wasmdom::Children::iterator wasmdom::VNode::end() { return _data->children.end(); }
+
+inline wasmdom::Children::const_iterator wasmdom::VNode::begin() const { return _data->children.begin(); }
+
+inline wasmdom::Children::const_iterator wasmdom::VNode::end() const { return _data->children.end(); }
+
+// -----------------------------------------------------------------------------
+// src/internals/bind.h
+// -----------------------------------------------------------------------------
 // for single header use, see https://github.com/emscripten-core/emscripten/issues/25219
 // use WASMDOM_EM_JS instead of EM_JS in library mode for unicity
 #define _WASMDOM_EM_JS(ret, c_name, js_name, params, code)                          \
@@ -596,7 +728,7 @@ namespace wasmdom::dsl
 #define WASMDOM_EM_JS(ret, name, params, ...) _WASMDOM_EM_JS(ret, name, name, params, #__VA_ARGS__)
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/domapi.hpp
+// src/internals/domapi.hpp
 // -----------------------------------------------------------------------------
 namespace emscripten
 {
@@ -623,7 +755,7 @@ namespace wasmdom::internals::domapi
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/domkeys.hpp
+// src/internals/domkeys.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -637,7 +769,7 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// build/src/wasm-dom/internals/jsapi.hpp
+// build/src/internals/jsapi.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals::jsapi
 {
@@ -684,7 +816,7 @@ namespace wasmdom::internals::jsapi
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/wire.hpp
+// src/internals/wire.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -692,7 +824,7 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/diff.hpp
+// src/internals/diff.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -785,7 +917,7 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/domfactory.hpp
+// src/internals/domfactory.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -817,7 +949,7 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/domrecycler.hpp
+// src/internals/domrecycler.hpp
 // -----------------------------------------------------------------------------
 namespace emscripten
 {
@@ -856,7 +988,7 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/utils.hpp
+// src/internals/utils.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -884,7 +1016,7 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/domrecyclerfactory.hpp
+// src/internals/domrecyclerfactory.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -1014,7 +1146,7 @@ inline void wasmdom::internals::DomRecyclerFactory::collect(DomRecycler& recycle
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/patch.hpp
+// src/internals/patch.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -1192,7 +1324,7 @@ inline void wasmdom::internals::patchVNode(VNode& oldVnode, VNode& vnode, const 
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/tohtml.hpp
+// src/internals/tohtml.hpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -1363,46 +1495,11 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/vdom.hpp
-// -----------------------------------------------------------------------------
-namespace emscripten
-{
-    class val;
-}
-
-namespace wasmdom
-{
-
-    class VDom
-    {
-    public:
-        VDom() = default;
-        VDom(const emscripten::val& element);
-
-        const VNode& patch(VNode vnode);
-
-    private:
-        VNode _currentNode = nullptr;
-    };
-
-}
-
-// -----------------------------------------------------------------------------
-// src/wasm-dom/attribute.cpp
+// src/attribute.cpp
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/attribute.inl.cpp
-// -----------------------------------------------------------------------------
-inline bool wasmdom::Event::operator==(const Event&) const = default;
-
-inline std::size_t wasmdom::EventHash::operator()(const Event& e) const
-{
-    return std::hash<std::size_t>{}(e.e);
-}
-
-// -----------------------------------------------------------------------------
-// src/wasm-dom/internals/domapi.cpp
+// src/internals/domapi.cpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -1499,7 +1596,7 @@ inline emscripten::val wasmdom::internals::domapi::nextSibling(const emscripten:
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/domrecycler.cpp
+// src/internals/domrecycler.cpp
 // -----------------------------------------------------------------------------
 namespace wasmdom::internals
 {
@@ -1572,7 +1669,7 @@ inline std::vector<emscripten::val> wasmdom::internals::DomRecycler::nodes(const
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/internals/wire.cpp
+// src/internals/wire.cpp
 // -----------------------------------------------------------------------------
 inline emscripten::val wasmdom::internals::toJsCallback(const Callback& callback)
 {
@@ -1612,7 +1709,7 @@ namespace wasmdom::internals
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/vdom.cpp
+// src/vdom.cpp
 // -----------------------------------------------------------------------------
 inline wasmdom::VDom::VDom(const emscripten::val& element)
     : _currentNode(VNode::toVNode(element))
@@ -1647,7 +1744,7 @@ inline const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 }
 
 // -----------------------------------------------------------------------------
-// src/wasm-dom/vnode.cpp
+// src/vnode.cpp
 // -----------------------------------------------------------------------------
 inline void wasmdom::VNode::normalize(bool injectSvgNamespace)
 {
@@ -1790,99 +1887,5 @@ inline void wasmdom::VNode::diff(const VNode& oldVnode)
         internals::diffCallbacks(oldVnode, *this);
     }
 }
-
-// -----------------------------------------------------------------------------
-// src/wasm-dom/vnode.inl.cpp
-// -----------------------------------------------------------------------------
-inline wasmdom::VNode::VNode(std::nullptr_t) {}
-
-inline wasmdom::VNode::VNode(const std::string& nodeSel)
-    : _data(std::make_shared<SharedData>())
-{
-    _data->sel = nodeSel;
-}
-
-inline wasmdom::VNode::VNode(text_tag_t, const std::string& nodeText)
-    : _data(std::make_shared<SharedData>())
-{
-    normalize();
-    _data->sel = nodeText;
-    // replace current type with text type
-    _data->hash = (_data->hash & removeNodeType) | isText;
-}
-
-inline wasmdom::VNode::VNode(const std::string& nodeSel, const VNodeAttributes& nodeData)
-    : VNode(nodeSel)
-{
-    _data->data = nodeData;
-}
-
-inline wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
-{
-    normalize();
-    if (_data->hash & isComment) {
-        _data->sel = nodeText;
-    } else {
-        _data->children.emplace_back(text_tag, nodeText);
-        _data->hash |= hasText;
-    }
-    return *this;
-}
-
-inline wasmdom::VNode& wasmdom::VNode::operator()(const VNode& child)
-{
-    _data->children.push_back(child);
-    return *this;
-}
-
-inline wasmdom::VNode& wasmdom::VNode::operator()(const Children& nodeChildren)
-{
-    _data->children = nodeChildren;
-    return *this;
-}
-
-inline wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<VNode> nodeChildren)
-{
-    _data->children = nodeChildren;
-    return *this;
-}
-
-inline const wasmdom::Attrs& wasmdom::VNode::attrs() const { return _data->data.attrs; }
-
-inline const wasmdom::Props& wasmdom::VNode::props() const { return _data->data.props; }
-
-inline const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->data.callbacks; }
-
-inline const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->data.eventCallbacks; }
-
-inline const std::string& wasmdom::VNode::sel() const { return _data->sel; }
-
-inline const std::string& wasmdom::VNode::key() const { return _data->key; }
-
-inline const std::string& wasmdom::VNode::ns() const { return _data->ns; }
-
-inline std::size_t wasmdom::VNode::hash() const { return _data->hash; }
-
-inline const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
-
-inline emscripten::val& wasmdom::VNode::node() { return _data->node; }
-
-inline void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
-
-inline void wasmdom::VNode::normalize() { normalize(false); }
-
-inline wasmdom::VNode::operator bool() const { return _data != nullptr; }
-
-inline bool wasmdom::VNode::operator!() const { return _data == nullptr; }
-
-inline bool wasmdom::VNode::operator==(const VNode& other) const { return _data == other._data; }
-
-inline wasmdom::Children::iterator wasmdom::VNode::begin() { return _data->children.begin(); }
-
-inline wasmdom::Children::iterator wasmdom::VNode::end() { return _data->children.end(); }
-
-inline wasmdom::Children::const_iterator wasmdom::VNode::begin() const { return _data->children.begin(); }
-
-inline wasmdom::Children::const_iterator wasmdom::VNode::end() const { return _data->children.end(); }
 
 // End of single header library

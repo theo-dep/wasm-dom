@@ -1,7 +1,7 @@
 #pragma once
 
-#include "wasm-dom/internals/domkeys.hpp"
-#include "wasm-dom/internals/jsapi.hpp"
+#include "internals/domkeys.hpp"
+#include "internals/jsapi.hpp"
 
 #include <emscripten/val.h>
 

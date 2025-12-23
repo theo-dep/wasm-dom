@@ -1,13 +1,5 @@
 #pragma once
 
-#define WASMDOM_SH_INLINE
-
-#ifdef WASMDOM_COVERAGE
-#define WASMDOM_INLINE
-#else
-#define WASMDOM_INLINE inline
-#endif
-
 // for single header use, see https://github.com/emscripten-core/emscripten/issues/25219
 // use WASMDOM_EM_JS instead of EM_JS in library mode for unicity
 #define _WASMDOM_EM_JS(ret, c_name, js_name, params, code)                          \

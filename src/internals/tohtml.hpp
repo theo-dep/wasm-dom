@@ -1,7 +1,8 @@
 #pragma once
 
-#include "wasm-dom/internals/utils.hpp"
-#include "wasm-dom/vnode.hpp"
+#include "internals/utils.hpp"
+
+#include <wasm-dom/vnode.hpp>
 
 #include <algorithm>
 #include <array>

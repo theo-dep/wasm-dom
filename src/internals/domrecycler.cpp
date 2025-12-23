@@ -1,10 +1,12 @@
 #include "domrecycler.hpp"
 
-#include "wasm-dom/internals/conf.h"
-#include "wasm-dom/internals/domfactory.hpp"
-#include "wasm-dom/internals/domkeys.hpp"
-#include "wasm-dom/internals/domrecyclerfactory.hpp"
-#include "wasm-dom/internals/utils.hpp"
+#include "bind.h"
+#include "domfactory.hpp"
+#include "domkeys.hpp"
+#include "domrecyclerfactory.hpp"
+#include "utils.hpp"
+
+#include <wasm-dom/conf.h>
 
 #include <emscripten/em_js.h>
 #include <emscripten/val.h>

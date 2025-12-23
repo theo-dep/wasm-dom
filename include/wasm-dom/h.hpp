@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vnode.hpp"
+#include "wasm-dom/vnode.hpp"
 
 namespace wasmdom::dsl
 {

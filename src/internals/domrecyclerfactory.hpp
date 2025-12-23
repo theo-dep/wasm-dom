@@ -1,9 +1,9 @@
 #pragma once
 
-#include "wasm-dom/internals/domfactory.hpp"
-#include "wasm-dom/internals/domrecycler.hpp"
-#include "wasm-dom/internals/jsapi.hpp"
-#include "wasm-dom/internals/utils.hpp"
+#include "internals/domfactory.hpp"
+#include "internals/domrecycler.hpp"
+#include "internals/jsapi.hpp"
+#include "internals/utils.hpp"
 
 #include <emscripten/val.h>
 

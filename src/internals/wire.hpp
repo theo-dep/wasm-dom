@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wasm-dom/attribute.hpp"
+#include <wasm-dom/attribute.hpp>
 
 namespace wasmdom::internals
 {

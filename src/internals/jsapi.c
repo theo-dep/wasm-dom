@@ -1,4 +1,4 @@
-#include "conf.h"
+#include "bind.h"
 
 #include <emscripten/em_js.h>
 

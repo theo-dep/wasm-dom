@@ -1,11 +1,11 @@
-#include "vnode.hpp"
-
-#include "internals/conf.h"
 #include "internals/diff.hpp"
 #include "internals/tohtml.hpp"
 
+#include <wasm-dom/conf.h>
+#include <wasm-dom/vnode.hpp>
+
 #ifdef WASMDOM_COVERAGE
-#include "vnode.inl.cpp"
+#include <wasm-dom/vnode.inl.hpp>
 
 wasmdom::VNode::VNode(const VNode& other) = default;
 wasmdom::VNode::VNode(VNode&& other) = default;

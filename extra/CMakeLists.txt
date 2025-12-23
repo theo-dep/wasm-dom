@@ -1,10 +1,12 @@
 file(GLOB_RECURSE HEADER_FILES
-    "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.h"
-    "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.hpp"
+    "${WASM_DOM_SOURCE_DIR}/include/wasm-dom/*.h"
+    "${WASM_DOM_SOURCE_DIR}/include/wasm-dom/*.hpp"
+    "${WASM_DOM_SOURCE_DIR}/src/*.h"
+    "${WASM_DOM_SOURCE_DIR}/src/*.hpp"
 )
-file(GLOB_RECURSE SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/wasm-dom/*.cpp")
+file(GLOB_RECURSE SOURCE_FILES "${WASM_DOM_SOURCE_DIR}/src/*.cpp")
 
-set(JSAPI_C_FILE ${CMAKE_SOURCE_DIR}/src/wasm-dom/internals/jsapi.c)
+set(JSAPI_C_FILE ${WASM_DOM_SOURCE_DIR}/src/internals/jsapi.c)
 
 set(OUTPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/wasm-dom.hpp)
 
@@ -26,7 +28,7 @@ add_custom_command(
         -DHEADER_FILES="${HEADER_FILES}"
         -DSOURCE_FILES="${SOURCE_FILES}"
         -DJSAPI_C_FILE="${JSAPI_C_FILE}"
-        -DSOURCE_DIR="${CMAKE_SOURCE_DIR}"
+        -DSOURCE_DIR="${WASM_DOM_SOURCE_DIR}"
         -DBINARY_DIR="${CMAKE_BINARY_DIR}"
         -DOUTPUT_FILE="${OUTPUT_FILE}"
         --log-level=${CMAKE_LOG_LEVEL}
