@@ -110,7 +110,7 @@ jobs:
       - name: Generate coverage data
         if: ${{ !cancelled() }}
         run: |
-          lcov -b . -d build/coverage/src/CMakeFiles/wasm-dom.dir/wasm-dom/ -c -o lcov.info --gcov-tool `pwd`/coverage/llvm-gcov --no-external
+          lcov -b . -d build/coverage/src/CMakeFiles/wasm-dom.dir/ -c -o lcov.info --gcov-tool `pwd`/coverage/llvm-gcov --no-external
 
       - name: Report code coverage
         id: coverage-report

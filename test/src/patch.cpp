@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "internals/domkeys.hpp"
 #include "wasm-dom.hpp"
-#include "wasm-dom/internals/domkeys.hpp"
 
 #include "jsdom.hpp"
 

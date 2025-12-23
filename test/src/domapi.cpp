@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "wasm-dom/internals/domapi.hpp"
+#include "internals/domapi.hpp"
 
 #include "jsdom.hpp"
 
