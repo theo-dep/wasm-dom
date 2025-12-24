@@ -10,6 +10,6 @@ target_link_libraries(single_header_test PRIVATE Catch2::Catch2WithMain)
 
 add_dependencies(single_header_test single_header)
 
-add_test(NAME single_header
+add_test(NAME singleHeader
     COMMAND ${NODE_JS_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/single_header_test.js --colour-mode none
 )
