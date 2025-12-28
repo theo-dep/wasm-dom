@@ -54,16 +54,16 @@ void wasmdom::internals::domapi::insertBefore(const emscripten::val& parentNode,
 }
 
 WASMDOM_SH_INLINE
-void wasmdom::internals::domapi::removeChild(const emscripten::val& child)
+void wasmdom::internals::domapi::removeNode(const emscripten::val& node)
 {
-    if (child.isNull() || child.isUndefined())
+    if (node.isNull() || node.isUndefined())
         return;
 
-    const emscripten::val parentNode(child["parentNode"]);
+    const emscripten::val parentNode(node["parentNode"]);
     if (!parentNode.isNull())
-        jsapi::removeChild(parentNode.as_handle(), child.as_handle());
+        jsapi::removeChild(parentNode.as_handle(), node.as_handle());
 
-    recycler().collect(child);
+    recycler().collect(node);
 }
 
 WASMDOM_SH_INLINE

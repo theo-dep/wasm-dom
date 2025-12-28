@@ -77,7 +77,7 @@ namespace wasmdom::internals
             if (*start) {
                 unmountVNodeChildren(*start);
                 onEvent(*start, onUnmount);
-                domapi::removeChild(start->node());
+                domapi::removeNode(start->node());
             }
         }
     }

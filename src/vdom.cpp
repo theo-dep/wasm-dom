@@ -31,7 +31,7 @@ const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
         internals::onEvent(vnode, onMount);
         internals::unmountVNodeChildren(_currentNode);
         internals::onEvent(_currentNode, onUnmount);
-        internals::domapi::removeChild(_currentNode.node());
+        internals::domapi::removeNode(_currentNode.node());
     }
 
     _currentNode = vnode;

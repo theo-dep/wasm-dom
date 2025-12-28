@@ -12,7 +12,7 @@ TEST_CASE("domApi", "[domApi]")
 
     SECTION("Should remove an unknown node")
     {
-        domapi::removeChild(emscripten::val::null());
-        domapi::removeChild(emscripten::val::undefined());
+        domapi::removeNode(emscripten::val::null());
+        domapi::removeNode(emscripten::val::undefined());
     }
 }
