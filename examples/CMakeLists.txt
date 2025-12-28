@@ -1,4 +1,5 @@
-set(LINK_OPTIONS -sENVIRONMENT=web -sNO_EXIT_RUNTIME)
+add_library(examples_options INTERFACE)
+target_link_options(examples_options INTERFACE -sENVIRONMENT=web -sNO_EXIT_RUNTIME)
 
 set(EXAMPLE_DIRS
     0-console
