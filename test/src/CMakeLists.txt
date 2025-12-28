@@ -1,9 +1,7 @@
-add_executable(tests
-    ../jsdom.cpp
-)
+add_executable(tests)
 
-target_include_directories(tests PRIVATE ${WASM_DOM_SOURCE_DIR}/test ${WASM_DOM_SOURCE_DIR}/src)
-target_link_libraries(tests PRIVATE wasm-dom address_sanitizer_link compile_flags optimization_flags Catch2::Catch2WithMain)
+target_include_directories(tests PRIVATE ${WASM_DOM_SOURCE_DIR}/src)
+target_link_libraries(tests PRIVATE wasm-dom common address_sanitizer_link compile_flags optimization_flags Catch2::Catch2WithMain)
 
 set(TEST_CASES attributes dataset domApi domRecycler eventListeners h patch patchEvent patchFragment props toHTML toVNode)
 

@@ -2,6 +2,7 @@
 
 #include "wasm-dom.hpp"
 
+#include "catch_emscripten.hpp"
 #include "jsdom.hpp"
 
 using namespace wasmdom;
@@ -20,7 +21,7 @@ TEST_CASE("dataset", "[dataset]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")), StrictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should update dataset")
@@ -35,8 +36,8 @@ TEST_CASE("dataset", "[dataset]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")), StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")), StrictlyEquals(emscripten::val("bar")));
 
         VNode vnode2 = i(data);
 
@@ -44,8 +45,8 @@ TEST_CASE("dataset", "[dataset]")
 
         node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")), StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")), StrictlyEquals(emscripten::val("bar")));
     }
 
     SECTION("can be memorized")
@@ -59,8 +60,8 @@ TEST_CASE("dataset", "[dataset]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")), StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")), StrictlyEquals(emscripten::val("bar")));
 
         VNode vnode2 = div(("data-baz", "baz"s));
 
@@ -68,7 +69,7 @@ TEST_CASE("dataset", "[dataset]")
 
         node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-baz")).strictlyEquals(emscripten::val("baz")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-baz")), StrictlyEquals(emscripten::val("baz")));
         REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).isNull());
     }
 }

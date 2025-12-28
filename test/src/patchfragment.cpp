@@ -2,9 +2,8 @@
 
 #include "wasm-dom.hpp"
 
+#include "catch_emscripten.hpp"
 #include "jsdom.hpp"
-
-#include <emscripten.h>
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
@@ -22,8 +21,8 @@ TEST_CASE("patchFragment", "[patchFragment]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode);
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["nodeType"].strictlyEquals(jsDom.document()["TEXT_NODE"]));
-        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["nodeType"], StrictlyEquals(jsDom.document()["TEXT_NODE"]));
+        REQUIRE_THAT(node["textContent"], StrictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should patch an element inside a fragment")
@@ -39,12 +38,12 @@ TEST_CASE("patchFragment", "[patchFragment]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["textContent"], StrictlyEquals(emscripten::val("foo")));
         vdom.patch(vnode2);
         node = jsDom.bodyFirstChild();
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["textContent"], StrictlyEquals(emscripten::val("bar")));
     }
 
     SECTION("should append elements to fragment")
@@ -65,18 +64,18 @@ TEST_CASE("patchFragment", "[patchFragment]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo")));
         vdom.patch(vnode2);
         node = jsDom.bodyFirstChild();
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
-        REQUIRE(node["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["children"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["1"]["textContent"], StrictlyEquals(emscripten::val("bar")));
     }
 
     SECTION("should remove elements from fragment")
@@ -97,17 +96,17 @@ TEST_CASE("patchFragment", "[patchFragment]")
         VDom vdom(jsDom.root());
         vdom.patch(vnode1);
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
-        REQUIRE(node["children"]["1"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["children"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["children"]["1"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["1"]["textContent"], StrictlyEquals(emscripten::val("bar")));
         vdom.patch(vnode2);
         node = jsDom.bodyFirstChild();
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["children"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["children"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["children"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["children"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["children"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo")));
     }
 }

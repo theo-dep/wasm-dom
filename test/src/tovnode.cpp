@@ -2,6 +2,7 @@
 
 #include "wasm-dom.hpp"
 
+#include "catch_emscripten.hpp"
 #include "jsdom.hpp"
 
 using namespace wasmdom;
@@ -22,7 +23,7 @@ TEST_CASE("toVNode", "[toVNode]")
 
         node = jsDom.bodyFirstChild();
 
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
     }
 
     SECTION("should convert text node to vnode")
@@ -36,8 +37,8 @@ TEST_CASE("toVNode", "[toVNode]")
 
         node = jsDom.bodyFirstChild();
 
-        REQUIRE(node["nodeName"].strictlyEquals(emscripten::val("#text")));
-        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("Hello world!")));
+        REQUIRE_THAT(node["nodeName"], StrictlyEquals(emscripten::val("#text")));
+        REQUIRE_THAT(node["textContent"], StrictlyEquals(emscripten::val("Hello world!")));
     }
 
     SECTION("should convert comment node to vnode")
@@ -51,8 +52,8 @@ TEST_CASE("toVNode", "[toVNode]")
 
         node = jsDom.bodyFirstChild();
 
-        REQUIRE(node["nodeName"].strictlyEquals(emscripten::val("#comment")));
-        REQUIRE(node["textContent"].strictlyEquals(emscripten::val("Hello world!")));
+        REQUIRE_THAT(node["nodeName"], StrictlyEquals(emscripten::val("#comment")));
+        REQUIRE_THAT(node["textContent"], StrictlyEquals(emscripten::val("Hello world!")));
     }
 
     SECTION("should convert a node with attributes to vnode")
@@ -69,10 +70,10 @@ TEST_CASE("toVNode", "[toVNode]")
 
         node = jsDom.bodyFirstChild();
 
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("src")).strictlyEquals(emscripten::val("http://localhost/")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("bar")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("src")), StrictlyEquals(emscripten::val("http://localhost/")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")), StrictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-bar")), StrictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should convert a node with children to vnode")
@@ -95,19 +96,19 @@ TEST_CASE("toVNode", "[toVNode]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["childNodes"]["length"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(node["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("H1")));
-        REQUIRE(node["childNodes"]["0"]["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["childNodes"]["0"]["childNodes"]["0"]["nodeName"].strictlyEquals(emscripten::val("#text")));
-        REQUIRE(node["childNodes"]["0"]["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Hello World!")));
-        REQUIRE(node["childNodes"]["1"]["tagName"].strictlyEquals(emscripten::val("P")));
-        REQUIRE(node["childNodes"]["1"]["childNodes"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(node["childNodes"]["1"]["childNodes"]["0"]["nodeName"].strictlyEquals(emscripten::val("#text")));
-        REQUIRE(node["childNodes"]["1"]["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("foo")));
-        REQUIRE(node["childNodes"]["1"]["childNodes"]["1"]["nodeName"].strictlyEquals(emscripten::val("#comment")));
-        REQUIRE(node["childNodes"]["1"]["childNodes"]["1"]["textContent"].strictlyEquals(emscripten::val("bar")));
-        REQUIRE(node["childNodes"]["2"]["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["childNodes"]["length"], StrictlyEquals(emscripten::val(3)));
+        REQUIRE_THAT(node["childNodes"]["0"]["tagName"], StrictlyEquals(emscripten::val("H1")));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["0"]["nodeName"], StrictlyEquals(emscripten::val("#text")));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["0"]["textContent"], StrictlyEquals(emscripten::val("Hello World!")));
+        REQUIRE_THAT(node["childNodes"]["1"]["tagName"], StrictlyEquals(emscripten::val("P")));
+        REQUIRE_THAT(node["childNodes"]["1"]["childNodes"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["childNodes"]["1"]["childNodes"]["0"]["nodeName"], StrictlyEquals(emscripten::val("#text")));
+        REQUIRE_THAT(node["childNodes"]["1"]["childNodes"]["0"]["textContent"], StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["childNodes"]["1"]["childNodes"]["1"]["nodeName"], StrictlyEquals(emscripten::val("#comment")));
+        REQUIRE_THAT(node["childNodes"]["1"]["childNodes"]["1"]["textContent"], StrictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node["childNodes"]["2"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
     }
 
     SECTION("should convert a node with attributes and children to vnode")
@@ -127,12 +128,12 @@ TEST_CASE("toVNode", "[toVNode]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")).strictlyEquals(emscripten::val("foo")));
-        REQUIRE(node["childNodes"]["length"].strictlyEquals(emscripten::val(2)));
-        REQUIRE(node["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("IMG")));
-        REQUIRE(node["childNodes"]["0"].call<emscripten::val>("getAttribute", emscripten::val("src")).strictlyEquals(emscripten::val("http://localhost/")));
-        REQUIRE(node["childNodes"]["1"]["tagName"].strictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("data-foo")), StrictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["childNodes"]["length"], StrictlyEquals(emscripten::val(2)));
+        REQUIRE_THAT(node["childNodes"]["0"]["tagName"], StrictlyEquals(emscripten::val("IMG")));
+        REQUIRE_THAT(node["childNodes"]["0"].call<emscripten::val>("getAttribute", emscripten::val("src")), StrictlyEquals(emscripten::val("http://localhost/")));
+        REQUIRE_THAT(node["childNodes"]["1"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
     }
 
     SECTION("should remove previous children of the root element")
@@ -157,13 +158,13 @@ TEST_CASE("toVNode", "[toVNode]")
 
         emscripten::val node = nextVNode.node();
 
-        REQUIRE(node.strictlyEquals(prevNode));
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["id"].strictlyEquals(emscripten::val("id")));
-        REQUIRE(node["className"].strictlyEquals(emscripten::val("class")));
-        REQUIRE(node["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Hi")));
+        REQUIRE_THAT(node, StrictlyEquals(prevNode));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["id"], StrictlyEquals(emscripten::val("id")));
+        REQUIRE_THAT(node["className"], StrictlyEquals(emscripten::val("class")));
+        REQUIRE_THAT(node["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["childNodes"]["0"]["textContent"], StrictlyEquals(emscripten::val("Hi")));
     }
 
     SECTION("should support patching in a DocumentFragment")
@@ -184,15 +185,15 @@ TEST_CASE("toVNode", "[toVNode]")
 
         emscripten::val node = nextVNode.node();
 
-        REQUIRE(node.strictlyEquals(prevNode));
-        REQUIRE(node["nodeType"].strictlyEquals(emscripten::val(11)));
-        REQUIRE(node["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["childNodes"]["0"]["id"].strictlyEquals(emscripten::val("id")));
-        REQUIRE(node["childNodes"]["0"]["className"].strictlyEquals(emscripten::val("class")));
-        REQUIRE(node["childNodes"]["0"]["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["childNodes"]["0"]["childNodes"]["0"]["tagName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["childNodes"]["0"]["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Hi")));
+        REQUIRE_THAT(node, StrictlyEquals(prevNode));
+        REQUIRE_THAT(node["nodeType"], StrictlyEquals(emscripten::val(11)));
+        REQUIRE_THAT(node["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["childNodes"]["0"]["id"], StrictlyEquals(emscripten::val("id")));
+        REQUIRE_THAT(node["childNodes"]["0"]["className"], StrictlyEquals(emscripten::val("class")));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["0"]["tagName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["childNodes"]["0"]["childNodes"]["0"]["textContent"], StrictlyEquals(emscripten::val("Hi")));
     }
 
     SECTION("should remove some children of the root element")
@@ -218,14 +219,14 @@ TEST_CASE("toVNode", "[toVNode]")
 
         emscripten::val node = nextVNode.node();
 
-        REQUIRE(node.strictlyEquals(prevNode));
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["id"].strictlyEquals(emscripten::val("id")));
-        REQUIRE(node["className"].strictlyEquals(emscripten::val("class")));
-        REQUIRE(node["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["childNodes"]["0"]["nodeType"].strictlyEquals(emscripten::val(3)));
-        REQUIRE(node["childNodes"]["0"]["wholeText"].strictlyEquals(emscripten::val("Foobar")));
-        REQUIRE(node["childNodes"]["0"]["testProperty"].strictlyEquals(emscripten::val(123)));
+        REQUIRE_THAT(node, StrictlyEquals(prevNode));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["id"], StrictlyEquals(emscripten::val("id")));
+        REQUIRE_THAT(node["className"], StrictlyEquals(emscripten::val("class")));
+        REQUIRE_THAT(node["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["nodeType"], StrictlyEquals(emscripten::val(3)));
+        REQUIRE_THAT(node["childNodes"]["0"]["wholeText"], StrictlyEquals(emscripten::val("Foobar")));
+        REQUIRE_THAT(node["childNodes"]["0"]["testProperty"], StrictlyEquals(emscripten::val(123)));
     }
 
     SECTION("should remove text elements")
@@ -252,12 +253,12 @@ TEST_CASE("toVNode", "[toVNode]")
 
         emscripten::val node = nextVNode.node();
 
-        REQUIRE(node.strictlyEquals(prevNode));
-        REQUIRE(node["tagName"].strictlyEquals(emscripten::val("DIV")));
-        REQUIRE(node["id"].strictlyEquals(emscripten::val("id")));
-        REQUIRE(node["className"].strictlyEquals(emscripten::val("class")));
-        REQUIRE(node["childNodes"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["childNodes"]["0"]["nodeType"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["childNodes"]["0"]["textContent"].strictlyEquals(emscripten::val("Hello")));
+        REQUIRE_THAT(node, StrictlyEquals(prevNode));
+        REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
+        REQUIRE_THAT(node["id"], StrictlyEquals(emscripten::val("id")));
+        REQUIRE_THAT(node["className"], StrictlyEquals(emscripten::val("class")));
+        REQUIRE_THAT(node["childNodes"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["nodeType"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["childNodes"]["0"]["textContent"], StrictlyEquals(emscripten::val("Hello")));
     }
 }

@@ -2,6 +2,7 @@
 
 #include "wasm-dom.hpp"
 
+#include "catch_emscripten.hpp"
 #include "jsdom.hpp"
 
 using namespace wasmdom;
@@ -18,8 +19,8 @@ TEST_CASE("Second use of single header", "[single-header][2]")
         vdom.patch(vnode);
 
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(jsDom.document()["body"]["children"]["length"].strictlyEquals(emscripten::val(1)));
-        REQUIRE(node["nodeName"].strictlyEquals(emscripten::val("SPAN")));
-        REQUIRE(node["className"].strictlyEquals(emscripten::val("")));
+        REQUIRE_THAT(jsDom.document()["body"]["children"]["length"], StrictlyEquals(emscripten::val(1)));
+        REQUIRE_THAT(node["nodeName"], StrictlyEquals(emscripten::val("SPAN")));
+        REQUIRE_THAT(node["className"], StrictlyEquals(emscripten::val("")));
     }
 }

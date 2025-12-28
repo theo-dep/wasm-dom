@@ -1,6 +1,6 @@
 #include "jsdom.hpp"
 
-#include <emscripten.h>
+#include <emscripten/em_js.h>
 
 // call in JS side, we compile WASM without filesystem
 EM_JS(emscripten::EM_VAL, requireJSDom, (), { return Emval.toHandle(require("jsdom")); })
