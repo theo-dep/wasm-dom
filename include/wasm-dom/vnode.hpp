@@ -54,6 +54,7 @@ namespace wasmdom
             std::size_t hash{ 0 };
             VNodeAttributes data;
             emscripten::val node{ emscripten::val::null() };
+            emscripten::val parentNode{ emscripten::val::null() };
             Children children;
         };
 
@@ -90,8 +91,10 @@ namespace wasmdom
         std::size_t hash() const;
         const emscripten::val& node() const;
         emscripten::val& node();
+        const emscripten::val& parentNode() const;
 
         void setNode(const emscripten::val& node);
+        void setParentNode(const emscripten::val& node);
 
         void normalize();
 

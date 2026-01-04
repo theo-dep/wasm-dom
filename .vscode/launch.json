@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Launch Test Runner",
-            "program": "${workspaceFolder}/build/test/Debug/tests.js",
+            "program": "${workspaceFolder}/build/test/src/Debug/tests.js",
             "args": [
                 "[patch]"
             ],
