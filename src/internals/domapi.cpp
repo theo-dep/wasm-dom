@@ -99,7 +99,7 @@ void wasmdom::internals::domapi::setNodeValue(emscripten::val& node, const std::
 WASMDOM_SH_INLINE
 emscripten::val wasmdom::internals::domapi::parentNode(const emscripten::val& node)
 {
-    if (!node.isNull() && !node.isUndefined() && !node["parentNode"].isNull())
+    if (!node.isNull() && !node.isUndefined())
         return node["parentNode"];
     return emscripten::val::null();
 }
@@ -107,7 +107,7 @@ emscripten::val wasmdom::internals::domapi::parentNode(const emscripten::val& no
 WASMDOM_SH_INLINE
 emscripten::val wasmdom::internals::domapi::nextSibling(const emscripten::val& node)
 {
-    if (!node.isNull() && !node.isUndefined() && !node["nextSibling"].isNull())
+    if (!node.isNull() && !node.isUndefined())
         return node["nextSibling"];
     return emscripten::val::null();
 }
