@@ -12,10 +12,9 @@ wasmdom::VNode::VNode(const std::string& nodeSel)
 
 WASMDOM_INLINE
 wasmdom::VNode::VNode(text_tag_t, const std::string& nodeText)
-    : _data(std::make_shared<SharedData>())
+    : VNode(nodeText)
 {
     normalize();
-    _data->sel = nodeText;
     // replace current type with text type
     _data->hash = (_data->hash & removeNodeType) | isText;
 }
@@ -92,7 +91,13 @@ WASMDOM_INLINE
 emscripten::val& wasmdom::VNode::node() { return _data->node; }
 
 WASMDOM_INLINE
+const emscripten::val& wasmdom::VNode::parentNode() const { return _data->parentNode; }
+
+WASMDOM_INLINE
 void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
+
+WASMDOM_INLINE
+void wasmdom::VNode::setParentNode(const emscripten::val& node) { _data->parentNode = node; }
 
 WASMDOM_INLINE
 void wasmdom::VNode::normalize() { normalize(false); }
@@ -101,7 +106,7 @@ WASMDOM_INLINE
 wasmdom::VNode::operator bool() const { return _data != nullptr; }
 
 WASMDOM_INLINE
-bool wasmdom::VNode::operator!() const { return _data == nullptr; }
+bool wasmdom::VNode::operator!() const { return !static_cast<bool>(*this); }
 
 WASMDOM_INLINE
 bool wasmdom::VNode::operator==(const VNode& other) const { return _data == other._data; }

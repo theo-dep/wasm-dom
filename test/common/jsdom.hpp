@@ -9,6 +9,7 @@ public:
 
     emscripten::val document() const;
     emscripten::val root() const;
+    emscripten::val body() const;
     emscripten::val bodyFirstChild() const;
 
 private:

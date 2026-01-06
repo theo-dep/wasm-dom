@@ -20,7 +20,7 @@ namespace wasmdom::dsl
     inline auto f(F&& f) { return std::function(std::forward<F>(f)); }
 
     inline VNode t(const std::string& inlineText) { return VNode(text_tag, inlineText); }
-    inline VNode fragment() { return VNode(""); }
+
     inline VNode comment() { return VNode("!"); }
     inline VNode comment(const std::string& text) { return comment()(text); }
 
@@ -323,10 +323,14 @@ namespace wasmdom::dsl
     WASMDOM_DSL_FOR_EACH(WASMDOM_DSL_SEL, WASMDOM_DSL_ELEMENTS)
 
 #define WASMDOM_DSL_CONFLICT_ELEMENTS \
-    hTemplate, hSwitch,               \
+    fragment,                         \
+        hTemplate, hSwitch,           \
         webComponent,                 \
         missingGlyph,                 \
         fontFace, fontFaceFormat, fontFaceName, fontFaceSrc, fontFaceUri, colorProfile // annotationXml
+
+    // Fragment
+    WASMDOM_DSL_SEL_NAME(fragment, "")
 
     // Elements with naming conflicts resolved
     WASMDOM_DSL_SEL_NAME(hTemplate, "template")

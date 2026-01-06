@@ -3,6 +3,7 @@
 #include "internals/domkeys.hpp"
 #include "internals/domrecycler.hpp"
 
+#include "catch_emscripten.hpp"
 #include "jsdom.hpp"
 
 using namespace wasmdom::internals;
@@ -29,11 +30,11 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         std::vector textList = recycler.nodes("#TEXT");
         REQUIRE(textList.size() == 1);
-        REQUIRE(textList[0].strictlyEquals(node));
+        REQUIRE_THAT(textList[0], StrictlyEquals(node));
 
         emscripten::val newNode = recycler.createText("New Hello World!");
         REQUIRE(node["nodeValue"].as<std::string>() == "New Hello World!");
-        REQUIRE(newNode.strictlyEquals(node));
+        REQUIRE_THAT(newNode, StrictlyEquals(node));
 
         REQUIRE(recycler.nodes("#TEXT").empty());
     }
@@ -48,11 +49,11 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         std::vector commentList = recycler.nodes("#COMMENT");
         REQUIRE(commentList.size() == 1);
-        REQUIRE(commentList[0].strictlyEquals(node));
+        REQUIRE_THAT(commentList[0], StrictlyEquals(node));
 
         emscripten::val newNode = recycler.createComment("New Hello World!");
         REQUIRE(node["nodeValue"].as<std::string>() == "New Hello World!");
-        REQUIRE(newNode.strictlyEquals(node));
+        REQUIRE_THAT(newNode, StrictlyEquals(node));
         REQUIRE(recycler.nodes("#COMMENT").empty());
     }
 
@@ -66,11 +67,11 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         std::vector list = recycler.nodes("DIV");
         REQUIRE(list.size() == 1);
-        REQUIRE(list[0].strictlyEquals(node));
+        REQUIRE_THAT(list[0], StrictlyEquals(node));
 
         emscripten::val newNode = recycler.create("div");
         REQUIRE(node["nodeName"].as<std::string>() == "DIV");
-        REQUIRE(newNode.strictlyEquals(node));
+        REQUIRE_THAT(newNode, StrictlyEquals(node));
         REQUIRE(recycler.nodes("DIV").empty());
     }
 
@@ -84,11 +85,11 @@ TEST_CASE("domRecycler", "[domRecycler]")
 
         std::vector list = recycler.nodes("SVGhttp://www.w3.org/2000/svg");
         REQUIRE(list.size() == 1);
-        REQUIRE(list[0].strictlyEquals(node));
+        REQUIRE_THAT(list[0], StrictlyEquals(node));
 
         emscripten::val newNode = recycler.createNS("svg", "http://www.w3.org/2000/svg");
         REQUIRE(node["nodeName"].as<std::string>() == "svg");
-        REQUIRE(newNode.strictlyEquals(node));
+        REQUIRE_THAT(newNode, StrictlyEquals(node));
         REQUIRE(recycler.nodes("SVGhttp://www.w3.org/2000/svg").empty());
     }
 
@@ -111,10 +112,10 @@ TEST_CASE("domRecycler", "[domRecycler]")
         std::vector spanList = recycler.nodes("SPAN");
 
         REQUIRE(divList.size() == 1);
-        REQUIRE(divList[0].strictlyEquals(div));
+        REQUIRE_THAT(divList[0], StrictlyEquals(div));
 
         REQUIRE(spanList.size() == 1);
-        REQUIRE(spanList[0].strictlyEquals(span));
+        REQUIRE_THAT(spanList[0], StrictlyEquals(span));
     }
 
     SECTION("should clean attributes")
@@ -173,8 +174,8 @@ TEST_CASE("domRecycler", "[domRecycler]")
         node.set("onkeydown", callback);
         node.set(nodeRawsKey, emscripten::val::array(std::vector{ emscripten::val("onclick"), emscripten::val("onkeydown") }));
 
-        REQUIRE(node["onclick"].strictlyEquals(callback));
-        REQUIRE(node["onkeydown"].strictlyEquals(callback));
+        REQUIRE_THAT(node["onclick"], StrictlyEquals(callback));
+        REQUIRE_THAT(node["onkeydown"], StrictlyEquals(callback));
 
         recycler.collect(node);
 

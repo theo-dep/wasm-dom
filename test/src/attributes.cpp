@@ -2,6 +2,7 @@
 
 #include "wasm-dom.hpp"
 
+#include "catch_emscripten.hpp"
 #include "jsdom.hpp"
 
 using namespace wasmdom;
@@ -48,9 +49,9 @@ TEST_CASE("attributes", "[attributes]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("href")), StrictlyEquals(emscripten::val("/foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")), StrictlyEquals(emscripten::val("1")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("value")), StrictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("can be memoized")
@@ -68,9 +69,9 @@ TEST_CASE("attributes", "[attributes]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("href")), StrictlyEquals(emscripten::val("/foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")), StrictlyEquals(emscripten::val("1")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("value")), StrictlyEquals(emscripten::val("foo")));
 
         VNode vnode2 = div(data);
 
@@ -78,9 +79,9 @@ TEST_CASE("attributes", "[attributes]")
 
         node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("/foo")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("1")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("href")), StrictlyEquals(emscripten::val("/foo")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")), StrictlyEquals(emscripten::val("1")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("value")), StrictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should be omitted when falsy values are provided")
@@ -95,8 +96,8 @@ TEST_CASE("attributes", "[attributes]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("href")), StrictlyEquals(emscripten::val("null")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")), StrictlyEquals(emscripten::val("0")));
         REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("value")).isNull());
     }
 
@@ -114,9 +115,9 @@ TEST_CASE("attributes", "[attributes]")
 
         emscripten::val node = jsDom.bodyFirstChild();
 
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("href")).strictlyEquals(emscripten::val("null")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")).strictlyEquals(emscripten::val("0")));
-        REQUIRE(node.call<emscripten::val>("getAttribute", emscripten::val("readonly")).strictlyEquals(emscripten::val("")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("href")), StrictlyEquals(emscripten::val("null")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("minlength")), StrictlyEquals(emscripten::val("0")));
+        REQUIRE_THAT(node.call<emscripten::val>("getAttribute", emscripten::val("readonly")), StrictlyEquals(emscripten::val("")));
     }
 
     SECTION("should be set correctly when xlink namespaced")

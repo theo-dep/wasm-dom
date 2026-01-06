@@ -2,6 +2,7 @@
 
 #include "wasm-dom.hpp"
 
+#include "catch_emscripten.hpp"
 #include "jsdom.hpp"
 
 using namespace wasmdom;
@@ -19,7 +20,7 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode);
 
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://localhost/")));
+        REQUIRE_THAT(node["src"], StrictlyEquals(emscripten::val("http://localhost/")));
     }
 
     SECTION("changes an elements props")
@@ -32,7 +33,7 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode2);
 
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://localhost/")));
+        REQUIRE_THAT(node["src"], StrictlyEquals(emscripten::val("http://localhost/")));
     }
 
     SECTION("preserves memorized props")
@@ -46,12 +47,12 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode);
 
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://other/")));
+        REQUIRE_THAT(node["src"], StrictlyEquals(emscripten::val("http://other/")));
 
         vdom.patch(vnode2);
 
         node = jsDom.bodyFirstChild();
-        REQUIRE(node["src"].strictlyEquals(emscripten::val("http://other/")));
+        REQUIRE_THAT(node["src"], StrictlyEquals(emscripten::val("http://other/")));
     }
 
     SECTION("removes an elements props")
@@ -76,14 +77,14 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode);
 
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["value"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["value"], StrictlyEquals(emscripten::val("foo")));
 
         node.set("value", emscripten::val("bar"));
-        REQUIRE(node["value"].strictlyEquals(emscripten::val("bar")));
+        REQUIRE_THAT(node["value"], StrictlyEquals(emscripten::val("bar")));
 
         vdom.patch(vnode2);
 
-        REQUIRE(node["value"].strictlyEquals(emscripten::val("foo")));
+        REQUIRE_THAT(node["value"], StrictlyEquals(emscripten::val("foo")));
     }
 
     SECTION("should update checked prop if user interacted with the element")
@@ -103,13 +104,13 @@ TEST_CASE("props", "[props]")
         vdom.patch(vnode);
 
         emscripten::val node = jsDom.bodyFirstChild();
-        REQUIRE(node["checked"].strictlyEquals(emscripten::val(true)));
+        REQUIRE_THAT(node["checked"], StrictlyEquals(emscripten::val(true)));
 
         node.set("checked", emscripten::val(false));
-        REQUIRE(node["checked"].strictlyEquals(emscripten::val(false)));
+        REQUIRE_THAT(node["checked"], StrictlyEquals(emscripten::val(false)));
 
         vdom.patch(vnode2);
 
-        REQUIRE(node["checked"].strictlyEquals(emscripten::val(true)));
+        REQUIRE_THAT(node["checked"], StrictlyEquals(emscripten::val(true)));
     }
 }

@@ -6,6 +6,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
+target_link_options(Catch2WithMain PUBLIC -sENVIRONMENT=node -sEXIT_RUNTIME -sNO_DISABLE_EXCEPTION_CATCHING)
+
 find_program(NPM_EXECUTABLE npm REQUIRED)
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL Windows)
@@ -18,8 +20,7 @@ file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${CMAKE_CURRENT_BIN
 execute_process(COMMAND ${NPM_EXECUTABLE} install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} OUTPUT_QUIET COMMAND_ERROR_IS_FATAL ANY)
 message(CHECK_PASS "done")
 
-set(LINK_OPTIONS -sENVIRONMENT=node -sEXIT_RUNTIME -sNO_DISABLE_EXCEPTION_CATCHING)
-
+add_subdirectory(common)
 add_subdirectory(src)
 add_subdirectory(benchmark)
 add_subdirectory(single_header)
