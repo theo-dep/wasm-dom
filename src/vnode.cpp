@@ -2,10 +2,13 @@
 
 #ifdef __EMSCRIPTEN__
 #include "internals/diff.hpp"
+#include "internals/tovnode.hpp"
 #endif
 
 #include <wasm-dom/conf.h>
 #include <wasm-dom/vnode.hpp>
+
+#include <cassert>
 
 #ifdef WASMDOM_COVERAGE
 #include <wasm-dom/vnode.inl.hpp>
@@ -136,52 +139,19 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
 WASMDOM_SH_INLINE
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
-    VNode vnode = nullptr;
-
-    const int nodeType = node["nodeType"].as<int>();
-    switch (nodeType) {
-        case 1: // isElement
-        {
-            std::string sel = node["tagName"].as<std::string>();
-            internals::lower(sel);
-
-            VNodeAttributes data;
-            for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
-                data.attrs.emplace(node["attributes"][i]["nodeName"].as<std::string>(), node["attributes"][i]["nodeValue"].as<std::string>());
-            }
-
-            Children children;
-            for (int i : std::views::iota(0, node["childNodes"]["length"].as<int>())) {
-                children.push_back(toVNode(node["childNodes"][i]));
-            }
-
-            vnode = VNode(sel, data)(children);
-        } break;
-
-        case 3: // isText
-            vnode = VNode(text_tag, node["textContent"].as<std::string>());
-            break;
-
-        case 8: // isComment
-            vnode = VNode("!")(node["textContent"].as<std::string>());
-            break;
-
-        default: // isDocumentFragment
-        {
-            // if fragment is not added to the DOM yet
-            Children children;
-            for (int i : std::views::iota(0, node["childElementCount"].as<int>())) {
-                children.push_back(toVNode(node["children"][i]));
-            }
-
-            vnode = VNode("")(children);
-        }
+    VNode parent{ internals::toVNode(node["parentNode"]) };
+    if (!parent) {
+        return internals::toVNode(node);
     }
 
-    vnode.setNode(node);
-    vnode.setParentNode(internals::domapi::parentNode(node));
-
-    return vnode;
+    const Children::iterator vnodeIt{
+        std::ranges::find_if(parent, [&node](const VNode& child) {
+            return node.strictlyEquals(child.node());
+        })
+    };
+    assert(vnodeIt != parent.end());
+    vnodeIt->setParent(std::move(parent));
+    return *vnodeIt;
 }
 
 #endif

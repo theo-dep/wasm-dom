@@ -3,6 +3,7 @@
 #include "wasm-dom/attribute.hpp"
 
 #include <memory>
+#include <variant>
 #include <vector>
 
 namespace wasmdom
@@ -46,20 +47,6 @@ namespace wasmdom
 
     class VNode
     {
-        struct SharedData
-        {
-            std::string sel;
-            std::string key;
-            std::string ns;
-            std::size_t hash{ 0 };
-            VNodeAttributes data;
-#ifdef __EMSCRIPTEN__
-            emscripten::val node{ emscripten::val::null() };
-            emscripten::val parentNode{ emscripten::val::null() };
-#endif
-            Children children;
-        };
-
     public:
         VNode(std::nullptr_t);
         VNode(const std::string& nodeSel);
@@ -95,13 +82,15 @@ namespace wasmdom
         std::size_t hash() const;
 
 #ifdef __EMSCRIPTEN__
+        void setNode(const emscripten::val& node);
         const emscripten::val& node() const;
         emscripten::val& node();
-        const emscripten::val& parentNode() const;
-
-        void setNode(const emscripten::val& node);
-        void setParentNode(const emscripten::val& node);
 #endif
+
+        void setParent(const VNode& vnode);
+        void setParent(VNode&& vnode);
+        const VNode& parent() const;
+        VNode releaseParent();
 
         void normalize();
 
@@ -126,7 +115,24 @@ namespace wasmdom
         void normalize(bool injectSvgNamespace);
 
         // contains selector for elements and fragments, text for comments and textNodes
+        struct SharedData;
         std::shared_ptr<SharedData> _data = nullptr;
+    };
+
+    struct VNode::SharedData
+    {
+        std::string sel;
+        std::string key;
+        std::string ns;
+        std::size_t hash{ 0 };
+        VNodeAttributes data;
+#ifdef __EMSCRIPTEN__
+        emscripten::val node{ emscripten::val::null() };
+#endif
+        using TopVNode = VNode;
+        using InGraphVNode = std::reference_wrapper<const VNode>;
+        std::variant<TopVNode, InGraphVNode> parent{ nullptr };
+        Children children;
     };
 }
 

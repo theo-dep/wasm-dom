@@ -21,7 +21,4 @@ namespace wasmdom::internals::domapi
     void removeAttribute(const emscripten::val& node, const std::string& attribute);
     void setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value);
     void setNodeValue(emscripten::val& node, const std::string& text);
-
-    emscripten::val parentNode(const emscripten::val& node);
-    emscripten::val nextSibling(const emscripten::val& node);
 }

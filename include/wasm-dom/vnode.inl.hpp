@@ -91,21 +91,45 @@ std::size_t wasmdom::VNode::hash() const { return _data->hash; }
 #ifdef __EMSCRIPTEN__
 
 WASMDOM_INLINE
+void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
+
+WASMDOM_INLINE
 const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
 
 WASMDOM_INLINE
 emscripten::val& wasmdom::VNode::node() { return _data->node; }
 
-WASMDOM_INLINE
-const emscripten::val& wasmdom::VNode::parentNode() const { return _data->parentNode; }
-
-WASMDOM_INLINE
-void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
-
-WASMDOM_INLINE
-void wasmdom::VNode::setParentNode(const emscripten::val& node) { _data->parentNode = node; }
-
 #endif
+
+WASMDOM_INLINE
+void wasmdom::VNode::setParent(const VNode& vnode) { _data->parent = std::cref(vnode); }
+
+WASMDOM_INLINE
+void wasmdom::VNode::setParent(VNode&& vnode) { _data->parent = std::move(vnode); }
+
+WASMDOM_INLINE
+const wasmdom::VNode& wasmdom::VNode::parent() const
+{
+    if (const auto* parentPtr{ std::get_if<SharedData::TopVNode>(&_data->parent) }) {
+        return *parentPtr;
+    } else if (const auto* parentRef{ std::get_if<SharedData::InGraphVNode>(&_data->parent) }) {
+        return *parentRef;
+    } else {
+        static const VNode nullNode(nullptr);
+        return nullNode;
+    }
+}
+
+WASMDOM_INLINE
+wasmdom::VNode wasmdom::VNode::releaseParent()
+{
+    if (auto* parent{ std::get_if<SharedData::TopVNode>(&_data->parent) }) {
+        _data->parent = nullptr;
+        return std::move(*parent);
+    } else {
+        return nullptr;
+    }
+}
 
 WASMDOM_INLINE
 void wasmdom::VNode::normalize() { normalize(false); }
