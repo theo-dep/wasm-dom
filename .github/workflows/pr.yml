@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install dependencies
         run: |
@@ -48,7 +48,7 @@ jobs:
           node build/test/benchmark/Release/benchmarks.js -r junit > benchmarks.xml
 
       - name: Publish test results
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v6
         if: ${{ !cancelled() }}
         with:
           report_paths: "*.xml"
@@ -56,7 +56,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-results
           path: "*.xml"
@@ -64,7 +64,7 @@ jobs:
 
       - name: Upload examples
         if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.EXAMPLES_ARTIFACT_NAME }}
           path: build/examples/Release/
@@ -81,7 +81,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install dependencies
         run: |
@@ -115,7 +115,7 @@ jobs:
       - name: Report code coverage
         id: coverage-report
         if: ${{ !cancelled() }}
-        uses: zgosalvez/github-actions-report-lcov@v4
+        uses: zgosalvez/github-actions-report-lcov@v7
         with:
           coverage-files: lcov.info
           minimum-coverage: 100
@@ -136,7 +136,7 @@ jobs:
 
     steps:
       - name: Download examples
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ${{ env.EXAMPLES_ARTIFACT_NAME }}
           path: pages/
@@ -149,7 +149,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: pages/
 
