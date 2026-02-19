@@ -39,13 +39,13 @@ jobs:
 
       - name: Build project
         run: |
-          cmake --build build --config Release -j$(nproc)
+          cmake --build build/emsdk --config Release -j$(nproc)
 
       - name: Run tests
         run: |
-          node build/test/src/Release/tests.js -r junit > tests.xml
-          node build/test/single_header/Release/single_header_test.js -r junit > single_header.xml
-          node build/test/benchmark/Release/benchmarks.js -r junit > benchmarks.xml
+          node build/emsdk/test/src/Release/tests.js -r junit > tests.xml
+          node build/emsdk/test/single_header/Release/single_header_test.js -r junit > single_header.xml
+          node build/emsdk/test/benchmark/Release/benchmarks.js -r junit > benchmarks.xml
 
       - name: Publish test results
         uses: mikepenz/action-junit-report@v6
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.EXAMPLES_ARTIFACT_NAME }}
-          path: build/examples/Release/
+          path: build/emsdk/examples/Release/
 
   build-coverage:
     runs-on: ubuntu-24.04

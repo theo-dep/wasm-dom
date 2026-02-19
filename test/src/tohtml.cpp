@@ -11,7 +11,6 @@ TEST_CASE("toHTML", "[toHTML]")
     {
         VNode vnode(nullptr);
         vnode.normalize();
-        vnode.diff(nullptr);
         REQUIRE(vnode.toHTML() == "");
     }
 
@@ -82,6 +81,8 @@ TEST_CASE("toHTML", "[toHTML]")
         REQUIRE(vnode.toHTML() == "<div readonly=\"\"></div>");
     }
 
+#ifdef __EMSCRIPTEN__
+
     SECTION("should parse props")
     {
         VNode vnode = div(("readonly", emscripten::val(true)));
@@ -135,6 +136,8 @@ TEST_CASE("toHTML", "[toHTML]")
         VNode vnode = div(("innerHTML", emscripten::val::u8string("<p>a text 字à</p>")));
         REQUIRE(vnode.toHTML() == "<div><p>a text 字à</p></div>");
     }
+
+#endif
 
     SECTION("should handle svg container elements")
     {
@@ -212,9 +215,13 @@ TEST_CASE("toHTML", "[toHTML]")
         REQUIRE(vnode.toHTML() == "<div data-foo=\"&lt;&gt;&quot;&apos;&amp;&#96;text\"></div>");
     }
 
+#ifdef __EMSCRIPTEN__
+
     SECTION("should escape props")
     {
         VNode vnode = div(("data-foo", emscripten::val("<>\"'&`text")));
         REQUIRE(vnode.toHTML() == "<div data-foo=\"&lt;&gt;&quot;&apos;&amp;&#96;text\"></div>");
     }
+
+#endif
 }

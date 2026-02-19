@@ -1,3 +1,8 @@
+if(NOT EMSCRIPTEN)
+    # todo add server side rendering example
+    return()
+endif()
+
 add_library(examples_options INTERFACE)
 target_link_options(examples_options INTERFACE -sENVIRONMENT=web -sNO_EXIT_RUNTIME)
 

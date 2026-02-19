@@ -5,7 +5,7 @@ add_executable(single_header_test
 
 target_include_directories(single_header_test PRIVATE ${WASM_DOM_SOURCE_DIR}/extra)
 target_link_options(single_header_test PRIVATE -lembind)
-target_link_libraries(single_header_test PRIVATE common Catch2::Catch2WithMain)
+target_link_libraries(single_header_test PRIVATE common compile_flags Catch2::Catch2WithMain)
 
 add_dependencies(single_header_test single_header)
 

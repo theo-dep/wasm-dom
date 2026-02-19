@@ -53,8 +53,10 @@ namespace wasmdom
             std::string ns;
             std::size_t hash{ 0 };
             VNodeAttributes data;
+#ifdef __EMSCRIPTEN__
             emscripten::val node{ emscripten::val::null() };
             emscripten::val parentNode{ emscripten::val::null() };
+#endif
             Children children;
         };
 
@@ -81,20 +83,25 @@ namespace wasmdom
 #endif
 
         const Attrs& attrs() const;
+#ifdef __EMSCRIPTEN__
         const Props& props() const;
         const Callbacks& callbacks() const;
         const EventCallbacks& eventCallbacks() const;
+#endif
 
         const std::string& sel() const;
         const std::string& key() const;
         const std::string& ns() const;
         std::size_t hash() const;
+
+#ifdef __EMSCRIPTEN__
         const emscripten::val& node() const;
         emscripten::val& node();
         const emscripten::val& parentNode() const;
 
         void setNode(const emscripten::val& node);
         void setParentNode(const emscripten::val& node);
+#endif
 
         void normalize();
 
@@ -104,9 +111,11 @@ namespace wasmdom
 
         std::string toHTML() const;
 
+#ifdef __EMSCRIPTEN__
         void diff(const VNode& other);
 
         static VNode toVNode(const emscripten::val& node);
+#endif
 
         Children::iterator begin();
         Children::iterator end();

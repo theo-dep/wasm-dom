@@ -122,6 +122,7 @@ namespace wasmdom::internals
             html.append(" " + key + "=\"" + encode(val) + "\"");
         }
 
+#ifdef __EMSCRIPTEN__
         static const emscripten::val String = emscripten::val::global("String");
 
         for (const auto& [key, val] : vnode.props()) {
@@ -131,6 +132,7 @@ namespace wasmdom::internals
                 html.append(" " + lowerKey + "=\"" + encode(String(val).as<std::string>()) + "\"");
             }
         }
+#endif
     }
 
     inline void toHTML(const VNode& vnode, std::string& html)
@@ -160,10 +162,13 @@ namespace wasmdom::internals
             if (isSvgContainerElement ||
                 (!isSvg && std::ranges::find(voidElements, vnode.sel()) == voidElements.cend())) {
 
+#ifdef __EMSCRIPTEN__
                 const auto propsIt = vnode.props().find("innerHTML");
                 if (propsIt != vnode.props().cend()) {
                     html.append(propsIt->second.as<std::string>());
-                } else {
+                } else
+#endif
+                {
                     for (const VNode& child : vnode) {
                         toHTML(child, html);
                     }

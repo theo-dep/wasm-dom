@@ -9,8 +9,8 @@ namespace wasmdom::internals
     inline void lower(std::string& str)
     {
         static const auto tolower{
-            [](unsigned char c) -> std::string::value_type {
-                return std::tolower(c);
+            [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
             }
         };
         std::ranges::copy(std::views::transform(str, tolower), str.begin());
@@ -19,8 +19,8 @@ namespace wasmdom::internals
     inline std::string upper(const std::string& str)
     {
         static const auto toupper{
-            [](unsigned char c) -> std::string::value_type {
-                return std::toupper(c);
+            [](unsigned char c) {
+                return static_cast<char>(std::toupper(c));
             }
         };
         std::string upperStr = str;

@@ -4,22 +4,29 @@
         {
             "name": "emsdk",
             "displayName": "Emscripten Multi-Config",
-            "binaryDir": "${sourceDir}/build",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "generator": "Ninja Multi-Config",
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
             }
         },
+
         {
             "name": "coverage",
             "displayName": "Code Coverage",
-            "binaryDir": "${sourceDir}/build/coverage",
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "generator": "Ninja",
             "cacheVariables": {
                 "WASM_DOM_COVERAGE": true,
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
             }
+        },
+        {
+            "name": "native",
+            "displayName": "Native Multi-Config",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "generator": "Ninja Multi-Config"
         }
     ]
 }

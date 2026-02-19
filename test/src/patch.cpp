@@ -70,6 +70,8 @@ TEST_CASE("patch", "[patch]")
         emscripten::val node = jsDom.bodyFirstChild();
         REQUIRE_THAT(jsDom.document()["body"]["children"]["length"], StrictlyEquals(emscripten::val(1)));
         REQUIRE_THAT(jsDom.document()["body"]["firstChild"], StrictlyEquals(emscripten::val(jsDom.root())));
+        // for code coverage
+        vnode.diff(nullptr);
     }
 
     SECTION("should patch a node")

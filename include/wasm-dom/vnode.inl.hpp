@@ -63,6 +63,8 @@ wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<VNode> nodeChil
 WASMDOM_INLINE
 const wasmdom::Attrs& wasmdom::VNode::attrs() const { return _data->data.attrs; }
 
+#ifdef __EMSCRIPTEN__
+
 WASMDOM_INLINE
 const wasmdom::Props& wasmdom::VNode::props() const { return _data->data.props; }
 
@@ -71,6 +73,8 @@ const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->data
 
 WASMDOM_INLINE
 const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->data.eventCallbacks; }
+
+#endif
 
 WASMDOM_INLINE
 const std::string& wasmdom::VNode::sel() const { return _data->sel; }
@@ -83,6 +87,8 @@ const std::string& wasmdom::VNode::ns() const { return _data->ns; }
 
 WASMDOM_INLINE
 std::size_t wasmdom::VNode::hash() const { return _data->hash; }
+
+#ifdef __EMSCRIPTEN__
 
 WASMDOM_INLINE
 const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
@@ -98,6 +104,8 @@ void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; 
 
 WASMDOM_INLINE
 void wasmdom::VNode::setParentNode(const emscripten::val& node) { _data->parentNode = node; }
+
+#endif
 
 WASMDOM_INLINE
 void wasmdom::VNode::normalize() { normalize(false); }
