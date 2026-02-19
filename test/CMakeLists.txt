@@ -25,7 +25,7 @@ endif()
 if(EMSCRIPTEN)
     add_subdirectory(common)
     add_subdirectory(benchmark)
-    add_subdirectory(single_header)
 endif()
 
 add_subdirectory(src)
+add_subdirectory(single_header)

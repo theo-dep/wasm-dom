@@ -3,6 +3,7 @@
 # Convert space-separated strings back to CMake lists
 separate_arguments(HEADER_FILES)
 separate_arguments(SOURCE_FILES)
+separate_arguments(NATIVE_FILES)
 
 # clean jsapi.c content
 file(READ ${JSAPI_C_FILE} JSAPI_CONTENT)
@@ -139,8 +140,22 @@ list(REMOVE_ITEM ALL_INCLUDES "") # remove empty items
 list(REMOVE_DUPLICATES ALL_INCLUDES)
 list(SORT ALL_INCLUDES)
 
+# Separate emscripten includes
+set(ALL_EMSCRIPTEN_INCLUDES)
+file(APPEND ${OUTPUT_FILE} "#ifdef __EMSCRIPTEN__\n")
 foreach(INCLUDE ${ALL_INCLUDES})
-    file(APPEND ${OUTPUT_FILE} "${INCLUDE}\n")
+    if(INCLUDE MATCHES "emscripten/.*")
+        file(APPEND ${OUTPUT_FILE} "${INCLUDE}\n")
+        list(APPEND ALL_EMSCRIPTEN_INCLUDES "${INCLUDE}")
+    endif()
+endforeach()
+file(APPEND ${OUTPUT_FILE} "#endif\n\n")
+
+foreach(INCLUDE ${ALL_INCLUDES})
+    list(FIND ALL_EMSCRIPTEN_INCLUDES "${INCLUDE}" EMSCRIPTEN_INCLUDE)
+    if(EMSCRIPTEN_INCLUDE EQUAL -1)
+        file(APPEND ${OUTPUT_FILE} "${INCLUDE}\n")
+    endif()
 endforeach()
 
 file(APPEND ${OUTPUT_FILE} "\n")
@@ -154,10 +169,12 @@ foreach(FILE_PATH ${SOURCE_FILES})
     message(DEBUG "  Processing: ${REL_PATH}")
 
     file(READ ${FILE_PATH} CONTENT)
+    string(REGEX REPLACE "build/(native|emsdk)/" "" CONTENT_FILE_PATH "${REL_PATH}")
 
     # Clean up content
     string(REGEX REPLACE "#pragma once[^\n]*\n?" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#include[^\n]*\n?" "" CONTENT "${CONTENT}")
+    string(REGEX REPLACE "#ifdef __EMSCRIPTEN__\n#endif\n?" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#ifdef WASMDOM_COVERAGE\n.*WASMDOM_INLINE.*#else.*#endif\n?" "" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#ifndef WASMDOM_COVERAGE(.[^#]*)#endif\n?" "\\1" CONTENT "${CONTENT}")
     string(REGEX REPLACE "#ifdef WASMDOM_COVERAGE.[^#]*#endif\n?" "" CONTENT "${CONTENT}")
@@ -170,11 +187,27 @@ foreach(FILE_PATH ${SOURCE_FILES})
     string(REGEX REPLACE "WASMDOM_SH_INLINE\n?" "inline " CONTENT "${CONTENT}")
     string(REGEX REPLACE "WASMDOM_INLINE\n?" "inline " CONTENT "${CONTENT}")
 
+    if("${CONTENT}" STREQUAL "")
+        continue()
+    endif()
+
     # Add cleaned content
+
     file(APPEND ${OUTPUT_FILE} "// -----------------------------------------------------------------------------\n")
-    file(APPEND ${OUTPUT_FILE} "// ${REL_PATH}\n")
+    file(APPEND ${OUTPUT_FILE} "// ${CONTENT_FILE_PATH}\n")
     file(APPEND ${OUTPUT_FILE} "// -----------------------------------------------------------------------------\n")
+
+    list(FIND NATIVE_FILES "${FILE_PATH}" NATIVE_FILE)
+    if(NATIVE_FILE EQUAL -1)
+        file(APPEND ${OUTPUT_FILE} "#ifdef __EMSCRIPTEN__\n\n")
+    endif()
+
     file(APPEND ${OUTPUT_FILE} "${CONTENT}")
+
+    if(NATIVE_FILE EQUAL -1)
+        file(APPEND ${OUTPUT_FILE} "\n\n#endif")
+    endif()
+
     file(APPEND ${OUTPUT_FILE} "\n\n")
 endforeach()
 
