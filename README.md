@@ -3,7 +3,7 @@
 # wasm-dom
 
 ![experimental](https://img.shields.io/badge/Stability-experimental-orange)
-[![Build with Emscripten 4.0.15](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/pr.yml?label=Build%20with%20Emscripten%204.0.15)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
+[![Build with Emscripten 5.0.1](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/pr.yml?label=Build%20with%20Emscripten%205.0.1)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
 [![Code Coverage](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Ftheo-dep.github.io%2Fwasm-dom%2Fcoverage-badge.json&query=%24.coverage&label=Code%20Coverage&color=brightgreen)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
 
 A minimal C++23 WebAssembly virtual DOM to build SPA (Single page applications).
