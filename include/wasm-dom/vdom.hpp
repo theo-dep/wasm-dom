@@ -19,7 +19,8 @@ namespace wasmdom
         const VNode& patch(VNode vnode);
 
     private:
-        VNode _currentNode = nullptr;
+        const VNode _topParentNode{ nullptr };
+        VNode _currentNode{ nullptr };
     };
 
 }

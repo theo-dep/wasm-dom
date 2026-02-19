@@ -9,12 +9,6 @@
 
 #ifdef WASMDOM_COVERAGE
 #include <wasm-dom/vnode.inl.hpp>
-
-wasmdom::VNode::VNode(const VNode& other) = default;
-wasmdom::VNode::VNode(VNode&& other) = default;
-wasmdom::VNode& wasmdom::VNode::operator=(const VNode& other) = default;
-wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other) = default;
-wasmdom::VNode::~VNode() = default;
 #endif
 
 WASMDOM_SH_INLINE
@@ -22,6 +16,8 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
 {
     if (!_data)
         return;
+
+    const bool addNS{ injectSvgNamespace || (_data->sel == "svg") };
 
     if (!(_data->hash & isNormalized)) {
         const auto attrsIt = _data->data.attrs.find("key");
@@ -35,8 +31,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             _data->hash |= isComment;
             _data->sel = "";
         } else {
-            std::erase(_data->children, nullptr);
-
             Attrs::iterator it = _data->data.attrs.begin();
             while (it != _data->data.attrs.end()) {
                 if (it->first == "ns") {
@@ -53,7 +47,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
-            const bool addNS = injectSvgNamespace || (_data->sel == "svg");
             if (addNS) {
                 _data->hash |= hasNS;
                 _data->ns = "http://www.w3.org/2000/svg";
@@ -73,12 +66,11 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 _data->hash |= hasEventCallbacks;
             }
 #endif
+
+            std::erase(_data->children, nullptr);
+
             if (!_data->children.empty()) {
                 _data->hash |= hasDirectChildren;
-
-                for (VNode& child : _data->children) {
-                    child.normalize(addNS && _data->sel != "foreignObject");
-                }
             }
 
             if (_data->sel.empty()) {
@@ -96,6 +88,11 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
         }
 
         _data->hash |= isNormalized;
+    }
+
+    for (VNode& child : _data->children) {
+        child._data->parent = this;
+        child.normalize(addNS && _data->sel != "foreignObject");
     }
 }
 
@@ -136,14 +133,17 @@ void wasmdom::VNode::diff(const VNode& oldVnode)
 WASMDOM_SH_INLINE
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
 {
-    VNode vnode = nullptr;
+    if (node.isNull()) {
+        return nullptr;
+    }
+
+    VNode vnode(nullptr);
 
     const int nodeType = node["nodeType"].as<int>();
     switch (nodeType) {
         case 1: // isElement
         {
-            std::string sel = node["tagName"].as<std::string>();
-            internals::lower(sel);
+            const std::string sel{ internals::lower(node["tagName"].as<std::string>()) };
 
             VNodeAttributes data;
             for (int i : std::views::iota(0, node["attributes"]["length"].as<int>())) {
@@ -179,8 +179,6 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     }
 
     vnode.setNode(node);
-    vnode.setParentNode(internals::domapi::parentNode(node));
-
     return vnode;
 }
 

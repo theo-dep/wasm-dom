@@ -5,10 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Test Runner",
-            "program": "${workspaceFolder}/build/test/src/Debug/tests.js",
+            "name": "Debug Node.js executable",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [
-                "[patch]"
+                "[patch]",
+                "-c",
+                "should reverse elements"
             ],
             "request": "launch",
             "skipFiles": [

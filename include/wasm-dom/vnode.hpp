@@ -46,20 +46,6 @@ namespace wasmdom
 
     class VNode
     {
-        struct SharedData
-        {
-            std::string sel;
-            std::string key;
-            std::string ns;
-            std::size_t hash{ 0 };
-            VNodeAttributes data;
-#ifdef __EMSCRIPTEN__
-            emscripten::val node{ emscripten::val::null() };
-            emscripten::val parentNode{ emscripten::val::null() };
-#endif
-            Children children;
-        };
-
     public:
         VNode(std::nullptr_t);
         VNode(const std::string& nodeSel);
@@ -74,13 +60,11 @@ namespace wasmdom
         VNode& operator()(const Children& nodeChildren);
         VNode& operator()(std::initializer_list<VNode> nodeChildren);
 
-#ifdef WASMDOM_COVERAGE
         VNode(const VNode& other);
         VNode(VNode&& other);
         VNode& operator=(const VNode& other);
         VNode& operator=(VNode&& other);
         ~VNode();
-#endif
 
         const Attrs& attrs() const;
 #ifdef __EMSCRIPTEN__
@@ -95,13 +79,13 @@ namespace wasmdom
         std::size_t hash() const;
 
 #ifdef __EMSCRIPTEN__
+        void setNode(const emscripten::val& node);
         const emscripten::val& node() const;
         emscripten::val& node();
-        const emscripten::val& parentNode() const;
-
-        void setNode(const emscripten::val& node);
-        void setParentNode(const emscripten::val& node);
 #endif
+
+        void updateParent(const VNode& oldVnode);
+        const VNode& parent() const;
 
         void normalize();
 
@@ -126,7 +110,22 @@ namespace wasmdom
         void normalize(bool injectSvgNamespace);
 
         // contains selector for elements and fragments, text for comments and textNodes
+        struct SharedData;
         std::shared_ptr<SharedData> _data = nullptr;
+    };
+
+    struct VNode::SharedData
+    {
+        std::string sel;
+        std::string key;
+        std::string ns;
+        std::size_t hash{ 0 };
+        VNodeAttributes data;
+#ifdef __EMSCRIPTEN__
+        emscripten::val node{ emscripten::val::null() };
+#endif
+        const VNode* parent{ nullptr };
+        Children children;
     };
 }
 

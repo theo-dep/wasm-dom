@@ -127,8 +127,7 @@ namespace wasmdom::internals
 
         for (const auto& [key, val] : vnode.props()) {
             if (std::ranges::find(omitProps, key) == omitProps.cend()) {
-                std::string lowerKey(key);
-                lower(lowerKey);
+                const std::string lowerKey{ lower(key) };
                 html.append(" " + lowerKey + "=\"" + encode(String(val).as<std::string>()) + "\"");
             }
         }

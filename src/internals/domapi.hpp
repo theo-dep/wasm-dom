@@ -16,12 +16,9 @@ namespace wasmdom::internals::domapi
     emscripten::val createDocumentFragment();
 
     void insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode);
-    void removeNode(const emscripten::val& node);
+    void removeNode(const emscripten::val& parentNode, const emscripten::val& node);
     void appendChild(const emscripten::val& parent, const emscripten::val& child);
     void removeAttribute(const emscripten::val& node, const std::string& attribute);
     void setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value);
     void setNodeValue(emscripten::val& node, const std::string& text);
-
-    emscripten::val parentNode(const emscripten::val& node);
-    emscripten::val nextSibling(const emscripten::val& node);
 }
