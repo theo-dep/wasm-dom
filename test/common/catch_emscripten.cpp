@@ -2,8 +2,8 @@
 
 #include <emscripten/em_js.h>
 
-EM_JS_DEPS(deps, "$stringToNewUTF8");
-EM_JS(char*, asString, (emscripten::EM_VAL handle), { return stringToNewUTF8(String(Emval.toValue(handle))); });
+EM_JS_DEPS(deps, "$stringToUTF8OnStack");
+EM_JS(char*, asString, (emscripten::EM_VAL handle), { return stringToUTF8OnStack(String(Emval.toValue(handle))); });
 
 StrictlyEqualsMatcher::StrictlyEqualsMatcher(const emscripten::val& val)
     : _val{ val }

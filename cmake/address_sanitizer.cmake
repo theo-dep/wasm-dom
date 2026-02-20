@@ -7,7 +7,7 @@ if(WASM_DOM_ASAN)
         )
     else()
         target_compile_options(address_sanitizer_compile INTERFACE
-            $<$<CONFIG:Debug>:-fsanitize=address>
+            $<$<CONFIG:Debug>:-fsanitize=address -fsanitize=undefined>
         )
     endif()
 
@@ -27,7 +27,7 @@ if(WASM_DOM_ASAN)
         )
     else()
         target_link_options(address_sanitizer_link INTERFACE
-            $<$<CONFIG:Debug>:-fsanitize=address>
+            $<$<CONFIG:Debug>:-fsanitize=address -fsanitize=undefined>
         )
     endif()
 
