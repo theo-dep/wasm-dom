@@ -18,7 +18,13 @@ Every release, along with the migration instructions, is documented on the Githu
 - Can be used without exceptions and RTTI to [optimize code size](https://emscripten.org/docs/optimizing/Optimizing-Code.html#c-rtti).
 - Replace `"ref"` callbacks by `onMount`, `onUpdate` and `onUnmount` event callbacks.
 
+## v0.2.1
+
+- Enable wasm-dom integration as either a Git submodule or via CMake’s [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html).
+- Introduce build options to compile only the library.
+
 ### v0.3.0
 
 - Update `patch` method to support many fragment node configurations.
 - Allow `fragment` with attribute for `key` and event callbacks.
+- Build `VNode::toHTML` for native platform (Linux, macOS and Windows).
