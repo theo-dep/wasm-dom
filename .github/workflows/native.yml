@@ -1,0 +1,84 @@
+name: Native
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      cxx_compiler:
+        required: true
+        type: string
+      c_compiler:
+        required: true
+        type: string
+
+jobs:
+  build:
+    permissions:
+      checks: write
+      id-token: write
+
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y ninja-build
+
+      - name: Install dependencies
+        if: runner.os == 'Windows'
+        run: |
+          choco install ninja
+
+      - name: Configure MSVC environment
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        if: runner.os == 'Windows'
+        with:
+          arch: x64
+
+      - name: Install dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install ninja
+
+      - name: Configure CMake
+        run: |
+          cmake --preset native -DCMAKE_CXX_COMPILER=${{ inputs.cxx_compiler }} -DCMAKE_C_COMPILER=${{ inputs.c_compiler }}
+
+      - name: Build project
+        run: |
+          cmake --build build/native --config Release --parallel
+
+      - name: Run tests
+        if: runner.os == 'macOS' || runner.os == 'Linux'
+        run: |
+          build/native/test/src/Release/tests -r junit > tests.xml
+          build/native/test/single_header/Release/single_header_test -r junit > single_header.xml
+
+      - name: Run tests
+        if: runner.os == 'Windows'
+        run: |
+          build/native/test/src/Release/tests.exe -r junit > tests.xml
+          build/native/test/single_header/Release/single_header_test.exe -r junit > single_header.xml
+
+      - name: Publish test results
+        uses: mikepenz/action-junit-report@v6
+        if: ${{ !cancelled() }}
+        with:
+          report_paths: "*.xml"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          test_files_prefix: ${{ inputs.os }}-${{ inputs.cxx_compiler }}
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-results-${{ inputs.os }}-${{ inputs.cxx_compiler }}
+          path: "*.xml"
+          retention-days: 7

@@ -1,0 +1,15 @@
+name: macOS
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-clang:
+    uses: ./.github/workflows/native.yml
+    with:
+      os: macos-latest
+      cxx_compiler: clang++
+      c_compiler: clang
