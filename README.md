@@ -3,8 +3,11 @@
 # wasm-dom
 
 ![experimental](https://img.shields.io/badge/Stability-experimental-orange)
-[![Build with Emscripten 5.0.1](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/pr.yml?label=Build%20with%20Emscripten%205.0.1)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
-[![Code Coverage](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Ftheo-dep.github.io%2Fwasm-dom%2Fcoverage-badge.json&query=%24.coverage&label=Code%20Coverage&color=brightgreen)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr.yml)
+[![Emscripten 5.0.1](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/emscripten.yml?label=Emscripten%205.0.1)](https://github.com/theo-dep/wasm-dom/actions/workflows/emscripten.yml)
+[![Linux](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/linux.yml?label=Linux)](https://github.com/theo-dep/wasm-dom/actions/workflows/linux.yml)
+[![macOS](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/macos.yml?label=macOS)](https://github.com/theo-dep/wasm-dom/actions/workflows/macos.yml)
+[![Windows](https://img.shields.io/github/actions/workflow/status/theo-dep/wasm-dom/windows.yml?label=Windows)](https://github.com/theo-dep/wasm-dom/actions/workflows/windows.yml)
+[![Code Coverage](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Ftheo-dep.github.io%2Fwasm-dom%2Fcoverage-badge.json&query=%24.coverage&label=Code%20Coverage&color=brightgreen)](https://github.com/theo-dep/wasm-dom/actions/workflows/pr_emsdk.yml)
 
 A minimal C++23 WebAssembly virtual DOM to build SPA (Single page applications).
 
@@ -37,6 +40,7 @@ Initial version of wasm-dom is a fork of [asm-dom](https://github.com/mbasso/asm
 - Replace `"ref"` callbacks by `onMount`, `onUpdate` and `onUnmount` event callbacks.
 - Update `patch` method to support many fragment node configurations.
 - Allow `fragment` with attribute for `key` and event callbacks.
+- Build `VNode::toHTML` for native platform (Linux, macOS and Windows).
 
 ## Motivation
 
@@ -98,7 +102,7 @@ VNode vnode =
 
 ### Server Side Rendering
 
-wasm-dom supports server-side rendering, you can write your server in C++ and run it on Node.js with WebAssembly.
+wasm-dom supports server-side rendering, you can write your server in C++ and run it on Node.js with WebAssembly. This is also available on Linux, macOS and Windows.
 
 ```cpp
 VNode vnode = view();

@@ -1,3 +1,17 @@
+set(NATIVE_FILES
+    ${WASM_DOM_SOURCE_DIR}/include/wasm-dom/attribute.hpp
+    ${WASM_DOM_SOURCE_DIR}/include/wasm-dom/attribute.inl.hpp
+    ${WASM_DOM_SOURCE_DIR}/include/wasm-dom/conf.h
+    ${WASM_DOM_SOURCE_DIR}/include/wasm-dom/h.hpp
+    ${WASM_DOM_SOURCE_DIR}/include/wasm-dom/vnode.hpp
+    ${WASM_DOM_SOURCE_DIR}/include/wasm-dom/vnode.inl.hpp
+    ${WASM_DOM_SOURCE_DIR}/src/internals/tohtml.hpp
+    ${WASM_DOM_SOURCE_DIR}/src/internals/utils.hpp
+
+    ${WASM_DOM_SOURCE_DIR}/src/attribute.cpp
+    ${WASM_DOM_SOURCE_DIR}/src/vnode.cpp
+)
+
 file(GLOB_RECURSE HEADER_FILES
     "${WASM_DOM_SOURCE_DIR}/include/wasm-dom/*.h"
     "${WASM_DOM_SOURCE_DIR}/include/wasm-dom/*.hpp"
@@ -27,6 +41,7 @@ add_custom_command(
         -DPROJECT_NAME="${PROJECT_NAME}"
         -DHEADER_FILES="${HEADER_FILES}"
         -DSOURCE_FILES="${SOURCE_FILES}"
+        -DNATIVE_FILES="${NATIVE_FILES}"
         -DJSAPI_C_FILE="${JSAPI_C_FILE}"
         -DSOURCE_DIR="${WASM_DOM_SOURCE_DIR}"
         -DBINARY_DIR="${CMAKE_BINARY_DIR}"

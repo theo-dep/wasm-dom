@@ -1,0 +1,22 @@
+name: Linux
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-gcc:
+    uses: ./.github/workflows/native.yml
+    with:
+      os: ubuntu-latest
+      cxx_compiler: g++
+      c_compiler: gcc
+      
+  build-clang:
+    uses: ./.github/workflows/native.yml
+    with:
+      os: ubuntu-latest
+      cxx_compiler: clang++
+      c_compiler: clang

@@ -1,5 +1,8 @@
-#include "internals/diff.hpp"
 #include "internals/tohtml.hpp"
+
+#ifdef __EMSCRIPTEN__
+#include "internals/diff.hpp"
+#endif
 
 #include <wasm-dom/conf.h>
 #include <wasm-dom/vnode.hpp>
@@ -59,6 +62,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             if (!_data->data.attrs.empty()) {
                 _data->hash |= hasAttrs;
             }
+#ifdef __EMSCRIPTEN__
             if (!_data->data.props.empty()) {
                 _data->hash |= hasProps;
             }
@@ -68,6 +72,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             if (!_data->data.eventCallbacks.empty()) {
                 _data->hash |= hasEventCallbacks;
             }
+#endif
             if (!_data->children.empty()) {
                 _data->hash |= hasDirectChildren;
 
@@ -91,6 +96,40 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
         }
 
         _data->hash |= isNormalized;
+    }
+}
+
+WASMDOM_SH_INLINE
+std::string wasmdom::VNode::toHTML() const
+{
+    VNode vnode = *this;
+
+    if (vnode)
+        vnode.normalize();
+
+    std::string html;
+    internals::toHTML(vnode, html);
+    return html;
+}
+
+#ifdef __EMSCRIPTEN__
+
+WASMDOM_SH_INLINE
+void wasmdom::VNode::diff(const VNode& oldVnode)
+{
+    if (!*this || !oldVnode || *this == oldVnode)
+        return;
+
+    const std::size_t vnodes = _data->hash | oldVnode._data->hash;
+
+    if (vnodes & hasAttrs) {
+        internals::diffAttrs(oldVnode, *this);
+    }
+    if (vnodes & hasProps) {
+        internals::diffProps(oldVnode, *this);
+    }
+    if (vnodes & hasCallbacks) {
+        internals::diffCallbacks(oldVnode, *this);
     }
 }
 
@@ -145,34 +184,4 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
     return vnode;
 }
 
-WASMDOM_SH_INLINE
-std::string wasmdom::VNode::toHTML() const
-{
-    VNode vnode = *this;
-
-    if (vnode)
-        vnode.normalize();
-
-    std::string html;
-    internals::toHTML(vnode, html);
-    return html;
-}
-
-WASMDOM_SH_INLINE
-void wasmdom::VNode::diff(const VNode& oldVnode)
-{
-    if (!*this || !oldVnode || *this == oldVnode)
-        return;
-
-    const std::size_t vnodes = _data->hash | oldVnode._data->hash;
-
-    if (vnodes & hasAttrs) {
-        internals::diffAttrs(oldVnode, *this);
-    }
-    if (vnodes & hasProps) {
-        internals::diffProps(oldVnode, *this);
-    }
-    if (vnodes & hasCallbacks) {
-        internals::diffCallbacks(oldVnode, *this);
-    }
-}
+#endif

@@ -1,0 +1,22 @@
+name: Windows
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-cl:
+    uses: ./.github/workflows/native.yml
+    with:
+      os: windows-latest
+      cxx_compiler: cl
+      c_compiler: cl
+
+  build-clang:
+    uses: ./.github/workflows/native.yml
+    with:
+      os: windows-latest
+      cxx_compiler: clang++
+      c_compiler: clang

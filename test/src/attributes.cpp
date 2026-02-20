@@ -2,16 +2,16 @@
 
 #include "wasm-dom.hpp"
 
+#ifdef __EMSCRIPTEN__
 #include "catch_emscripten.hpp"
 #include "jsdom.hpp"
+#endif
 
 using namespace wasmdom;
 using namespace wasmdom::dsl;
 
 TEST_CASE("attributes", "[attributes]")
 {
-    const JSDom jsDom;
-
     SECTION("can be copied")
     {
         VNodeAttributes data;
@@ -36,6 +36,10 @@ TEST_CASE("attributes", "[attributes]")
         VNodeAttributes other(std::move(moved));
         REQUIRE(data.attrs == other.attrs);
     }
+
+#ifdef __EMSCRIPTEN__
+
+    const JSDom jsDom;
 
     SECTION("should have their provided values")
     {
@@ -155,4 +159,6 @@ TEST_CASE("attributes", "[attributes]")
             ) == emscripten::val("#foo")
         );
     }
+
+#endif
 }
