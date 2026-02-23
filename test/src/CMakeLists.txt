@@ -19,6 +19,7 @@ foreach(test ${TEST_CASES})
     string(TOLOWER ${test} test_src)
     target_sources(tests PRIVATE ${test_src}.cpp)
     add_test(NAME src.${test}
-        COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/tests${TEST_EXTENSION} [${test}] --colour-mode none
+        COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/tests${TEST_EXTENSION}
+            [${test}] --colour-mode none --reporter compact
     )
 endforeach()

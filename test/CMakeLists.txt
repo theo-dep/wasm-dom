@@ -7,7 +7,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 if(EMSCRIPTEN)
-    target_link_options(Catch2WithMain PUBLIC -sENVIRONMENT=node -sEXIT_RUNTIME -sNO_DISABLE_EXCEPTION_CATCHING)
+    target_compile_options(Catch2WithMain PUBLIC -fwasm-exceptions)
+    target_link_options(Catch2WithMain PUBLIC -sENVIRONMENT=node -sEXIT_RUNTIME -fwasm-exceptions)
 
     find_program(NPM_EXECUTABLE npm REQUIRED)
 

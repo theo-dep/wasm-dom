@@ -24,5 +24,6 @@ if(EMSCRIPTEN)
 endif()
 
 add_test(NAME singleHeader
-    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/single_header_test${TEST_EXTENSION} --colour-mode none
+    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/single_header_test${TEST_EXTENSION}
+        --colour-mode none --reporter compact
 )
