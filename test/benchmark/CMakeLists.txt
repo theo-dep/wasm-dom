@@ -8,5 +8,6 @@ target_link_libraries(benchmarks PRIVATE common compile_flags Catch2::Catch2With
 
 set(CMAKE_CTEST_ARGUMENTS --verbose)
 add_test(NAME benchmarks
-    COMMAND ${NODE_JS_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/benchmarks.js --colour-mode none
+    COMMAND ${NODE_JS_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/benchmarks.js
+        --colour-mode none --reporter compact
 )
