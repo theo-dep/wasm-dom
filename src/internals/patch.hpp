@@ -56,36 +56,47 @@ namespace wasmdom::internals
         }
     }
 
-    inline emscripten::val nextSiblingNode(const VNode& vnode)
+    inline const VNode& nextSibling(const VNode& vnode)
     {
+        static const VNode nullVnode{ nullptr };
+
         // Get vnode position in parent children
         const VNode& parent{ vnode.parent() };
         if (!parent) {
-            return emscripten::val::null();
+            return nullVnode;
         }
 
         const Children::const_iterator vnodeIt{ std::ranges::find(parent, vnode) };
         if (vnodeIt == parent.end()) {
-            return emscripten::val::null();
+            return nullVnode;
         }
 
         const Children::const_iterator nextSiblingVNodeIt{ std::next(vnodeIt) };
         if (nextSiblingVNodeIt == parent.end()) {
-            return emscripten::val::null();
+            return nullVnode;
         }
 
-        return domSiblingNode(*nextSiblingVNodeIt);
+        return *nextSiblingVNodeIt;
     }
 
-    inline void removeNode(const VNode& vnode)
+    inline emscripten::val nextSiblingNode(const VNode& vnode)
+    {
+        return domSiblingNode(nextSibling(vnode));
+    }
+
+    inline void removeNode(VNode& vnode)
     {
         if (vnode.hash() & isFragment) {
             // a fragment is not added to the DOM, remove its children
-            for (const VNode& child : vnode) {
+            for (VNode& child : vnode) {
                 removeNode(child);
             }
         } else {
-            domapi::removeNode(domNode(vnode.parent()), vnode.node());
+            VNode& parentVnode{ vnode.parent() };
+            if (parentVnode) {
+                parentVnode.removeChild(vnode);
+                domapi::removeNode(domNode(parentVnode), vnode.node());
+            }
         }
     }
 
@@ -118,11 +129,19 @@ namespace wasmdom::internals
         vnode.diff(emptyNode);
     }
 
-    inline void addVNodes(const emscripten::val& parentNode, const emscripten::val& beforeNode, Children::iterator start, Children::iterator end)
+    inline void insertBefore(VNode& parentVnode, VNode& vnode, const VNode& referenceVnode, emscripten::val (*domFunction)(const VNode& vnode))
+    {
+        if (parentVnode) {
+            parentVnode.insertChild(referenceVnode, vnode);
+            domapi::insertBefore(domNode(parentVnode), vnode.node(), domFunction(referenceVnode));
+        }
+    }
+
+    inline void addVNodes(VNode& parentVnode, const VNode& referenceVnode, Children::iterator start, Children::iterator end)
     {
         for (; start <= end; ++start) {
             createNode(*start);
-            domapi::insertBefore(parentNode, start->node(), beforeNode);
+            insertBefore(parentVnode, *start, referenceVnode, domSiblingNode);
             onEvent(*start, onMount);
         }
     }
@@ -146,7 +165,7 @@ namespace wasmdom::internals
         }
     }
 
-    inline void updateChildren(const emscripten::val& parentNode, Children::iterator oldStart, Children::iterator oldEnd, Children::iterator newStart, Children::iterator newEnd, Children::iterator end)
+    inline void updateChildren(VNode& parentVnode, Children::iterator oldStart, Children::iterator oldEnd, Children::iterator newStart, Children::iterator newEnd, Children::iterator end)
     {
         bool oldKeys = false;
         std::unordered_map<std::string, Children::iterator> oldKeyTo;
@@ -169,13 +188,13 @@ namespace wasmdom::internals
             } else if (sameVNode(*oldStart, *newEnd)) {
                 if (*oldStart != *newEnd)
                     patchVNode(*oldStart, *newEnd);
-                domapi::insertBefore(parentNode, newEnd->node(), nextSiblingNode(*oldEnd));
+                insertBefore(parentVnode, *newEnd, nextSibling(*oldEnd), nextSiblingNode);
                 ++oldStart;
                 --newEnd;
             } else if (sameVNode(*oldEnd, *newStart)) {
                 if (*oldEnd != *newStart)
                     patchVNode(*oldEnd, *newStart);
-                domapi::insertBefore(parentNode, newStart->node(), domSiblingNode(*oldStart));
+                insertBefore(parentVnode, *newStart, nextSibling(*oldStart), domSiblingNode);
                 --oldEnd;
                 ++newStart;
             } else {
@@ -190,19 +209,19 @@ namespace wasmdom::internals
                 }
                 if (!oldKeyTo.contains(newStart->key())) {
                     createNode(*newStart);
-                    domapi::insertBefore(parentNode, newStart->node(), domSiblingNode(*oldStart));
+                    insertBefore(parentVnode, *newStart, nextSibling(*oldStart), domSiblingNode);
                     onEvent(*newStart, onMount);
                 } else {
                     const Children::iterator elmToMove = oldKeyTo[newStart->key()];
 
                     if ((elmToMove->hash() & extractSel) != (newStart->hash() & extractSel)) {
                         createNode(*newStart);
-                        domapi::insertBefore(parentNode, newStart->node(), domSiblingNode(*oldStart));
+                        insertBefore(parentVnode, *newStart, nextSibling(*oldStart), domSiblingNode);
                         onEvent(*newStart, onMount);
                     } else {
                         if (*elmToMove != *newStart) {
                             patchVNode(*elmToMove, *newStart);
-                            domapi::insertBefore(parentNode, newStart->node(), domSiblingNode(*oldStart));
+                            insertBefore(parentVnode, *newStart, nextSibling(*oldStart), domSiblingNode);
                             onEvent(*newStart, onMount);
                         }
                         *elmToMove = nullptr;
@@ -213,8 +232,12 @@ namespace wasmdom::internals
         }
 
         if (newStart <= newEnd) {
-            const emscripten::val before{ std::next(newEnd) != end ? domSiblingNode(*std::next(newEnd)) : emscripten::val::null() };
-            addVNodes(parentNode, before, newStart, newEnd);
+            const Children::const_iterator beforeVnode{ std::next(newEnd) };
+            if (beforeVnode != end) {
+                addVNodes(parentVnode, *beforeVnode, newStart, newEnd);
+            } else {
+                addVNodes(parentVnode, nullptr, newStart, newEnd);
+            }
         }
 
         if (oldStart <= oldEnd) {
@@ -226,15 +249,16 @@ namespace wasmdom::internals
     {
         if (sameVNode(oldVnode, vnode)) {
             vnode.setNode(oldVnode.node());
+            vnode.setParent(oldVnode.parent());
 
             if (vnode.hash() & isElementOrFragment) {
                 const std::size_t childrenNotEmpty = vnode.hash() & hasChildren;
                 const std::size_t oldChildrenNotEmpty = oldVnode.hash() & hasChildren;
 
                 if (childrenNotEmpty && oldChildrenNotEmpty) {
-                    updateChildren(domNode(oldVnode), oldVnode.begin(), std::prev(oldVnode.end()), vnode.begin(), std::prev(vnode.end()), vnode.end());
+                    updateChildren(oldVnode, oldVnode.begin(), std::prev(oldVnode.end()), vnode.begin(), std::prev(vnode.end()), vnode.end());
                 } else if (childrenNotEmpty) {
-                    addVNodes(domNode(oldVnode), emscripten::val::null(), vnode.begin(), std::prev(vnode.end()));
+                    addVNodes(oldVnode, nullptr, vnode.begin(), std::prev(vnode.end()));
                 } else if (oldChildrenNotEmpty) {
                     removeVNodes(oldVnode.begin(), std::prev(oldVnode.end()));
                 }
@@ -247,7 +271,7 @@ namespace wasmdom::internals
             onEvent(vnode, onUpdate);
         } else {
             createNode(vnode);
-            domapi::insertBefore(domNode(oldVnode.parent()), vnode.node(), nextSiblingNode(oldVnode));
+            insertBefore(oldVnode.parent(), vnode, nextSibling(oldVnode), nextSiblingNode);
             onEvent(vnode, onMount);
             unmountVNodeChildren(oldVnode);
             onEvent(oldVnode, onUnmount);

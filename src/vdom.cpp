@@ -18,7 +18,6 @@ const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
     if (!_currentNode || !vnode || _currentNode == vnode)
         return _currentNode;
 
-    vnode.updateParent(_currentNode);
     vnode.normalize();
 
     internals::patchVNode(_currentNode, vnode);

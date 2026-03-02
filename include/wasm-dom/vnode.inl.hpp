@@ -35,7 +35,7 @@ wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
     if (_data->hash & isComment) {
         _data->sel = nodeText;
     } else {
-        _data->children.emplace_back(text_tag, nodeText);
+        addChild(VNode(text_tag, nodeText));
         _data->hash |= hasText;
     }
     return *this;
@@ -44,35 +44,57 @@ wasmdom::VNode& wasmdom::VNode::operator()(const std::string& nodeText)
 WASMDOM_INLINE
 wasmdom::VNode& wasmdom::VNode::operator()(const VNode& child)
 {
-    _data->children.push_back(child);
+    addChild(child);
     return *this;
 }
 
 WASMDOM_INLINE
 wasmdom::VNode& wasmdom::VNode::operator()(const Children& nodeChildren)
 {
-    _data->children = nodeChildren;
+    _data->children.reserve(nodeChildren.size());
+    for (const VNode& child : nodeChildren) {
+        addChild(child);
+    }
     return *this;
 }
 
 WASMDOM_INLINE
 wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<VNode> nodeChildren)
 {
-    _data->children = nodeChildren;
+    _data->children.reserve(nodeChildren.size());
+    for (const VNode& child : nodeChildren) {
+        addChild(child);
+    }
     return *this;
 }
 
 WASMDOM_INLINE
-wasmdom::VNode::VNode(const VNode& other) = default;
+wasmdom::VNode::VNode(const VNode& other)
+    : _data(other._data)
+{
+}
 
 WASMDOM_INLINE
-wasmdom::VNode::VNode(VNode&& other) = default;
+wasmdom::VNode::VNode(VNode&& other)
+    : _data(std::exchange(other._data, nullptr))
+{
+}
 
 WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator=(const VNode& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(const VNode& other)
+{
+    std::shared_ptr tmp(other._data);
+    std::swap(_data, tmp);
+    return *this;
+}
 
 WASMDOM_INLINE
-wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other)
+{
+    std::shared_ptr tmp(std::move(other._data));
+    std::swap(_data, tmp);
+    return *this;
+}
 
 WASMDOM_INLINE
 wasmdom::VNode::~VNode()
@@ -80,7 +102,7 @@ wasmdom::VNode::~VNode()
     if (_data.use_count() == 1) {
         // last vnode, update parent and children
         if (_data->parent && _data->parent->_data) {
-            std::erase(_data->parent->_data->children, *this);
+            _data->parent->removeChild(*this);
         }
         for (VNode& child : _data->children) {
             child._data->parent = nullptr;
@@ -130,29 +152,62 @@ emscripten::val& wasmdom::VNode::node() { return _data->node; }
 #endif
 
 WASMDOM_INLINE
-void wasmdom::VNode::updateParent(const VNode& oldVnode)
-{
-    if (_data->parent && _data->parent->_data) {
-        std::erase(_data->parent->_data->children, *this);
-    }
+void wasmdom::VNode::removeChild(const VNode& child) { std::erase(_data->children, child); }
 
-    const VNode& parent{ oldVnode.parent() };
-    _data->parent = &parent;
-    if (parent) {
-        const Children::iterator vnodeIt{ std::ranges::find(parent._data->children, oldVnode) };
-        if (vnodeIt != parent._data->children.end()) {
-            *vnodeIt = *this;
-        }
+WASMDOM_INLINE
+void wasmdom::VNode::addChild(const VNode& child)
+{
+    if (child) {
+        _data->children.push_back(child);
+        _data->children.back().setParent(*this);
     }
 }
 
 WASMDOM_INLINE
+void wasmdom::VNode::addChild(VNode&& child)
+{
+    if (child) {
+        child.setParent(*this);
+        _data->children.push_back(std::move(child));
+    }
+}
+
+WASMDOM_INLINE
+void wasmdom::VNode::insertChild(const VNode& referenceChild, const VNode& child)
+{
+    if (!child)
+        return;
+
+    const Children::const_iterator childIt{ std::ranges::find(_data->children, child) };
+    if (childIt != _data->children.end()) {
+        _data->children.erase(childIt);
+    }
+
+    const Children::const_iterator referenceChildIt{ std::ranges::find(_data->children, referenceChild) };
+    _data->children.insert(referenceChildIt, child)->setParent(*this);
+}
+
+WASMDOM_INLINE
+void wasmdom::VNode::setParent(VNode& parent) { _data->parent = &parent; }
+
+WASMDOM_INLINE
 const wasmdom::VNode& wasmdom::VNode::parent() const
 {
-    if (_data->parent && _data->parent->_data) {
+    if (_data->parent) {
         return *_data->parent;
     } else {
         static const VNode nullVnode{ nullptr };
+        return nullVnode;
+    }
+}
+
+WASMDOM_INLINE
+wasmdom::VNode& wasmdom::VNode::parent()
+{
+    if (_data->parent) {
+        return *_data->parent;
+    } else {
+        static VNode nullVnode{ nullptr };
         return nullVnode;
     }
 }

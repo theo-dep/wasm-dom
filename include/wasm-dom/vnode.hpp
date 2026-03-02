@@ -84,8 +84,14 @@ namespace wasmdom
         emscripten::val& node();
 #endif
 
-        void updateParent(const VNode& oldVnode);
+        void removeChild(const VNode& child);
+        void addChild(const VNode& child);
+        void addChild(VNode&& child);
+        void insertChild(const VNode& referenceChild, const VNode& child);
+
+        void setParent(VNode& parent);
         const VNode& parent() const;
+        VNode& parent();
 
         void normalize();
 
@@ -110,22 +116,21 @@ namespace wasmdom
         void normalize(bool injectSvgNamespace);
 
         // contains selector for elements and fragments, text for comments and textNodes
-        struct SharedData;
-        std::shared_ptr<SharedData> _data = nullptr;
-    };
-
-    struct VNode::SharedData
-    {
-        std::string sel;
-        std::string key;
-        std::string ns;
-        std::size_t hash{ 0 };
-        VNodeAttributes data;
+        struct SharedData
+        {
+            std::string sel;
+            std::string key;
+            std::string ns;
+            std::size_t hash{ 0 };
+            VNodeAttributes data;
 #ifdef __EMSCRIPTEN__
-        emscripten::val node{ emscripten::val::null() };
+            emscripten::val node{ emscripten::val::null() };
 #endif
-        const VNode* parent{ nullptr };
-        Children children;
+            VNode* parent{ nullptr };
+            Children children;
+        };
+
+        std::shared_ptr<SharedData> _data = nullptr;
     };
 }
 

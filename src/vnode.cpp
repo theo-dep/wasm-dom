@@ -17,8 +17,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
     if (!_data)
         return;
 
-    const bool addNS{ injectSvgNamespace || (_data->sel == "svg") };
-
     if (!(_data->hash & isNormalized)) {
         const auto attrsIt = _data->data.attrs.find("key");
         if (attrsIt != _data->data.attrs.cend()) {
@@ -47,6 +45,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 }
             }
 
+            const bool addNS{ injectSvgNamespace || (_data->sel == "svg") };
             if (addNS) {
                 _data->hash |= hasNS;
                 _data->ns = "http://www.w3.org/2000/svg";
@@ -67,10 +66,11 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             }
 #endif
 
-            std::erase(_data->children, nullptr);
-
             if (!_data->children.empty()) {
                 _data->hash |= hasDirectChildren;
+                for (VNode& child : _data->children) {
+                    child.normalize(addNS && _data->sel != "foreignObject");
+                }
             }
 
             if (_data->sel.empty()) {
@@ -88,11 +88,6 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
         }
 
         _data->hash |= isNormalized;
-    }
-
-    for (VNode& child : _data->children) {
-        child._data->parent = this;
-        child.normalize(addNS && _data->sel != "foreignObject");
     }
 }
 
