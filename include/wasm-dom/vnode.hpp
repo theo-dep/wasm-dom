@@ -7,10 +7,6 @@
 
 namespace wasmdom
 {
-
-    class VNode;
-    using Children = std::vector<VNode>;
-
     enum VNodeFlags
     {
         // NodeType
@@ -27,15 +23,17 @@ namespace wasmdom
         hasCallbacks = 1 << 8,
         hasEventCallbacks = 1 << 9,
         hasDirectChildren = 1 << 10,
-        hasNS = 1 << 11,
-        isNormalized = 1 << 12,
+        hasParent = 1 << 11,
+        hasNS = 1 << 12,
+        isNormalized = 1 << 13,
+        maxFlags = 14,
 
         // masks
         hasChildren = hasDirectChildren | hasText,
         isElementOrFragment = isElement | isFragment,
         nodeType = isElement | isText | isComment | isFragment,
         removeNodeType = ~0 ^ nodeType,
-        extractSel = ~0 << 13,
+        extractSel = ~0 << maxFlags,
         id = extractSel | hasKey | nodeType
     };
 
@@ -57,14 +55,16 @@ namespace wasmdom
         VNode& operator()(const std::string& nodeText);
 
         VNode& operator()(const VNode& child);
-        VNode& operator()(const Children& nodeChildren);
+        VNode& operator()(const std::vector<VNode>& nodeChildren);
         VNode& operator()(std::initializer_list<VNode> nodeChildren);
 
+#ifdef WASMDOM_COVERAGE
         VNode(const VNode& other);
         VNode(VNode&& other);
         VNode& operator=(const VNode& other);
         VNode& operator=(VNode&& other);
         ~VNode();
+#endif
 
         const Attrs& attrs() const;
 #ifdef __EMSCRIPTEN__
@@ -79,44 +79,24 @@ namespace wasmdom
         std::size_t hash() const;
 
 #ifdef __EMSCRIPTEN__
-        void setNode(const emscripten::val& node);
         const emscripten::val& node() const;
-        emscripten::val& node();
 #endif
 
-        void removeChild(const VNode& child);
-        void addChild(const VNode& child);
-        void addChild(VNode&& child);
-        void insertChild(const VNode& referenceChild, const VNode& child);
-
-        void setParent(VNode& parent);
-        const VNode& parent() const;
-        VNode& parent();
+        const std::vector<VNode>& children() const;
 
         void normalize();
-
-        operator bool() const;
-        bool operator!() const;
-        bool operator==(const VNode& other) const;
+        bool valid() const;
 
         std::string toHTML() const;
 
 #ifdef __EMSCRIPTEN__
-        void diff(const VNode& other);
-
         static VNode toVNode(const emscripten::val& node);
 #endif
-
-        Children::iterator begin();
-        Children::iterator end();
-        Children::const_iterator begin() const;
-        Children::const_iterator end() const;
 
     private:
         void normalize(bool injectSvgNamespace);
 
-        // contains selector for elements and fragments, text for comments and textNodes
-        struct SharedData
+        struct Data
         {
             std::string sel;
             std::string key;
@@ -126,11 +106,11 @@ namespace wasmdom
 #ifdef __EMSCRIPTEN__
             emscripten::val node{ emscripten::val::null() };
 #endif
-            VNode* parent{ nullptr };
-            Children children;
         };
 
-        std::shared_ptr<SharedData> _data = nullptr;
+        // contains selector for elements and fragments, text for comments and textNodes
+        std::shared_ptr<Data> _data{ nullptr };
+        std::vector<VNode> _children;
     };
 }
 

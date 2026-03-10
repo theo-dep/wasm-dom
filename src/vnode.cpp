@@ -1,14 +1,16 @@
 #include "internals/tohtml.hpp"
 
-#ifdef __EMSCRIPTEN__
-#include "internals/diff.hpp"
-#endif
-
 #include <wasm-dom/conf.h>
 #include <wasm-dom/vnode.hpp>
 
 #ifdef WASMDOM_COVERAGE
 #include <wasm-dom/vnode.inl.hpp>
+
+wasmdom::VNode::VNode(const VNode& other) = default;
+wasmdom::VNode::VNode(VNode&& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(const VNode& other) = default;
+wasmdom::VNode& wasmdom::VNode::operator=(VNode&& other) = default;
+wasmdom::VNode::~VNode() = default;
 #endif
 
 WASMDOM_SH_INLINE
@@ -66,9 +68,9 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             }
 #endif
 
-            if (!_data->children.empty()) {
+            if (!_children.empty()) {
                 _data->hash |= hasDirectChildren;
-                for (VNode& child : _data->children) {
+                for (VNode& child : _children) {
                     child.normalize(addNS && _data->sel != "foreignObject");
                 }
             }
@@ -83,7 +85,7 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                     hashes.emplace(_data->sel, ++currentHash);
                 }
 
-                _data->hash |= (hashes[_data->sel] << 13) | isElement;
+                _data->hash |= (hashes[_data->sel] << maxFlags) | isElement;
             }
         }
 
@@ -95,9 +97,7 @@ WASMDOM_SH_INLINE
 std::string wasmdom::VNode::toHTML() const
 {
     VNode vnode = *this;
-
-    if (vnode)
-        vnode.normalize();
+    vnode.normalize();
 
     std::string html;
     internals::toHTML(vnode, html);
@@ -105,25 +105,6 @@ std::string wasmdom::VNode::toHTML() const
 }
 
 #ifdef __EMSCRIPTEN__
-
-WASMDOM_SH_INLINE
-void wasmdom::VNode::diff(const VNode& oldVnode)
-{
-    if (!*this || !oldVnode || *this == oldVnode)
-        return;
-
-    const std::size_t vnodes = _data->hash | oldVnode._data->hash;
-
-    if (vnodes & hasAttrs) {
-        internals::diffAttrs(oldVnode, *this);
-    }
-    if (vnodes & hasProps) {
-        internals::diffProps(oldVnode, *this);
-    }
-    if (vnodes & hasCallbacks) {
-        internals::diffCallbacks(oldVnode, *this);
-    }
-}
 
 WASMDOM_SH_INLINE
 wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
@@ -145,9 +126,10 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
                 data.attrs.emplace(node["attributes"][i]["nodeName"].as<std::string>(), node["attributes"][i]["nodeValue"].as<std::string>());
             }
 
-            Children children;
-            for (int i : std::views::iota(0, node["childNodes"]["length"].as<int>())) {
-                children.push_back(toVNode(node["childNodes"][i]));
+            const int childNodesLength{ node["childNodes"]["length"].as<int>() };
+            std::vector<VNode> children(childNodesLength, nullptr);
+            for (int i : std::views::iota(0, childNodesLength)) {
+                children[i] = toVNode(node["childNodes"][i]);
             }
 
             vnode = VNode(sel, data)(children);
@@ -164,16 +146,17 @@ wasmdom::VNode wasmdom::VNode::toVNode(const emscripten::val& node)
         default: // isDocumentFragment
         {
             // if fragment is not added to the DOM yet
-            Children children;
-            for (int i : std::views::iota(0, node["childElementCount"].as<int>())) {
-                children.push_back(toVNode(node["children"][i]));
+            const int childNodesLength{ node["childElementCount"].as<int>() };
+            std::vector<VNode> children(childNodesLength, nullptr);
+            for (int i : std::views::iota(0, childNodesLength)) {
+                children[i] = toVNode(node["children"][i]);
             }
 
             vnode = VNode("")(children);
         }
     }
 
-    vnode.setNode(node);
+    vnode._data->node = node;
     return vnode;
 }
 

@@ -1,6 +1,10 @@
 #pragma once
 
-#include "wasm-dom/vnode.hpp"
+#include "wasm-dom/vnodedata.hpp"
+
+#include <functional>
+#include <optional>
+#include <variant>
 
 namespace emscripten
 {
@@ -9,6 +13,7 @@ namespace emscripten
 
 namespace wasmdom
 {
+    class VNode;
 
     class VDom
     {
@@ -16,11 +21,10 @@ namespace wasmdom
         VDom() = default;
         VDom(const emscripten::val& element);
 
-        const VNode& patch(VNode vnode);
+        void patch(VNode vnode);
 
     private:
-        const VNode _topParentNode{ nullptr };
-        VNode _currentNode{ nullptr };
+        std::optional<VNodeData> _topParentNode{ std::nullopt };
+        std::variant<std::optional<VNodeData>, std::reference_wrapper<VNodeData>> _currentNode{ std::nullopt };
     };
-
 }

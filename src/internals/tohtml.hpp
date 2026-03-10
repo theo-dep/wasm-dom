@@ -136,7 +136,7 @@ namespace wasmdom::internals
 
     inline void toHTML(const VNode& vnode, std::string& html)
     {
-        if (!vnode)
+        if (!vnode.valid())
             return;
 
         if (vnode.hash() & isText && !vnode.sel().empty()) {
@@ -144,7 +144,7 @@ namespace wasmdom::internals
         } else if (vnode.hash() & isComment) {
             html.append("<!--" + vnode.sel() + "-->");
         } else if (vnode.hash() & isFragment) {
-            for (const VNode& child : vnode) {
+            for (const VNode& child : vnode.children()) {
                 toHTML(child, html);
             }
         } else {
@@ -168,7 +168,7 @@ namespace wasmdom::internals
                 } else
 #endif
                 {
-                    for (const VNode& child : vnode) {
+                    for (const VNode& child : vnode.children()) {
                         toHTML(child, html);
                     }
                 }

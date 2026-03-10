@@ -5,20 +5,19 @@
 #include "internals/jsapi.hpp"
 #include "internals/wire.hpp"
 
-#include <wasm-dom/attribute.hpp>
-#include <wasm-dom/vnode.hpp>
+#include <wasm-dom/vnodedata.hpp>
 
 #include <ranges>
 #include <unordered_map>
 
 namespace wasmdom::internals
 {
-    inline void diffAttrs(const VNode& oldVnode, const VNode& vnode)
+    inline void diffAttrs(const VNodeData& oldVnode, const VNodeData& vnode)
     {
-        const Attrs& oldAttrs = oldVnode.attrs();
-        const Attrs& attrs = vnode.attrs();
+        const Attrs& oldAttrs = oldVnode.attrs;
+        const Attrs& attrs = vnode.attrs;
 
-        const emscripten::val& node = vnode.node();
+        const emscripten::val& node = vnode.data.node;
 
         for (const auto& [key, _] : oldAttrs) {
             if (!attrs.contains(key)) {
@@ -34,16 +33,16 @@ namespace wasmdom::internals
         }
     }
 
-    inline void diffProps(const VNode& oldVnode, VNode& vnode)
+    inline void diffProps(const VNodeData& oldVnode, VNodeData& vnode)
     {
-        const Props& oldProps = oldVnode.props();
-        const Props& props = vnode.props();
+        const Props& oldProps = oldVnode.props;
+        const Props& props = vnode.props;
 
         const emscripten::val nodeRaws = emscripten::val::array(
             props | std::views::keys | std::ranges::to<std::vector<std::string>>()
         );
 
-        emscripten::val& node = vnode.node();
+        emscripten::val& node = vnode.data.node;
         node.set(nodeRawsKey, nodeRaws);
 
         for (const auto& [key, _] : oldProps) {
@@ -71,12 +70,12 @@ namespace wasmdom::internals
         return key;
     }
 
-    inline void diffCallbacks(const VNode& oldVnode, VNode& vnode)
+    inline void diffCallbacks(const VNodeData& oldVnode, VNodeData& vnode)
     {
-        const Callbacks& oldCallbacks = oldVnode.callbacks();
-        const Callbacks& callbacks = vnode.callbacks();
+        const Callbacks& oldCallbacks = oldVnode.callbacks;
+        const Callbacks& callbacks = vnode.callbacks;
 
-        emscripten::val& node = vnode.node();
+        emscripten::val& node = vnode.data.node;
 
         std::string eventKey;
 
@@ -99,4 +98,18 @@ namespace wasmdom::internals
         }
     }
 
+    inline void diff(const VNodeData& oldVnode, const VNodeData& vnode)
+    {
+        const std::size_t vnodes = vnode.hash | oldVnode.hash;
+
+        if (vnodes & hasAttrs) {
+            diffAttrs(oldVnode, vnode);
+        }
+        if (vnodes & hasProps) {
+            diffProps(oldVnode, vnode);
+        }
+        if (vnodes & hasCallbacks) {
+            diffCallbacks(oldVnode, vnode);
+        }
+    }
 }
