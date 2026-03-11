@@ -3,7 +3,6 @@
 #include "wasm-dom/vnodedata.hpp"
 
 #include <functional>
-#include <optional>
 #include <variant>
 
 namespace emscripten
@@ -24,7 +23,7 @@ namespace wasmdom
         void patch(VNode vnode);
 
     private:
-        std::optional<VNodeData> _topParentNode{ std::nullopt };
-        std::variant<std::optional<VNodeData>, std::reference_wrapper<VNodeData>> _currentNode{ std::nullopt };
+        std::shared_ptr<VNodeData> _topParentNode{ nullptr };
+        std::variant<std::shared_ptr<VNodeData>, std::reference_wrapper<VNodeData>> _currentNode{ nullptr };
     };
 }

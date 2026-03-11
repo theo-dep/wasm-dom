@@ -714,7 +714,7 @@ TEST_CASE("patchFragment", "[patchFragment]")
 
     SECTION("should support empty children")
     {
-        wasmdom::Children children;
+        std::vector<VNode> children;
         VNode vnode1 = fragment()(children);
         children.push_back(span()(std::string("foo")));
         children.push_back(span()(std::string("bar")));
@@ -734,7 +734,7 @@ TEST_CASE("patchFragment", "[patchFragment]")
 
     SECTION("should support empty children in children")
     {
-        wasmdom::Children children;
+        std::vector<VNode> children;
         VNode vnode1 = div()(fragment()(children));
         children.push_back(span()(std::string("foo")));
         children.push_back(span()(std::string("bar")));

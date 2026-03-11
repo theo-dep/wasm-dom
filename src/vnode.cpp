@@ -68,6 +68,10 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
             }
 #endif
 
+            std::erase_if(_children, [](const VNode& child) {
+                return !child.valid();
+            });
+
             if (!_children.empty()) {
                 _data->hash |= hasDirectChildren;
                 for (VNode& child : _children) {

@@ -35,7 +35,7 @@ TEST_CASE("benchmark")
         const JSDom jsDom;
 
         const auto createVNode = [] {
-            Children children;
+            std::vector<VNode> children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] =
@@ -68,7 +68,7 @@ TEST_CASE("benchmark")
         const JSDom jsDom;
 
         const auto createVNode1 = [] {
-            Children children;
+            std::vector<VNode> children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] =
@@ -83,7 +83,7 @@ TEST_CASE("benchmark")
             )(children);
         };
         const auto createVNode2 = [] {
-            Children children;
+            std::vector<VNode> children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] =
@@ -116,7 +116,7 @@ TEST_CASE("benchmark")
         const JSDom jsDom;
 
         const auto createVNode1 = [] {
-            Children children;
+            std::vector<VNode> children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] = span()(
@@ -155,7 +155,7 @@ TEST_CASE("benchmark")
         const JSDom jsDom;
 
         const auto createVNode1 = [] {
-            Children children;
+            std::vector<VNode> children;
             children.resize(100, nullptr);
             for (std::size_t i = 0; i < children.size(); ++i) {
                 children[i] = span()(

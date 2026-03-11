@@ -70,8 +70,6 @@ TEST_CASE("patch", "[patch]")
         emscripten::val node = jsDom.bodyFirstChild();
         REQUIRE_THAT(jsDom.document()["body"]["children"]["length"], StrictlyEquals(emscripten::val(1)));
         REQUIRE_THAT(jsDom.document()["body"]["firstChild"], StrictlyEquals(emscripten::val(jsDom.root())));
-        // for code coverage
-        vnode.diff(nullptr);
     }
 
     SECTION("should patch a node")
@@ -91,8 +89,8 @@ TEST_CASE("patch", "[patch]")
     {
         VNode vnode = div();
         VDom vdom(jsDom.root());
-        VNode nodePtr = vdom.patch(vnode);
-        vdom.patch(nodePtr);
+        vdom.patch(vnode);
+        vdom.patch(vnode);
         emscripten::val node = jsDom.bodyFirstChild();
         REQUIRE_THAT(node["tagName"], StrictlyEquals(emscripten::val("DIV")));
     }
@@ -800,7 +798,7 @@ TEST_CASE("patch", "[patch]")
         }
 
         for (n = 0; n < samples; ++n) {
-            Children children;
+            std::vector<VNode> children;
             for (i = 0; i < nodes; ++i) {
                 children.push_back(spanNumWithOpacity(arr[i], std::string("1")));
             }
@@ -817,7 +815,7 @@ TEST_CASE("patch", "[patch]")
                 opacities[i] = std::string("0.");
                 opacities[i].append(std::to_string(rand() % 99999));
             }
-            Children opacityChildren;
+            std::vector<VNode> opacityChildren;
             for (i = 0; i < nodes; ++i) {
                 opacityChildren.push_back(spanNumWithOpacity(shufArr[i], opacities[i]));
             }
@@ -945,7 +943,7 @@ TEST_CASE("patch", "[patch]")
             VDom vdom(node);
             vdom.patch(div());
 
-            Children children = Children();
+            std::vector<VNode> children;
             for (j = 0; j < len; ++j) {
                 children.push_back(shufArr[j] == 0 ? nullptr : span()(std::to_string(shufArr[j])));
             }
@@ -1406,7 +1404,7 @@ TEST_CASE("patch", "[patch]")
 
     SECTION("should support empty children")
     {
-        wasmdom::Children children;
+        std::vector<VNode> children;
         VNode vnode1 = div()(children);
         children.push_back(span()(std::string("foo")));
         children.push_back(span()(std::string("bar")));

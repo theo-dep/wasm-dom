@@ -1,4 +1,4 @@
-// #include "internals/patch.hpp"
+#include "internals/patch.hpp"
 #include "internals/tovnodedata.hpp"
 #include "internals/variant.hpp"
 
@@ -27,16 +27,13 @@ void wasmdom::VDom::patch(VNode vnode)
 
     std::visit(
         internals::overloaded{
-            [&data](const std::optional<VNodeData> currentNode) {
-                (void)data;
+            [&data](std::optional<VNodeData>& currentNode) {
                 if (currentNode) {
-                    // internals::patchVNode(*currentNode, data);
+                    internals::patchVNode(*currentNode, data);
                 }
             },
             [&data](const std::reference_wrapper<VNodeData>& currentNode) {
-                // internals::patchVNode(currentNode, data);
-                (void)data;
-                (void)currentNode;
+                internals::patchVNode(currentNode, data);
             } },
         _currentNode
     );
