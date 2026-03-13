@@ -7,9 +7,9 @@
 
 namespace wasmdom::internals
 {
-    inline std::shared_ptr<VNodeData> toVNodeData(const VNode& vnode, VNodeData* parent)
+    inline VNodeData* toVNodeData(const VNode& vnode, VNodeData* parent)
     {
-        std::shared_ptr data{ std::make_shared<VNodeData>() };
+        VNodeData* data = new VNodeData;
         data->sel = vnode.sel();
         data->key = vnode.key();
         data->ns = vnode.ns();
@@ -23,13 +23,13 @@ namespace wasmdom::internals
         data->parent = parent;
 
         for (const VNode& child : vnode.children()) {
-            data->children.push_back(toVNodeData(child, data.get()));
+            data->children.push_back(toVNodeData(child, data));
         }
 
         return data;
     }
 
-    inline std::shared_ptr<VNodeData> toVNodeData(const emscripten::val& node)
+    inline VNodeData* toVNodeData(const emscripten::val& node)
     {
         VNode vnode{ VNode::toVNode(node) };
         if (!vnode.valid()) {
@@ -41,19 +41,19 @@ namespace wasmdom::internals
         return toVNodeData(vnode, nullptr);
     }
 
-    inline const VNodeData& toVNodeData(const emscripten::val& node, const VNodeData& parent)
+    inline VNodeData* toVNodeData(const emscripten::val& node, const VNodeData& parent)
     {
-        const VNodeData::Children::const_iterator dataIt{
-            std::ranges::find_if(parent.children, [&node](const auto& child) {
+        const std::list<VNodeData*>::const_iterator dataIt{
+            std::ranges::find_if(parent.children, [&node](const VNodeData* child) {
                 return node.strictlyEquals(child->node);
             })
         };
 
         assert(dataIt != parent.children.end() && "VNode not found in parent's children");
-        return **dataIt;
+        return *dataIt;
     }
 
-    inline const VNodeData& toVNodeData(const VNode& vnode, const VNodeData& parent)
+    inline VNodeData* toVNodeData(const VNode& vnode, const VNodeData& parent)
     {
         return toVNodeData(vnode.node(), parent);
     }

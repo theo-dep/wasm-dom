@@ -5,7 +5,7 @@ wasmdom::VNode::VNode(std::nullptr_t) {}
 
 WASMDOM_INLINE
 wasmdom::VNode::VNode(const std::string& nodeSel)
-    : _data(std::make_shared<Data>())
+    : _data(std::make_shared<VNodeData>())
 {
     _data->sel = nodeSel;
 }
@@ -23,7 +23,12 @@ WASMDOM_INLINE
 wasmdom::VNode::VNode(const std::string& nodeSel, const VNodeAttributes& nodeData)
     : VNode(nodeSel)
 {
-    _data->data = nodeData;
+    _data->attrs = nodeData.attrs;
+#ifdef __EMSCRIPTEN__
+    _data->props = nodeData.props;
+    _data->callbacks = nodeData.callbacks;
+    _data->eventCallbacks = nodeData.eventCallbacks;
+#endif
 }
 
 WASMDOM_INLINE
@@ -49,30 +54,30 @@ wasmdom::VNode& wasmdom::VNode::operator()(const VNode& child)
 WASMDOM_INLINE
 wasmdom::VNode& wasmdom::VNode::operator()(const std::vector<VNode>& nodeChildren)
 {
-    _children = nodeChildren;
+    insertChildren(nodeChildren.begin(), nodeChildren.end());
     return *this;
 }
 
 WASMDOM_INLINE
 wasmdom::VNode& wasmdom::VNode::operator()(std::initializer_list<VNode> nodeChildren)
 {
-    _children = nodeChildren;
+    insertChildren(nodeChildren.begin(), nodeChildren.end());
     return *this;
 }
 
 WASMDOM_INLINE
-const wasmdom::Attrs& wasmdom::VNode::attrs() const { return _data->data.attrs; }
+const wasmdom::Attrs& wasmdom::VNode::attrs() const { return _data->attrs; }
 
 #ifdef __EMSCRIPTEN__
 
 WASMDOM_INLINE
-const wasmdom::Props& wasmdom::VNode::props() const { return _data->data.props; }
+const wasmdom::Props& wasmdom::VNode::props() const { return _data->props; }
 
 WASMDOM_INLINE
-const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->data.callbacks; }
+const wasmdom::Callbacks& wasmdom::VNode::callbacks() const { return _data->callbacks; }
 
 WASMDOM_INLINE
-const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->data.eventCallbacks; }
+const wasmdom::EventCallbacks& wasmdom::VNode::eventCallbacks() const { return _data->eventCallbacks; }
 
 #endif
 
@@ -103,3 +108,14 @@ void wasmdom::VNode::normalize() { normalize(false); }
 
 WASMDOM_INLINE
 bool wasmdom::VNode::valid() const { return _data != nullptr; }
+
+template <typename Iterator>
+WASMDOM_INLINE void wasmdom::VNode::insertChildren(Iterator begin, Iterator end)
+{
+    _children.reserve(_children.size() + std::distance(begin, end));
+    for (; begin != end; ++begin) {
+        if (begin->valid()) {
+            _children.push_back(*begin);
+        }
+    }
+}

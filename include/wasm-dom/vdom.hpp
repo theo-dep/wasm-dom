@@ -2,9 +2,6 @@
 
 #include "wasm-dom/vnodedata.hpp"
 
-#include <functional>
-#include <variant>
-
 namespace emscripten
 {
     class val;
@@ -19,11 +16,12 @@ namespace wasmdom
     public:
         VDom() = default;
         VDom(const emscripten::val& element);
+        ~VDom();
 
         void patch(VNode vnode);
 
     private:
-        std::shared_ptr<VNodeData> _topParentNode{ nullptr };
-        std::variant<std::shared_ptr<VNodeData>, std::reference_wrapper<VNodeData>> _currentNode{ nullptr };
+        VNodeData* _topParentNode{ nullptr };
+        VNodeData* _currentNode{ nullptr };
     };
 }

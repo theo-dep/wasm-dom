@@ -1,6 +1,7 @@
 #pragma once
 
 #include "wasm-dom/attribute.hpp"
+#include "wasm-dom/vnodedata.hpp"
 
 #include <memory>
 #include <vector>
@@ -94,31 +95,20 @@ namespace wasmdom
 #endif
 
     private:
+        template <typename Iterator>
+        void insertChildren(Iterator begin, Iterator end);
         void normalize(bool injectSvgNamespace);
 
-        struct Data
-        {
-            std::string sel;
-            std::string key;
-            std::string ns;
-            std::size_t hash{ 0 };
-            VNodeAttributes data;
-#ifdef __EMSCRIPTEN__
-            emscripten::val node{ emscripten::val::null() };
-#endif
-        };
-
         // contains selector for elements and fragments, text for comments and textNodes
-        std::shared_ptr<Data> _data{ nullptr };
+        std::shared_ptr<VNodeData> _data{ nullptr };
         std::vector<VNode> _children;
     };
 }
 
 template <wasmdom::AttributeKey... K, wasmdom::AttributeValue... V>
 inline wasmdom::VNode::VNode(const std::string& nodeSel, std::pair<K, V>&&... nodeData)
-    : VNode(nodeSel)
+    : VNode(nodeSel, attributesToVNode(std::forward<std::pair<K, V>>(nodeData)...))
 {
-    _data->data = attributesToVNode(std::forward<std::pair<K, V>>(nodeData)...);
 }
 
 #ifndef WASMDOM_COVERAGE

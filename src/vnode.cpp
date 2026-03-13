@@ -20,25 +20,25 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
         return;
 
     if (!(_data->hash & isNormalized)) {
-        const auto attrsIt = _data->data.attrs.find("key");
-        if (attrsIt != _data->data.attrs.cend()) {
+        const auto attrsIt = _data->attrs.find("key");
+        if (attrsIt != _data->attrs.cend()) {
             _data->hash |= hasKey;
             _data->key = attrsIt->second;
-            _data->data.attrs.erase(attrsIt);
+            _data->attrs.erase(attrsIt);
         }
 
         if (_data->sel[0] == '!') {
             _data->hash |= isComment;
             _data->sel = "";
         } else {
-            Attrs::iterator it = _data->data.attrs.begin();
-            while (it != _data->data.attrs.end()) {
+            Attrs::iterator it = _data->attrs.begin();
+            while (it != _data->attrs.end()) {
                 if (it->first == "ns") {
                     _data->hash |= hasNS;
                     _data->ns = it->second;
-                    it = _data->data.attrs.erase(it);
+                    it = _data->attrs.erase(it);
                 } else if (it->second == "false") {
-                    it = _data->data.attrs.erase(it);
+                    it = _data->attrs.erase(it);
                 } else {
                     if (it->second == "true") {
                         it->second = "";
@@ -53,24 +53,20 @@ void wasmdom::VNode::normalize(bool injectSvgNamespace)
                 _data->ns = "http://www.w3.org/2000/svg";
             }
 
-            if (!_data->data.attrs.empty()) {
+            if (!_data->attrs.empty()) {
                 _data->hash |= hasAttrs;
             }
 #ifdef __EMSCRIPTEN__
-            if (!_data->data.props.empty()) {
+            if (!_data->props.empty()) {
                 _data->hash |= hasProps;
             }
-            if (!_data->data.callbacks.empty()) {
+            if (!_data->callbacks.empty()) {
                 _data->hash |= hasCallbacks;
             }
-            if (!_data->data.eventCallbacks.empty()) {
+            if (!_data->eventCallbacks.empty()) {
                 _data->hash |= hasEventCallbacks;
             }
 #endif
-
-            std::erase_if(_children, [](const VNode& child) {
-                return !child.valid();
-            });
 
             if (!_children.empty()) {
                 _data->hash |= hasDirectChildren;

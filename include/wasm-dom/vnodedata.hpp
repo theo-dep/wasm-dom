@@ -2,7 +2,7 @@
 
 #include "wasm-dom/attribute.hpp"
 
-#include <memory>
+#include <list>
 
 namespace emscripten
 {
@@ -25,8 +25,7 @@ namespace wasmdom
         emscripten::val node{ emscripten::val::null() };
 #endif
 
-        using Children = std::vector<std::shared_ptr<VNodeData>>;
-        Children children;
+        std::list<VNodeData*> children;
         VNodeData* parent{ nullptr };
     };
 }
