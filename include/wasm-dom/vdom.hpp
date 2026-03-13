@@ -18,10 +18,15 @@ namespace wasmdom
         VDom(const emscripten::val& element);
         ~VDom();
 
-        void patch(VNode vnode);
+        VNode patch(VNode vnode);
 
     private:
         VNodeData* _topParentNode{ nullptr };
         VNodeData* _currentNode{ nullptr };
+
+        VDom(const VDom& other) = delete;
+        VDom(VDom&& other) = delete;
+        VDom& operator=(const VDom& other) = delete;
+        VDom& operator=(VDom&& other) = delete;
     };
 }

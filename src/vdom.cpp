@@ -1,6 +1,7 @@
 #include "internals/deletevnodedata.hpp"
 #include "internals/patch.hpp"
 #include "internals/tovnodedata.hpp"
+#include "internals/updatevnode.hpp"
 
 #include <wasm-dom/conf.h>
 #include <wasm-dom/vdom.hpp>
@@ -24,14 +25,17 @@ wasmdom::VDom::~VDom()
 }
 
 WASMDOM_SH_INLINE
-void wasmdom::VDom::patch(VNode vnode)
+wasmdom::VNode wasmdom::VDom::patch(VNode vnode)
 {
     if (!_currentNode || !vnode.valid()) {
-        return;
+        return nullptr;
     }
 
     vnode.normalize();
-    VNodeData* data{ internals::toVNodeData(vnode, _topParentNode ? _topParentNode : nullptr) };
+    VNodeData* const data{ internals::toVNodeData(vnode, _topParentNode) };
 
-    internals::patchVNode(*_currentNode, *data);
+    internals::patchVNode(_currentNode, data);
+
+    internals::updateVNode(*_currentNode, vnode);
+    return vnode;
 }

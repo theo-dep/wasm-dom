@@ -81,9 +81,11 @@ namespace wasmdom
 
 #ifdef __EMSCRIPTEN__
         const emscripten::val& node() const;
+        void setNode(const emscripten::val& node);
 #endif
 
         const std::vector<VNode>& children() const;
+        std::vector<VNode>& children();
 
         void normalize();
         bool valid() const;

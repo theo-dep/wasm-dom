@@ -4,10 +4,10 @@
 
 namespace wasmdom::internals
 {
-    inline void deleteVNodeData(VNodeData* node)
+    inline void deleteVNodeData(VNodeData* const node)
     {
         if (node) {
-            for (VNodeData* child : node->children) {
+            for (VNodeData* const child : node->children) {
                 deleteVNodeData(child);
             }
             delete node;

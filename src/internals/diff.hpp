@@ -13,49 +13,49 @@
 
 namespace wasmdom::internals
 {
-    inline void diffAttrs(const VNodeData& oldVnode, const VNodeData& vnode)
+    inline void diffAttrs(const VNodeData& currentVnode, const VNodeData& newVnode)
     {
-        const Attrs& oldAttrs{ oldVnode.attrs };
-        const Attrs& attrs{ vnode.attrs };
+        const Attrs& currentAttrs{ currentVnode.attrs };
+        const Attrs& newAttrs{ newVnode.attrs };
 
-        for (const auto& [key, _] : oldAttrs) {
-            if (!attrs.contains(key)) {
-                domapi::removeAttribute(vnode.node, key);
+        for (const auto& [key, _] : currentAttrs) {
+            if (!newAttrs.contains(key)) {
+                domapi::removeAttribute(currentVnode.node, key);
             }
         }
 
-        for (const auto& [key, val] : attrs) {
-            const auto oldAttrsIt = oldAttrs.find(key);
-            if (oldAttrsIt == oldAttrs.cend() || oldAttrsIt->second != val) {
-                domapi::setAttribute(vnode.node, key, val);
+        for (const auto& [key, val] : newAttrs) {
+            const auto currentAttrsIt = currentAttrs.find(key);
+            if (currentAttrsIt == currentAttrs.cend() || currentAttrsIt->second != val) {
+                domapi::setAttribute(currentVnode.node, key, val);
             }
         }
     }
 
-    inline void diffProps(const VNodeData& oldVnode, VNodeData& vnode)
+    inline void diffProps(VNodeData& currentVnode, const VNodeData& newVnode)
     {
-        const Props& oldProps{ oldVnode.props };
-        const Props& props{ vnode.props };
+        const Props& currentProps{ currentVnode.props };
+        const Props& newProps{ newVnode.props };
 
         const emscripten::val nodeRaws{ emscripten::val::array(
-            props | std::views::keys | std::ranges::to<std::vector<std::string>>()
+            newProps | std::views::keys | std::ranges::to<std::vector<std::string>>()
         ) };
 
-        vnode.node.set(nodeRawsKey, nodeRaws);
+        currentVnode.node.set(nodeRawsKey, nodeRaws);
 
-        for (const auto& [key, _] : oldProps) {
-            if (!props.contains(key)) {
-                vnode.node.set(key, emscripten::val::undefined());
+        for (const auto& [key, _] : currentProps) {
+            if (!newProps.contains(key)) {
+                currentVnode.node.set(key, emscripten::val::undefined());
             }
         }
 
-        for (const auto& [key, val] : props) {
-            const auto oldPropsIt = oldProps.find(key);
-            if (oldPropsIt == oldProps.cend() ||
-                !val.strictlyEquals(oldPropsIt->second) ||
+        for (const auto& [key, val] : newProps) {
+            const auto currentPropsIt = currentProps.find(key);
+            if (currentPropsIt == currentProps.cend() ||
+                !val.strictlyEquals(currentPropsIt->second) ||
                 ((key == "value" || key == "checked") &&
-                 !val.strictlyEquals(vnode.node[key]))) {
-                vnode.node.set(key, val);
+                 !val.strictlyEquals(currentVnode.node[key]))) {
+                currentVnode.node.set(key, val);
             }
         }
     }
@@ -68,44 +68,44 @@ namespace wasmdom::internals
         return key;
     }
 
-    inline void diffCallbacks(const VNodeData& oldVnode, VNodeData& vnode)
+    inline void diffCallbacks(VNodeData& currentVnode, const VNodeData& newVnode)
     {
-        const Callbacks& oldCallbacks{ oldVnode.callbacks };
-        const Callbacks& callbacks{ vnode.callbacks };
+        const Callbacks& currentCallbacks{ currentVnode.callbacks };
+        const Callbacks& newCallbacks{ newVnode.callbacks };
 
         std::string eventKey;
 
-        for (const auto& [key, _] : oldCallbacks) {
+        for (const auto& [key, _] : currentCallbacks) {
             eventKey = formatEventKey(key);
-            jsapi::removeEventListener_(vnode.node.as_handle(), eventKey.c_str(), vnode.node[nodeEventsKey][eventKey].as_handle());
-            vnode.node[nodeEventsKey].delete_(eventKey);
+            jsapi::removeEventListener_(currentVnode.node.as_handle(), eventKey.c_str(), currentVnode.node[nodeEventsKey][eventKey].as_handle());
+            currentVnode.node[nodeEventsKey].delete_(eventKey);
         }
 
-        if (vnode.node[nodeEventsKey].isUndefined()) {
-            vnode.node.set(nodeEventsKey, emscripten::val::object());
+        if (currentVnode.node[nodeEventsKey].isUndefined()) {
+            currentVnode.node.set(nodeEventsKey, emscripten::val::object());
         }
 
-        for (auto& [key, val] : callbacks) {
+        for (auto& [key, val] : newCallbacks) {
             eventKey = formatEventKey(key);
             const emscripten::val jsCallback = toJsCallback(val);
             const emscripten::val functorAdapter = jsCallback["opcall"].call<emscripten::val>("bind", jsCallback);
-            jsapi::addEventListener_(vnode.node.as_handle(), eventKey.c_str(), functorAdapter.as_handle());
-            vnode.node[nodeEventsKey].set(eventKey, functorAdapter);
+            jsapi::addEventListener_(currentVnode.node.as_handle(), eventKey.c_str(), functorAdapter.as_handle());
+            currentVnode.node[nodeEventsKey].set(eventKey, functorAdapter);
         }
     }
 
-    inline void diff(const VNodeData& oldVnode, VNodeData& vnode)
+    inline void diff(VNodeData& currentVnode, const VNodeData& newVnode)
     {
-        const std::size_t vnodes{ vnode.hash | oldVnode.hash };
+        const std::size_t vnodes{ newVnode.hash | currentVnode.hash };
 
         if (vnodes & hasAttrs) {
-            diffAttrs(oldVnode, vnode);
+            diffAttrs(currentVnode, newVnode);
         }
         if (vnodes & hasProps) {
-            diffProps(oldVnode, vnode);
+            diffProps(currentVnode, newVnode);
         }
         if (vnodes & hasCallbacks) {
-            diffCallbacks(oldVnode, vnode);
+            diffCallbacks(currentVnode, newVnode);
         }
     }
 }

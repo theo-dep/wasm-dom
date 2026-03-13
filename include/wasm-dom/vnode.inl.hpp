@@ -98,10 +98,16 @@ std::size_t wasmdom::VNode::hash() const { return _data->hash; }
 WASMDOM_INLINE
 const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
 
+WASMDOM_INLINE
+void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
+
 #endif
 
 WASMDOM_INLINE
 const std::vector<wasmdom::VNode>& wasmdom::VNode::children() const { return _children; }
+
+WASMDOM_INLINE
+std::vector<wasmdom::VNode>& wasmdom::VNode::children() { return _children; }
 
 WASMDOM_INLINE
 void wasmdom::VNode::normalize() { normalize(false); }
