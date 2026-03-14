@@ -9,7 +9,7 @@ namespace wasmdom::internals
 {
     inline VNodeData* toVNodeData(const VNode& vnode, VNodeData* parent)
     {
-        VNodeData* data = new VNodeData;
+        auto data = new VNodeData;
         data->sel = vnode.sel();
         data->key = vnode.key();
         data->ns = vnode.ns();
@@ -22,7 +22,7 @@ namespace wasmdom::internals
 
         data->parent = parent;
 
-        for (const VNode& child : vnode.children()) {
+        for (const auto& child : vnode.children()) {
             data->children.push_back(toVNodeData(child, data));
         }
 
@@ -31,7 +31,7 @@ namespace wasmdom::internals
 
     inline VNodeData* toVNodeData(const emscripten::val& node)
     {
-        VNode vnode{ VNode::toVNode(node) };
+        auto vnode = VNode::toVNode(node);
         if (!vnode.valid()) {
             return nullptr;
         }
@@ -43,11 +43,9 @@ namespace wasmdom::internals
 
     inline VNodeData* toVNodeData(const emscripten::val& node, const VNodeData& parent)
     {
-        const std::list<VNodeData*>::const_iterator dataIt{
-            std::ranges::find_if(parent.children, [&node](const VNodeData* child) {
-                return node.strictlyEquals(child->node);
-            })
-        };
+        const auto dataIt = std::ranges::find_if(parent.children, [&node](const VNodeData* child) {
+            return node.strictlyEquals(child->node);
+        });
 
         assert(dataIt != parent.children.end() && "VNode not found in parent's children");
         return *dataIt;
