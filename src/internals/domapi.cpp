@@ -53,105 +53,89 @@ emscripten::val wasmdom::internals::domapi::nextSibling(const emscripten::val& n
     return emscripten::val::null();
 }
 
-namespace wasmdom::internals::domapi
-{
-    using internals::nullNodeId;
-    using internals::retainNode;
-}
-
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::insertBefore(NodeId parent, NodeId newNode, NodeId ref)
 {
-    retainNode(parent);
-    retainNode(newNode);
-    retainNode(ref);
-    domQueue().enqueue(DomOpInsertBefore{ parent, newNode, ref });
+    domQueue().emitInsertBefore(parent, newNode, ref);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::removeNode(NodeId node)
 {
-    if (node == nullNodeId)
-        return;
-    retainNode(node);
-    domQueue().enqueue(DomOpRemoveNode{ node });
+    domQueue().emitRemoveNode(node);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::appendChild(NodeId parent, NodeId child)
 {
-    retainNode(parent);
-    retainNode(child);
-    domQueue().enqueue(DomOpAppendChild{ parent, child });
+    domQueue().emitAppendChild(parent, child);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::removeAttribute(NodeId node, const std::string& attribute)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpRemoveAttribute{ node, attribute });
+    domQueue().emitRemoveAttribute(node, attribute);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setAttribute(NodeId node, const std::string& attribute, const std::string& value)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpSetAttribute{ node, attribute, value });
+    domQueue().emitSetAttribute(node, attribute, value);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setNodeValue(NodeId node, const std::string& text)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpSetNodeValue{ node, text });
+    domQueue().emitSetNodeValue(node, text);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setProperty(NodeId node, const std::string& name, const emscripten::val& value)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpSetProperty{ node, name, value });
+    domQueue().emitSetProperty(node, name, value);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::ensureEventsObject(NodeId node)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpEnsureEventsObject{ node });
+    domQueue().emitEnsureEventsObject(node);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setEventsProperty(NodeId node, const std::string& name, const emscripten::val& value)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpSetEventsProperty{ node, name, value });
+    domQueue().emitSetEventsProperty(node, name, value);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::deleteEventsProperty(NodeId node, const std::string& name)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpDeleteEventsProperty{ node, name });
+    domQueue().emitDeleteEventsProperty(node, name);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::addEventListener(NodeId node, const std::string& event, const emscripten::val& listener)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpAddEventListener{ node, event, listener });
+    domQueue().emitAddEventListener(node, event, listener);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::removeEventListener(NodeId node, const std::string& event, const emscripten::val& listener)
 {
-    retainNode(node);
-    domQueue().enqueue(DomOpRemoveEventListener{ node, event, listener });
+    domQueue().emitRemoveEventListener(node, event, listener);
 }
 
+// Legacy val-taking entry point: still used by the public domapi test. The
+// node is allocated into the JS handle table and the queue takes care of
+// dropping its ref after the batch executes (the alloc gives us 1 ref, and
+// emit retains a second, so the queue's drop balances the alloc; we drop
+// the alloc-ref synchronously after enqueueing).
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::removeNode(const emscripten::val& node)
 {
     if (node.isNull() || node.isUndefined())
         return;
-    domQueue().enqueue(DomOpRemoveNode{ allocNode(node) });
+    const NodeId id = allocNode(node);
+    domQueue().emitRemoveNode(id);
+    dropNode(id);
 }

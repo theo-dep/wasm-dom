@@ -17,28 +17,13 @@ namespace wasmdom::internals::jsapi
 
     emscripten::EM_VAL createDocumentFragment();
 
-    void insertBefore(emscripten::EM_VAL parentNode, emscripten::EM_VAL newNode, emscripten::EM_VAL referenceNode);
-
-    void removeChild(emscripten::EM_VAL parentNode, emscripten::EM_VAL child);
-
-    void appendChild(emscripten::EM_VAL parentNode, emscripten::EM_VAL child);
-
-    void removeAttribute(emscripten::EM_VAL node, const char* attribute);
-
-    void setAttributeNS(emscripten::EM_VAL node, const char* ns, const char* attribute, const char* value);
-
-    void setAttribute(emscripten::EM_VAL node, const char* attribute, const char* value);
-
-    // conflict name with https://github.com/emscripten-core/emscripten/blob/main/src/closure-externs/closure-externs.js#L182
-    void addEventListener_(emscripten::EM_VAL node, const char* event, emscripten::EM_VAL listener);
-
-    // conflict name with https://github.com/emscripten-core/emscripten/blob/main/src/closure-externs/closure-externs.js#L188
-    void removeEventListener_(emscripten::EM_VAL node, const char* event, emscripten::EM_VAL listener);
-
     // JS-side handle table for batched DOM operations.
     std::uint32_t wdom_alloc(emscripten::EM_VAL handle);
     emscripten::EM_VAL wdom_get(std::uint32_t id);
     void wdom_retain(std::uint32_t id);
     void wdom_drop(std::uint32_t id);
+
+    // Single-call batch executor. See domoperation.cpp / jsapi.c.
+    void wdom_flush(const std::uint32_t* cmds, std::uint32_t cmdsLen, const char* strs, emscripten::EM_VAL valsHandle);
     }
 }

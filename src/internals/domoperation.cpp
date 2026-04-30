@@ -1,99 +1,208 @@
 #include "domoperation.hpp"
 
-#include "domkeys.hpp"
 #include "handletable.hpp"
 #include "jsapi.hpp"
 
 #include <wasm-dom/conf.h>
+#include <wasm-dom/vnode.hpp>
+
+#include <cstdint>
 
 WASMDOM_SH_INLINE
-void wasmdom::internals::DomOperationQueue::enqueue(DomOperation op)
+void wasmdom::internals::DomOperationQueue::pushString(std::string_view s, std::uint32_t& outOffset, std::uint32_t& outLength)
 {
-    _ops.push_back(std::move(op));
+    outOffset = static_cast<std::uint32_t>(_strs.size());
+    outLength = static_cast<std::uint32_t>(s.size());
+    _strs.insert(_strs.end(), s.begin(), s.end());
+}
+
+WASMDOM_SH_INLINE
+std::uint32_t wasmdom::internals::DomOperationQueue::pushVal(const emscripten::val& v)
+{
+    const std::uint32_t idx = static_cast<std::uint32_t>(_vals.size());
+    _vals.push_back(v);
+    return idx;
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::retain(NodeId id)
+{
+    retainNode(id);
+    _retained.push_back(id);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitInsertBefore(NodeId parent, NodeId newNode, NodeId ref)
+{
+    retain(parent);
+    retain(newNode);
+    retain(ref);
+    _cmds.push_back(OP_INSERT_BEFORE);
+    _cmds.push_back(parent);
+    _cmds.push_back(newNode);
+    _cmds.push_back(ref);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitRemoveNode(NodeId node)
+{
+    if (node == nullNodeId)
+        return;
+    retain(node);
+    _cmds.push_back(OP_REMOVE_NODE);
+    _cmds.push_back(node);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitAppendChild(NodeId parent, NodeId child)
+{
+    retain(parent);
+    retain(child);
+    _cmds.push_back(OP_APPEND_CHILD);
+    _cmds.push_back(parent);
+    _cmds.push_back(child);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitRemoveAttribute(NodeId node, std::string_view name)
+{
+    retain(node);
+    std::uint32_t no, nl;
+    pushString(name, no, nl);
+    _cmds.push_back(OP_REMOVE_ATTRIBUTE);
+    _cmds.push_back(node);
+    _cmds.push_back(no);
+    _cmds.push_back(nl);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitSetAttribute(NodeId node, std::string_view name, std::string_view value)
+{
+    retain(node);
+    std::uint32_t no, nl, vo, vl;
+    pushString(name, no, nl);
+    pushString(value, vo, vl);
+    _cmds.push_back(OP_SET_ATTRIBUTE);
+    _cmds.push_back(node);
+    _cmds.push_back(no);
+    _cmds.push_back(nl);
+    _cmds.push_back(vo);
+    _cmds.push_back(vl);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitSetNodeValue(NodeId node, std::string_view text)
+{
+    retain(node);
+    std::uint32_t vo, vl;
+    pushString(text, vo, vl);
+    _cmds.push_back(OP_SET_NODE_VALUE);
+    _cmds.push_back(node);
+    _cmds.push_back(vo);
+    _cmds.push_back(vl);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitSetProperty(NodeId node, std::string_view name, const emscripten::val& value)
+{
+    retain(node);
+    std::uint32_t no, nl;
+    pushString(name, no, nl);
+    const std::uint32_t vi = pushVal(value);
+    _cmds.push_back(OP_SET_PROPERTY);
+    _cmds.push_back(node);
+    _cmds.push_back(no);
+    _cmds.push_back(nl);
+    _cmds.push_back(vi);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitEnsureEventsObject(NodeId node)
+{
+    retain(node);
+    _cmds.push_back(OP_ENSURE_EVENTS_OBJECT);
+    _cmds.push_back(node);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitSetEventsProperty(NodeId node, std::string_view name, const emscripten::val& value)
+{
+    retain(node);
+    std::uint32_t no, nl;
+    pushString(name, no, nl);
+    const std::uint32_t vi = pushVal(value);
+    _cmds.push_back(OP_SET_EVENTS_PROPERTY);
+    _cmds.push_back(node);
+    _cmds.push_back(no);
+    _cmds.push_back(nl);
+    _cmds.push_back(vi);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitDeleteEventsProperty(NodeId node, std::string_view name)
+{
+    retain(node);
+    std::uint32_t no, nl;
+    pushString(name, no, nl);
+    _cmds.push_back(OP_DELETE_EVENTS_PROPERTY);
+    _cmds.push_back(node);
+    _cmds.push_back(no);
+    _cmds.push_back(nl);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitAddEventListener(NodeId node, std::string_view event, const emscripten::val& listener)
+{
+    retain(node);
+    std::uint32_t eo, el;
+    pushString(event, eo, el);
+    const std::uint32_t vi = pushVal(listener);
+    _cmds.push_back(OP_ADD_EVENT_LISTENER);
+    _cmds.push_back(node);
+    _cmds.push_back(eo);
+    _cmds.push_back(el);
+    _cmds.push_back(vi);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::DomOperationQueue::emitRemoveEventListener(NodeId node, std::string_view event, const emscripten::val& listener)
+{
+    retain(node);
+    std::uint32_t eo, el;
+    pushString(event, eo, el);
+    const std::uint32_t vi = pushVal(listener);
+    _cmds.push_back(OP_REMOVE_EVENT_LISTENER);
+    _cmds.push_back(node);
+    _cmds.push_back(eo);
+    _cmds.push_back(el);
+    _cmds.push_back(vi);
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::DomOperationQueue::flush()
 {
-    // Move ops out so re-entrant enqueues during flush (none expected) are safe.
-    std::vector<DomOperation> ops;
-    ops.swap(_ops);
+    if (_cmds.empty())
+        return;
 
-    for (DomOperation& op : ops) {
-        std::visit([](auto& o) {
-            using T = std::decay_t<decltype(o)>;
+    // Pack vals into a JS Array so the handler can index them directly.
+    emscripten::val valArr = emscripten::val::array();
+    for (std::size_t i = 0; i < _vals.size(); ++i)
+        valArr.set(i, _vals[i]);
 
-            if constexpr (std::is_same_v<T, DomOpInsertBefore>) {
-                const emscripten::val parent = resolveNode(o.parent);
-                const emscripten::val node = resolveNode(o.node);
-                const emscripten::val ref = resolveNode(o.ref);
-                if (!parent.isNull() && !parent.isUndefined())
-                    jsapi::insertBefore(parent.as_handle(), node.as_handle(), ref.as_handle());
-                dropNode(o.parent);
-                dropNode(o.node);
-                dropNode(o.ref);
-            } else if constexpr (std::is_same_v<T, DomOpRemoveNode>) {
-                const emscripten::val node = resolveNode(o.node);
-                if (!node.isNull() && !node.isUndefined()) {
-                    const emscripten::val parentNode{ node["parentNode"] };
-                    if (!parentNode.isNull())
-                        jsapi::removeChild(parentNode.as_handle(), node.as_handle());
-                }
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpAppendChild>) {
-                const emscripten::val parent = resolveNode(o.parent);
-                const emscripten::val child = resolveNode(o.child);
-                jsapi::appendChild(parent.as_handle(), child.as_handle());
-                dropNode(o.parent);
-                dropNode(o.child);
-            } else if constexpr (std::is_same_v<T, DomOpSetAttribute>) {
-                const emscripten::val node = resolveNode(o.node);
-                if (o.name.starts_with("xml:")) {
-                    jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", o.name.c_str(), o.value.c_str());
-                } else if (o.name.starts_with("xlink:")) {
-                    jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/1999/xlink", o.name.c_str(), o.value.c_str());
-                } else {
-                    jsapi::setAttribute(node.as_handle(), o.name.c_str(), o.value.c_str());
-                }
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpRemoveAttribute>) {
-                const emscripten::val node = resolveNode(o.node);
-                jsapi::removeAttribute(node.as_handle(), o.name.c_str());
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpSetNodeValue>) {
-                emscripten::val node = resolveNode(o.node);
-                node.set("nodeValue", o.value);
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpSetProperty>) {
-                emscripten::val node = resolveNode(o.node);
-                node.set(o.name, o.value);
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpEnsureEventsObject>) {
-                emscripten::val node = resolveNode(o.node);
-                if (node[nodeEventsKey].isUndefined()) {
-                    node.set(nodeEventsKey, emscripten::val::object());
-                }
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpSetEventsProperty>) {
-                emscripten::val node = resolveNode(o.node);
-                node[nodeEventsKey].set(o.name, o.value);
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpDeleteEventsProperty>) {
-                emscripten::val node = resolveNode(o.node);
-                node[nodeEventsKey].delete_(o.name);
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpAddEventListener>) {
-                const emscripten::val node = resolveNode(o.node);
-                jsapi::addEventListener_(node.as_handle(), o.event.c_str(), o.listener.as_handle());
-                dropNode(o.node);
-            } else if constexpr (std::is_same_v<T, DomOpRemoveEventListener>) {
-                const emscripten::val node = resolveNode(o.node);
-                jsapi::removeEventListener_(node.as_handle(), o.event.c_str(), o.listener.as_handle());
-                dropNode(o.node);
-            }
-        },
-                   op);
-    }
+    jsapi::wdom_flush(
+        _cmds.data(),
+        static_cast<std::uint32_t>(_cmds.size()),
+        _strs.empty() ? nullptr : _strs.data(),
+        valArr.as_handle()
+    );
+
+    for (NodeId id : _retained)
+        dropNode(id);
+
+    _cmds.clear();
+    _strs.clear();
+    _vals.clear();
+    _retained.clear();
 }
 
 WASMDOM_SH_INLINE
