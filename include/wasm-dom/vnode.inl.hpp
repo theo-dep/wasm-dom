@@ -112,7 +112,7 @@ void wasmdom::VNode::setNode(const emscripten::val& node)
 WASMDOM_INLINE
 void wasmdom::VNode::setParentNode(const emscripten::val& node)
 {
-    wasmdom::internals::dropNode(_data->parentNode);
+    // parentNode is a non-owning reference; do not drop the previous slot.
     _data->parentNode = wasmdom::internals::allocNode(node);
 }
 
@@ -121,7 +121,6 @@ void wasmdom::VNode::setNodeId(wasmdom::internals::NodeId id)
 {
     if (id == _data->node)
         return;
-    wasmdom::internals::retainNode(id);
     wasmdom::internals::dropNode(_data->node);
     _data->node = id;
 }
@@ -129,11 +128,27 @@ void wasmdom::VNode::setNodeId(wasmdom::internals::NodeId id)
 WASMDOM_INLINE
 void wasmdom::VNode::setParentNodeId(wasmdom::internals::NodeId id)
 {
-    if (id == _data->parentNode)
-        return;
-    wasmdom::internals::retainNode(id);
-    wasmdom::internals::dropNode(_data->parentNode);
+    // parentNode is a non-owning reference; do not drop the previous slot.
     _data->parentNode = id;
+}
+
+WASMDOM_INLINE
+void wasmdom::VNode::stealNodeId(VNode& src)
+{
+    if (this == &src || _data == src._data)
+        return;
+    wasmdom::internals::dropNode(_data->node);
+    _data->node = src._data->node;
+    src._data->node = wasmdom::internals::nullNodeId;
+}
+
+WASMDOM_INLINE
+void wasmdom::VNode::stealParentNodeId(VNode& src)
+{
+    if (this == &src || _data == src._data)
+        return;
+    // parentNode is a non-owning reference; just copy.
+    _data->parentNode = src._data->parentNode;
 }
 
 WASMDOM_INLINE

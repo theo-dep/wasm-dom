@@ -8,22 +8,20 @@
 
 namespace wasmdom::internals::domapi
 {
-    // Synchronous (creation) operations: must return a node value used by
-    // subsequent operations.
-    emscripten::val createElement(const std::string& tag);
-    emscripten::val createElementNS(const std::string& namespaceURI, const std::string& qualifiedName);
-    emscripten::val createTextNode(const std::string& text);
-    emscripten::val createComment(const std::string& comment);
-    emscripten::val createDocumentFragment();
+    // Synchronous (creation) operations: deferred to the next flush. They
+    // allocate a NodeId on the C++ side and emit the matching CREATE_*
+    // opcode; the actual DOM node is created later by wdom_flush.
+    NodeId createElement(const std::string& tag);
+    NodeId createElementNS(const std::string& namespaceURI, const std::string& qualifiedName);
+    NodeId createTextNode(const std::string& text);
+    NodeId createComment(const std::string& comment);
+    NodeId createDocumentFragment();
 
-    // Read-only DOM access. Kept for the public API tests; not used by the
-    // internal patch pipeline (which avoids any live DOM reads during diff).
+    // Read-only DOM access. Kept for the public API tests.
     emscripten::val parentNode(const emscripten::val& node);
     emscripten::val nextSibling(const emscripten::val& node);
 
-    // Mutating operations: deferred via the DomOperationQueue and executed
-    // in batch by domQueue().flush(). The queue retains/drops refcounts on
-    // the JS handle table so caller-owned NodeIds are not invalidated.
+    // Mutating operations: deferred via the DomOperationQueue.
     void insertBefore(NodeId parent, NodeId newNode, NodeId ref);
     void removeNode(NodeId node);
     void appendChild(NodeId parent, NodeId child);

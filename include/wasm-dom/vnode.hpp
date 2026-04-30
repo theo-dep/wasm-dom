@@ -132,9 +132,16 @@ namespace wasmdom
         void setNode(const emscripten::val& node);
         void setParentNode(const emscripten::val& node);
 
-        // Take a retained reference on `id` (caller keeps its own ref).
+        // Take ownership of a freshly-allocated id (e.g. from create*).
+        // Drops the previously held id.
         void setNodeId(internals::NodeId id);
         void setParentNodeId(internals::NodeId id);
+
+        // Move the id from `src` into `*this`. After the call, `src` no
+        // longer owns the id (set to nullNodeId). Used in the sameVNode
+        // branch of patchVNode to avoid double-free.
+        void stealNodeId(VNode& src);
+        void stealParentNodeId(VNode& src);
 
         std::unordered_map<std::string, emscripten::val>& installedListeners();
         const std::unordered_map<std::string, emscripten::val>& installedListeners() const;

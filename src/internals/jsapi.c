@@ -5,44 +5,18 @@
 
 typedef struct _EM_VAL* EM_VAL;
 
-WASMDOM_EM_JS(EM_VAL, createElement, (const char* name),
-    { return Emval.toHandle(document.createElement(UTF8ToString(name))); })
-
-WASMDOM_EM_JS(EM_VAL, createElementNS, (const char* ns, const char* name),
-    { return Emval.toHandle(document.createElementNS(UTF8ToString(ns), UTF8ToString(name))); })
-
-WASMDOM_EM_JS(EM_VAL, createTextNode, (const char* text),
-    { return Emval.toHandle(document.createTextNode(UTF8ToString(text))); })
-
-WASMDOM_EM_JS(EM_VAL, createComment, (const char* comment),
-    { return Emval.toHandle(document.createComment(UTF8ToString(comment))); })
-
-WASMDOM_EM_JS(EM_VAL, createDocumentFragment, (void),
-    { return Emval.toHandle(document.createDocumentFragment()); })
-
-// JS-side handle table for batched DOM operations.
-// Slot 0 is reserved for the null sentinel and is never freed.
-WASMDOM_EM_JS(uint32_t, wdom_alloc, (EM_VAL handle),
-    {
-        var t = Module.__wdomTable || (Module.__wdomTable = { nodes: [null], refs: [Number.MAX_SAFE_INTEGER], freeList: [] });
-        var id = t.freeList.length ? t.freeList.pop() : t.nodes.length;
-        t.nodes[id] = Emval.toValue(handle);
-        t.refs[id] = 1;
-        return id;
-    })
+// JS-side handle table.
+// Slot 0 is the null sentinel.
+// The table is created lazily by wdom_flush. wdom_get / wdom_drop simply
+// look it up. NodeId allocation and refcounting is done in C++; the JS
+// table only stores the actual DOM node references.
 
 WASMDOM_EM_JS(EM_VAL, wdom_get, (uint32_t id),
     {
         var t = Module.__wdomTable;
-        return Emval.toHandle(t ? t.nodes[id] : null);
-    })
-
-WASMDOM_EM_JS(void, wdom_retain, (uint32_t id),
-    {
-        if (id === 0) return;
-        var t = Module.__wdomTable;
-        if (!t) return;
-        ++t.refs[id];
+        if (!t) return Emval.toHandle(null);
+        var n = t.nodes[id];
+        return Emval.toHandle(n == null ? null : n);
     })
 
 WASMDOM_EM_JS(void, wdom_drop, (uint32_t id),
@@ -50,21 +24,39 @@ WASMDOM_EM_JS(void, wdom_drop, (uint32_t id),
         if (id === 0) return;
         var t = Module.__wdomTable;
         if (!t) return;
-        if (--t.refs[id] === 0) {
-            t.nodes[id] = null;
-            t.freeList.push(id);
-        }
+        t.nodes[id] = null;
     })
 
-// Single-call DOM batch executor. `cmds` is a flat uint32 buffer in WASM
-// linear memory, `strs` is a side blob holding all string payloads, and
-// `valsHandle` resolves to a JS Array of values used by setProperty /
-// setEventsProperty / addEventListener / removeEventListener ops.
-WASMDOM_EM_JS(void, wdom_flush, (const uint32_t* cmds, uint32_t cmdsLen, const char* strs, EM_VAL valsHandle),
+// Opcodes. Must match enum DomOpCode in domoperation.hpp.
+//   0  INSERT_BEFORE       parent, node, ref
+//   1  REMOVE_NODE         node
+//   2  APPEND_CHILD        parent, child
+//   3  SET_ATTRIBUTE       node, nameOff, nameLen, valOff, valLen
+//   4  REMOVE_ATTRIBUTE    node, nameOff, nameLen
+//   5  SET_NODE_VALUE      node, valOff, valLen
+//   6  SET_PROPERTY        node, nameOff, nameLen, valIdx
+//   7  ENSURE_EVENTS       node
+//   8  SET_EVENTS_PROPERTY node, nameOff, nameLen, valIdx
+//   9  DELETE_EVENTS_PROP  node, nameOff, nameLen
+//  10  ADD_EVENT_LISTENER  node, evOff, evLen, valIdx
+//  11  REMOVE_EVENT_LISTNR node, evOff, evLen, valIdx
+//  12  CREATE_ELEMENT      id, tagOff, tagLen
+//  13  CREATE_ELEMENT_NS   id, nsOff, nsLen, tagOff, tagLen
+//  14  CREATE_TEXT         id, textOff, textLen
+//  15  CREATE_COMMENT      id, textOff, textLen
+//  16  CREATE_FRAGMENT     id
+WASMDOM_EM_JS(void, wdom_flush,
+    (const uint32_t* cmds, uint32_t cmdsLen, const char* strs, EM_VAL valsHandle, EM_VAL mountsHandle),
     {
-        var t = Module.__wdomTable;
+        var t = Module.__wdomTable || (Module.__wdomTable = { nodes: [null] });
         var nodes = t.nodes;
         var vals = Emval.toValue(valsHandle);
+        var mounts = Emval.toValue(mountsHandle);
+        // Register externally-allocated nodes (toVNode) into the handle
+        // table before processing opcodes.
+        for (var k = 0; k < mounts.length; k += 2) {
+            nodes[mounts[k]] = mounts[k + 1];
+        }
         var view = HEAPU32.subarray(cmds >> 2, (cmds >> 2) + cmdsLen);
         var i = 0;
         while (i < cmdsLen) {
@@ -137,6 +129,31 @@ WASMDOM_EM_JS(void, wdom_flush, (const uint32_t* cmds, uint32_t cmdsLen, const c
                 case 11: { // removeEventListener
                     var n = view[i++], no = view[i++], nl = view[i++], vi = view[i++];
                     nodes[n].removeEventListener(UTF8ToString(strs + no, nl), vals[vi], false);
+                    break;
+                }
+                case 12: { // createElement
+                    var id = view[i++], to = view[i++], tl = view[i++];
+                    nodes[id] = document.createElement(UTF8ToString(strs + to, tl));
+                    break;
+                }
+                case 13: { // createElementNS
+                    var id = view[i++], no = view[i++], nl = view[i++], to = view[i++], tl = view[i++];
+                    nodes[id] = document.createElementNS(UTF8ToString(strs + no, nl), UTF8ToString(strs + to, tl));
+                    break;
+                }
+                case 14: { // createTextNode
+                    var id = view[i++], to = view[i++], tl = view[i++];
+                    nodes[id] = document.createTextNode(UTF8ToString(strs + to, tl));
+                    break;
+                }
+                case 15: { // createComment
+                    var id = view[i++], to = view[i++], tl = view[i++];
+                    nodes[id] = document.createComment(UTF8ToString(strs + to, tl));
+                    break;
+                }
+                case 16: { // createDocumentFragment
+                    var id = view[i++];
+                    nodes[id] = document.createDocumentFragment();
                     break;
                 }
             }

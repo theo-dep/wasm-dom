@@ -72,17 +72,17 @@ namespace wasmdom::internals
     {
         if (vnode.hash() & isElement) {
             if (vnode.hash() & hasNS) {
-                vnode.setNode(domapi::createElementNS(vnode.ns(), vnode.sel()));
+                vnode.setNodeId(domapi::createElementNS(vnode.ns(), vnode.sel()));
             } else {
-                vnode.setNode(domapi::createElement(vnode.sel()));
+                vnode.setNodeId(domapi::createElement(vnode.sel()));
             }
         } else if (vnode.hash() & isText) {
-            vnode.setNode(domapi::createTextNode(vnode.sel()));
+            vnode.setNodeId(domapi::createTextNode(vnode.sel()));
             return;
         } else if (vnode.hash() & isFragment) {
-            vnode.setNode(domapi::createDocumentFragment());
+            vnode.setNodeId(domapi::createDocumentFragment());
         } else if (vnode.hash() & isComment) {
-            vnode.setNode(domapi::createComment(vnode.sel()));
+            vnode.setNodeId(domapi::createComment(vnode.sel()));
             return;
         }
 
@@ -221,8 +221,8 @@ namespace wasmdom::internals
     inline void patchVNode(VNode& oldVnode, VNode& vnode)
     {
         if (sameVNode(oldVnode, vnode)) {
-            vnode.setNodeId(oldVnode.nodeId());
-            vnode.setParentNodeId(oldVnode.parentNodeId());
+            vnode.stealNodeId(oldVnode);
+            vnode.stealParentNodeId(oldVnode);
             vnode.installedListeners() = oldVnode.installedListeners();
 
             if (vnode.hash() & isElementOrFragment) {

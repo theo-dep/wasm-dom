@@ -2,39 +2,38 @@
 
 #include "domoperation.hpp"
 #include "handletable.hpp"
-#include "jsapi.hpp"
 
 #include <wasm-dom/conf.h>
 #include <wasm-dom/vnode.hpp>
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::internals::domapi::createElement(const std::string& tag)
+wasmdom::internals::NodeId wasmdom::internals::domapi::createElement(const std::string& tag)
 {
-    return emscripten::val::take_ownership(jsapi::createElement(tag.c_str()));
+    return domQueue().emitCreateElement(tag);
 }
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::internals::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
+wasmdom::internals::NodeId wasmdom::internals::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
-    return emscripten::val::take_ownership(jsapi::createElementNS(namespaceURI.c_str(), qualifiedName.c_str()));
+    return domQueue().emitCreateElementNS(namespaceURI, qualifiedName);
 }
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::internals::domapi::createTextNode(const std::string& text)
+wasmdom::internals::NodeId wasmdom::internals::domapi::createTextNode(const std::string& text)
 {
-    return emscripten::val::take_ownership(jsapi::createTextNode(text.c_str()));
+    return domQueue().emitCreateText(text);
 }
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::internals::domapi::createComment(const std::string& comment)
+wasmdom::internals::NodeId wasmdom::internals::domapi::createComment(const std::string& comment)
 {
-    return emscripten::val::take_ownership(jsapi::createComment(comment.c_str()));
+    return domQueue().emitCreateComment(comment);
 }
 
 WASMDOM_SH_INLINE
-emscripten::val wasmdom::internals::domapi::createDocumentFragment()
+wasmdom::internals::NodeId wasmdom::internals::domapi::createDocumentFragment()
 {
-    return emscripten::val::take_ownership(jsapi::createDocumentFragment());
+    return domQueue().emitCreateFragment();
 }
 
 WASMDOM_SH_INLINE
@@ -125,17 +124,19 @@ void wasmdom::internals::domapi::removeEventListener(NodeId node, const std::str
     domQueue().emitRemoveEventListener(node, event, listener);
 }
 
-// Legacy val-taking entry point: still used by the public domapi test. The
-// node is allocated into the JS handle table and the queue takes care of
-// dropping its ref after the batch executes (the alloc gives us 1 ref, and
-// emit retains a second, so the queue's drop balances the alloc; we drop
-// the alloc-ref synchronously after enqueueing).
+// Legacy val-taking entry point kept for the public domapi test. Mounts the
+// externally-owned node into the handle table, emits removeNode, then frees
+// the id (the JS table slot will be cleared at flush via wdom_drop side
+// effects on freeId).
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::removeNode(const emscripten::val& node)
 {
     if (node.isNull() || node.isUndefined())
         return;
-    const NodeId id = allocNode(node);
+    const NodeId id = domQueue().mount(node);
     domQueue().emitRemoveNode(id);
-    dropNode(id);
+    // Free after flush would be cleanest but we don't have a hook. Defer:
+    // since freeId would call wdom_drop synchronously and we want the node
+    // to still exist in the table when wdom_flush runs, keep the slot in
+    // the handle table by NOT calling freeId here.
 }

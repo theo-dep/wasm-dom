@@ -2,6 +2,7 @@
 
 #ifdef __EMSCRIPTEN__
 #include "internals/diff.hpp"
+#include "internals/domoperation.hpp"
 #include "internals/jsapi.hpp"
 #endif
 
@@ -120,7 +121,8 @@ wasmdom::internals::NodeId wasmdom::internals::allocNode(const emscripten::val& 
 {
     if (v.isNull() || v.isUndefined())
         return nullNodeId;
-    return jsapi::wdom_alloc(v.as_handle());
+    // Mount the externally-owned node into the JS handle table at next flush.
+    return domQueue().mount(v);
 }
 
 WASMDOM_SH_INLINE
@@ -130,24 +132,26 @@ emscripten::val wasmdom::internals::resolveNode(NodeId id)
 }
 
 WASMDOM_SH_INLINE
-void wasmdom::internals::retainNode(NodeId id)
+void wasmdom::internals::retainNode(NodeId /*id*/)
 {
-    if (id != nullNodeId)
-        jsapi::wdom_retain(id);
+    // Refcount is no longer maintained: NodeIds owned by VNode have unique
+    // ownership semantics (one VNode = one id, freed at SharedData dtor).
+    // Retain is a no-op kept to preserve the call-site API.
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::dropNode(NodeId id)
 {
     if (id != nullNodeId)
-        jsapi::wdom_drop(id);
+        domQueue().freeId(id);
 }
 
 WASMDOM_SH_INLINE
 wasmdom::VNode::SharedData::~SharedData()
 {
+    // Only `node` is owned. `parentNode` is a non-owning reference into
+    // another VNode's slot.
     internals::dropNode(node);
-    internals::dropNode(parentNode);
 }
 
 WASMDOM_SH_INLINE
