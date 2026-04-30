@@ -140,10 +140,18 @@ namespace wasmdom::internals
         }
     }
 
-    inline void updateChildren(const emscripten::val& parentNode, Children::iterator oldStart, Children::iterator oldEnd, Children::iterator newStart, Children::iterator newEnd, Children::iterator end)
+    inline void updateChildren(const emscripten::val& parentNode, Children::iterator oldStart, Children::iterator oldEnd, Children::iterator oldChildrenEnd, Children::iterator newStart, Children::iterator newEnd, Children::iterator end)
     {
         bool oldKeys = false;
         std::unordered_map<std::string, Children::iterator> oldKeyTo;
+
+        // Logical reference for the leftmost VNode of the already-matched
+        // right-tail block in the DOM. Replaces a live `nextSibling(oldEnd)`
+        // DOM read so the diff stays correct under batched DOM operations.
+        Children::iterator rightAnchor = oldChildrenEnd;
+        const auto rightAnchorRef = [&]() {
+            return rightAnchor != oldChildrenEnd ? domSiblingNode(*rightAnchor) : emscripten::val::null();
+        };
 
         while (oldStart <= oldEnd && newStart <= newEnd) {
             if (!*oldStart) {
@@ -158,12 +166,14 @@ namespace wasmdom::internals
             } else if (sameVNode(*oldEnd, *newEnd)) {
                 if (*oldEnd != *newEnd)
                     patchVNode(*oldEnd, *newEnd);
+                rightAnchor = oldEnd;
                 --oldEnd;
                 --newEnd;
             } else if (sameVNode(*oldStart, *newEnd)) {
                 if (*oldStart != *newEnd)
                     patchVNode(*oldStart, *newEnd);
-                domapi::insertBefore(parentNode, newEnd->node(), nextSiblingNode(*oldEnd));
+                domapi::insertBefore(parentNode, newEnd->node(), rightAnchorRef());
+                rightAnchor = oldStart;
                 ++oldStart;
                 --newEnd;
             } else if (sameVNode(*oldEnd, *newStart)) {
@@ -227,7 +237,7 @@ namespace wasmdom::internals
                 const std::size_t oldChildrenNotEmpty = oldVnode.hash() & hasChildren;
 
                 if (childrenNotEmpty && oldChildrenNotEmpty) {
-                    updateChildren(domNode(oldVnode), oldVnode.begin(), std::prev(oldVnode.end()), vnode.begin(), std::prev(vnode.end()), vnode.end());
+                    updateChildren(domNode(oldVnode), oldVnode.begin(), std::prev(oldVnode.end()), oldVnode.end(), vnode.begin(), std::prev(vnode.end()), vnode.end());
                 } else if (childrenNotEmpty) {
                     addVNodes(domNode(oldVnode), emscripten::val::null(), vnode.begin(), std::prev(vnode.end()));
                 } else if (oldChildrenNotEmpty) {
