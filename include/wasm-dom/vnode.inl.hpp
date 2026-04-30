@@ -105,6 +105,12 @@ void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; 
 WASMDOM_INLINE
 void wasmdom::VNode::setParentNode(const emscripten::val& node) { _data->parentNode = node; }
 
+WASMDOM_INLINE
+std::unordered_map<std::string, emscripten::val>& wasmdom::VNode::installedListeners() { return _data->installedListeners; }
+
+WASMDOM_INLINE
+const std::unordered_map<std::string, emscripten::val>& wasmdom::VNode::installedListeners() const { return _data->installedListeners; }
+
 #endif
 
 WASMDOM_INLINE

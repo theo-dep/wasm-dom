@@ -56,6 +56,10 @@ namespace wasmdom
 #ifdef __EMSCRIPTEN__
             emscripten::val node{ emscripten::val::null() };
             emscripten::val parentNode{ emscripten::val::null() };
+            // Event listener wrappers actually attached to `node`, keyed by
+            // the formatted event name (no "on" prefix). Mirrors the JS-side
+            // wasmDomEvents map so the diff can avoid live DOM reads.
+            std::unordered_map<std::string, emscripten::val> installedListeners;
 #endif
             Children children;
         };
@@ -101,6 +105,9 @@ namespace wasmdom
 
         void setNode(const emscripten::val& node);
         void setParentNode(const emscripten::val& node);
+
+        std::unordered_map<std::string, emscripten::val>& installedListeners();
+        const std::unordered_map<std::string, emscripten::val>& installedListeners() const;
 #endif
 
         void normalize();

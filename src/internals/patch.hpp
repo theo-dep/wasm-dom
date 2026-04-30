@@ -231,6 +231,7 @@ namespace wasmdom::internals
         if (sameVNode(oldVnode, vnode)) {
             vnode.setNode(oldVnode.node());
             vnode.setParentNode(oldVnode.parentNode());
+            vnode.installedListeners() = oldVnode.installedListeners();
 
             if (vnode.hash() & isElementOrFragment) {
                 const std::size_t childrenNotEmpty = vnode.hash() & hasChildren;
