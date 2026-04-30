@@ -1,5 +1,7 @@
 #pragma once
 
+#include "internals/handletable.hpp"
+
 #include <emscripten/val.h>
 
 #include <string>
@@ -11,79 +13,85 @@ namespace wasmdom::internals
     // DOM mutation operations are recorded into a queue during a patch and
     // executed in batch at the end. Read-only operations (createElement, ...)
     // remain synchronous because their result is needed by subsequent ops.
+    //
+    // Node arguments are stored as NodeIds: uint32 indices into a JS-side
+    // refcounted handle table. Allocation happens at enqueue time, the slot
+    // is released after the op is executed during flush.
+    // JS values that are not DOM nodes (property values, event listeners)
+    // continue to be carried as emscripten::val.
 
     struct DomOpInsertBefore
     {
-        emscripten::val parent;
-        emscripten::val node;
-        emscripten::val ref;
+        NodeId parent;
+        NodeId node;
+        NodeId ref;
     };
 
     struct DomOpRemoveNode
     {
-        emscripten::val node;
+        NodeId node;
     };
 
     struct DomOpAppendChild
     {
-        emscripten::val parent;
-        emscripten::val child;
+        NodeId parent;
+        NodeId child;
     };
 
     struct DomOpSetAttribute
     {
-        emscripten::val node;
+        NodeId node;
         std::string name;
         std::string value;
     };
 
     struct DomOpRemoveAttribute
     {
-        emscripten::val node;
+        NodeId node;
         std::string name;
     };
 
     struct DomOpSetNodeValue
     {
-        emscripten::val node;
+        NodeId node;
         std::string value;
     };
 
     struct DomOpSetProperty
     {
-        emscripten::val node;
+        NodeId node;
         std::string name;
         emscripten::val value;
     };
 
     struct DomOpEnsureEventsObject
     {
-        emscripten::val node;
+        NodeId node;
     };
 
     struct DomOpSetEventsProperty
     {
-        emscripten::val node;
+        NodeId node;
         std::string name;
         emscripten::val value;
     };
 
     struct DomOpDeleteEventsProperty
     {
-        emscripten::val node;
+        NodeId node;
         std::string name;
     };
 
     struct DomOpAddEventListener
     {
-        emscripten::val node;
+        NodeId node;
         std::string event;
         emscripten::val listener;
     };
 
     struct DomOpRemoveEventListener
     {
-        emscripten::val node;
+        NodeId node;
         std::string event;
         emscripten::val listener;
     };

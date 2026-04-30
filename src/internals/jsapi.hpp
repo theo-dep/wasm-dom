@@ -2,6 +2,8 @@
 
 #include <emscripten/val.h>
 
+#include <cstdint>
+
 namespace wasmdom::internals::jsapi
 {
     extern "C" {
@@ -32,5 +34,11 @@ namespace wasmdom::internals::jsapi
 
     // conflict name with https://github.com/emscripten-core/emscripten/blob/main/src/closure-externs/closure-externs.js#L188
     void removeEventListener_(emscripten::EM_VAL node, const char* event, emscripten::EM_VAL listener);
+
+    // JS-side handle table for batched DOM operations.
+    std::uint32_t wdom_alloc(emscripten::EM_VAL handle);
+    emscripten::EM_VAL wdom_get(std::uint32_t id);
+    void wdom_retain(std::uint32_t id);
+    void wdom_drop(std::uint32_t id);
     }
 }

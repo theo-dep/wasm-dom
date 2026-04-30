@@ -1,6 +1,7 @@
 #include "bind.h"
 
 #include <emscripten/em_js.h>
+#include <stdint.h>
 
 typedef struct _EM_VAL* EM_VAL;
 
@@ -42,3 +43,39 @@ WASMDOM_EM_JS(void, addEventListener_, (EM_VAL node, const char * event, EM_VAL 
 
 WASMDOM_EM_JS(void, removeEventListener_, (EM_VAL node, const char * event, EM_VAL listener),
     { Emval.toValue(node).removeEventListener(UTF8ToString(event), Emval.toValue(listener), false); })
+
+// JS-side handle table for batched DOM operations.
+// Slot 0 is reserved for the null sentinel and is never freed.
+WASMDOM_EM_JS(uint32_t, wdom_alloc, (EM_VAL handle),
+    {
+        var t = Module.__wdomTable || (Module.__wdomTable = { nodes: [null], refs: [Number.MAX_SAFE_INTEGER], freeList: [] });
+        var id = t.freeList.length ? t.freeList.pop() : t.nodes.length;
+        t.nodes[id] = Emval.toValue(handle);
+        t.refs[id] = 1;
+        return id;
+    })
+
+WASMDOM_EM_JS(EM_VAL, wdom_get, (uint32_t id),
+    {
+        var t = Module.__wdomTable;
+        return Emval.toHandle(t ? t.nodes[id] : null);
+    })
+
+WASMDOM_EM_JS(void, wdom_retain, (uint32_t id),
+    {
+        if (id === 0) return;
+        var t = Module.__wdomTable;
+        if (!t) return;
+        ++t.refs[id];
+    })
+
+WASMDOM_EM_JS(void, wdom_drop, (uint32_t id),
+    {
+        if (id === 0) return;
+        var t = Module.__wdomTable;
+        if (!t) return;
+        if (--t.refs[id] === 0) {
+            t.nodes[id] = null;
+            t.freeList.push(id);
+        }
+    })

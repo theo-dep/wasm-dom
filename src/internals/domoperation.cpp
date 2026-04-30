@@ -2,6 +2,7 @@
 
 #include "domkeys.hpp"
 #include "domrecycler.hpp"
+#include "handletable.hpp"
 #include "jsapi.hpp"
 
 #include <wasm-dom/conf.h>
@@ -24,44 +25,73 @@ void wasmdom::internals::DomOperationQueue::flush()
             using T = std::decay_t<decltype(o)>;
 
             if constexpr (std::is_same_v<T, DomOpInsertBefore>) {
-                if (o.parent.isNull() || o.parent.isUndefined())
-                    return;
-                jsapi::insertBefore(o.parent.as_handle(), o.node.as_handle(), o.ref.as_handle());
+                const emscripten::val parent = resolveNode(o.parent);
+                const emscripten::val node = resolveNode(o.node);
+                const emscripten::val ref = resolveNode(o.ref);
+                if (!parent.isNull() && !parent.isUndefined())
+                    jsapi::insertBefore(parent.as_handle(), node.as_handle(), ref.as_handle());
+                dropNode(o.parent);
+                dropNode(o.node);
+                dropNode(o.ref);
             } else if constexpr (std::is_same_v<T, DomOpRemoveNode>) {
-                if (o.node.isNull() || o.node.isUndefined())
-                    return;
-                const emscripten::val parentNode{ o.node["parentNode"] };
-                if (!parentNode.isNull())
-                    jsapi::removeChild(parentNode.as_handle(), o.node.as_handle());
-                recycler().collect(o.node);
+                const emscripten::val node = resolveNode(o.node);
+                if (!node.isNull() && !node.isUndefined()) {
+                    const emscripten::val parentNode{ node["parentNode"] };
+                    if (!parentNode.isNull())
+                        jsapi::removeChild(parentNode.as_handle(), node.as_handle());
+                    recycler().collect(node);
+                }
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpAppendChild>) {
-                jsapi::appendChild(o.parent.as_handle(), o.child.as_handle());
+                const emscripten::val parent = resolveNode(o.parent);
+                const emscripten::val child = resolveNode(o.child);
+                jsapi::appendChild(parent.as_handle(), child.as_handle());
+                dropNode(o.parent);
+                dropNode(o.child);
             } else if constexpr (std::is_same_v<T, DomOpSetAttribute>) {
+                const emscripten::val node = resolveNode(o.node);
                 if (o.name.starts_with("xml:")) {
-                    jsapi::setAttributeNS(o.node.as_handle(), "http://www.w3.org/XML/1998/namespace", o.name.c_str(), o.value.c_str());
+                    jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/XML/1998/namespace", o.name.c_str(), o.value.c_str());
                 } else if (o.name.starts_with("xlink:")) {
-                    jsapi::setAttributeNS(o.node.as_handle(), "http://www.w3.org/1999/xlink", o.name.c_str(), o.value.c_str());
+                    jsapi::setAttributeNS(node.as_handle(), "http://www.w3.org/1999/xlink", o.name.c_str(), o.value.c_str());
                 } else {
-                    jsapi::setAttribute(o.node.as_handle(), o.name.c_str(), o.value.c_str());
+                    jsapi::setAttribute(node.as_handle(), o.name.c_str(), o.value.c_str());
                 }
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpRemoveAttribute>) {
-                jsapi::removeAttribute(o.node.as_handle(), o.name.c_str());
+                const emscripten::val node = resolveNode(o.node);
+                jsapi::removeAttribute(node.as_handle(), o.name.c_str());
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpSetNodeValue>) {
-                o.node.set("nodeValue", o.value);
+                emscripten::val node = resolveNode(o.node);
+                node.set("nodeValue", o.value);
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpSetProperty>) {
-                o.node.set(o.name, o.value);
+                emscripten::val node = resolveNode(o.node);
+                node.set(o.name, o.value);
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpEnsureEventsObject>) {
-                if (o.node[nodeEventsKey].isUndefined()) {
-                    o.node.set(nodeEventsKey, emscripten::val::object());
+                emscripten::val node = resolveNode(o.node);
+                if (node[nodeEventsKey].isUndefined()) {
+                    node.set(nodeEventsKey, emscripten::val::object());
                 }
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpSetEventsProperty>) {
-                o.node[nodeEventsKey].set(o.name, o.value);
+                emscripten::val node = resolveNode(o.node);
+                node[nodeEventsKey].set(o.name, o.value);
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpDeleteEventsProperty>) {
-                o.node[nodeEventsKey].delete_(o.name);
+                emscripten::val node = resolveNode(o.node);
+                node[nodeEventsKey].delete_(o.name);
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpAddEventListener>) {
-                jsapi::addEventListener_(o.node.as_handle(), o.event.c_str(), o.listener.as_handle());
+                const emscripten::val node = resolveNode(o.node);
+                jsapi::addEventListener_(node.as_handle(), o.event.c_str(), o.listener.as_handle());
+                dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpRemoveEventListener>) {
-                jsapi::removeEventListener_(o.node.as_handle(), o.event.c_str(), o.listener.as_handle());
+                const emscripten::val node = resolveNode(o.node);
+                jsapi::removeEventListener_(node.as_handle(), o.event.c_str(), o.listener.as_handle());
+                dropNode(o.node);
             }
         },
                    op);

@@ -2,6 +2,7 @@
 
 #include "domoperation.hpp"
 #include "domrecycler.hpp"
+#include "handletable.hpp"
 #include "jsapi.hpp"
 
 #include <wasm-dom/conf.h>
@@ -39,7 +40,7 @@ emscripten::val wasmdom::internals::domapi::createDocumentFragment()
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::insertBefore(const emscripten::val& parentNode, const emscripten::val& newNode, const emscripten::val& referenceNode)
 {
-    domQueue().enqueue(DomOpInsertBefore{ parentNode, newNode, referenceNode });
+    domQueue().enqueue(DomOpInsertBefore{ allocNode(parentNode), allocNode(newNode), allocNode(referenceNode) });
 }
 
 WASMDOM_SH_INLINE
@@ -47,67 +48,67 @@ void wasmdom::internals::domapi::removeNode(const emscripten::val& node)
 {
     if (node.isNull() || node.isUndefined())
         return;
-    domQueue().enqueue(DomOpRemoveNode{ node });
+    domQueue().enqueue(DomOpRemoveNode{ allocNode(node) });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::appendChild(const emscripten::val& parent, const emscripten::val& child)
 {
-    domQueue().enqueue(DomOpAppendChild{ parent, child });
+    domQueue().enqueue(DomOpAppendChild{ allocNode(parent), allocNode(child) });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::removeAttribute(const emscripten::val& node, const std::string& attribute)
 {
-    domQueue().enqueue(DomOpRemoveAttribute{ node, attribute });
+    domQueue().enqueue(DomOpRemoveAttribute{ allocNode(node), attribute });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setAttribute(const emscripten::val& node, const std::string& attribute, const std::string& value)
 {
-    domQueue().enqueue(DomOpSetAttribute{ node, attribute, value });
+    domQueue().enqueue(DomOpSetAttribute{ allocNode(node), attribute, value });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setNodeValue(const emscripten::val& node, const std::string& text)
 {
-    domQueue().enqueue(DomOpSetNodeValue{ node, text });
+    domQueue().enqueue(DomOpSetNodeValue{ allocNode(node), text });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setProperty(const emscripten::val& node, const std::string& name, const emscripten::val& value)
 {
-    domQueue().enqueue(DomOpSetProperty{ node, name, value });
+    domQueue().enqueue(DomOpSetProperty{ allocNode(node), name, value });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::ensureEventsObject(const emscripten::val& node)
 {
-    domQueue().enqueue(DomOpEnsureEventsObject{ node });
+    domQueue().enqueue(DomOpEnsureEventsObject{ allocNode(node) });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::setEventsProperty(const emscripten::val& node, const std::string& name, const emscripten::val& value)
 {
-    domQueue().enqueue(DomOpSetEventsProperty{ node, name, value });
+    domQueue().enqueue(DomOpSetEventsProperty{ allocNode(node), name, value });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::deleteEventsProperty(const emscripten::val& node, const std::string& name)
 {
-    domQueue().enqueue(DomOpDeleteEventsProperty{ node, name });
+    domQueue().enqueue(DomOpDeleteEventsProperty{ allocNode(node), name });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::addEventListener(const emscripten::val& node, const std::string& event, const emscripten::val& listener)
 {
-    domQueue().enqueue(DomOpAddEventListener{ node, event, listener });
+    domQueue().enqueue(DomOpAddEventListener{ allocNode(node), event, listener });
 }
 
 WASMDOM_SH_INLINE
 void wasmdom::internals::domapi::removeEventListener(const emscripten::val& node, const std::string& event, const emscripten::val& listener)
 {
-    domQueue().enqueue(DomOpRemoveEventListener{ node, event, listener });
+    domQueue().enqueue(DomOpRemoveEventListener{ allocNode(node), event, listener });
 }
 
 WASMDOM_SH_INLINE
