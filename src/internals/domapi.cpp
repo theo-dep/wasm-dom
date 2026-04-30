@@ -1,7 +1,6 @@
 #include "domapi.hpp"
 
 #include "domoperation.hpp"
-#include "domrecycler.hpp"
 #include "handletable.hpp"
 #include "jsapi.hpp"
 
@@ -11,25 +10,25 @@
 WASMDOM_SH_INLINE
 emscripten::val wasmdom::internals::domapi::createElement(const std::string& tag)
 {
-    return recycler().create(tag);
+    return emscripten::val::take_ownership(jsapi::createElement(tag.c_str()));
 }
 
 WASMDOM_SH_INLINE
 emscripten::val wasmdom::internals::domapi::createElementNS(const std::string& namespaceURI, const std::string& qualifiedName)
 {
-    return recycler().createNS(qualifiedName, namespaceURI);
+    return emscripten::val::take_ownership(jsapi::createElementNS(namespaceURI.c_str(), qualifiedName.c_str()));
 }
 
 WASMDOM_SH_INLINE
 emscripten::val wasmdom::internals::domapi::createTextNode(const std::string& text)
 {
-    return recycler().createText(text);
+    return emscripten::val::take_ownership(jsapi::createTextNode(text.c_str()));
 }
 
 WASMDOM_SH_INLINE
 emscripten::val wasmdom::internals::domapi::createComment(const std::string& comment)
 {
-    return recycler().createComment(comment);
+    return emscripten::val::take_ownership(jsapi::createComment(comment.c_str()));
 }
 
 WASMDOM_SH_INLINE

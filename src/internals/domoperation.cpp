@@ -1,7 +1,6 @@
 #include "domoperation.hpp"
 
 #include "domkeys.hpp"
-#include "domrecycler.hpp"
 #include "handletable.hpp"
 #include "jsapi.hpp"
 
@@ -39,7 +38,6 @@ void wasmdom::internals::DomOperationQueue::flush()
                     const emscripten::val parentNode{ node["parentNode"] };
                     if (!parentNode.isNull())
                         jsapi::removeChild(parentNode.as_handle(), node.as_handle());
-                    recycler().collect(node);
                 }
                 dropNode(o.node);
             } else if constexpr (std::is_same_v<T, DomOpAppendChild>) {

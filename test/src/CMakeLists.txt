@@ -11,7 +11,7 @@ if(EMSCRIPTEN)
     target_link_options(tests PRIVATE -sSTACK_SIZE=5MB)
     target_link_libraries(tests PRIVATE common)
 
-    list(APPEND TEST_CASES dataset domApi domRecycler eventListeners patch patchEvent patchFragment props toVNode)
+    list(APPEND TEST_CASES dataset domApi eventListeners patch patchEvent patchFragment props toVNode)
     set(TEST_EXTENSION .js)
 endif()
 
