@@ -2,6 +2,7 @@
 
 #include "wasm-dom/attribute.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -44,6 +45,25 @@ namespace wasmdom
     };
     static inline constexpr text_tag_t text_tag{};
 
+#ifdef __EMSCRIPTEN__
+    namespace internals
+    {
+        // Index into the JS-side handle table (`Module.__wdomTable`).
+        // 0 is the null sentinel; non-zero ids each hold one refcount.
+        using NodeId = std::uint32_t;
+        inline constexpr NodeId nullNodeId = 0;
+
+        // JS-side handle table primitives. allocNode takes a val and
+        // returns a freshly retained id (0 for null/undefined).
+        // resolveNode produces a new val handle for an id (id is unaffected).
+        // retain/drop adjust the refcount; the slot is freed when it hits 0.
+        NodeId allocNode(const emscripten::val& v);
+        emscripten::val resolveNode(NodeId id);
+        void retainNode(NodeId id);
+        void dropNode(NodeId id);
+    }
+#endif
+
     class VNode
     {
         struct SharedData
@@ -54,12 +74,15 @@ namespace wasmdom
             std::size_t hash{ 0 };
             VNodeAttributes data;
 #ifdef __EMSCRIPTEN__
-            emscripten::val node{ emscripten::val::null() };
-            emscripten::val parentNode{ emscripten::val::null() };
+            // Indices into the JS-side handle table (0 == null sentinel).
+            // Each non-zero id holds one refcount; released by ~SharedData.
+            internals::NodeId node{ internals::nullNodeId };
+            internals::NodeId parentNode{ internals::nullNodeId };
             // Event listener wrappers actually attached to `node`, keyed by
             // the formatted event name (no "on" prefix). Mirrors the JS-side
             // wasmDomEvents map so the diff can avoid live DOM reads.
             std::unordered_map<std::string, emscripten::val> installedListeners;
+            ~SharedData();
 #endif
             Children children;
         };
@@ -99,12 +122,19 @@ namespace wasmdom
         std::size_t hash() const;
 
 #ifdef __EMSCRIPTEN__
-        const emscripten::val& node() const;
-        emscripten::val& node();
-        const emscripten::val& parentNode() const;
+        emscripten::val node() const;
+        emscripten::val parentNode() const;
+
+        // Internal accessors for the JS-side handle ids (no JS round-trip).
+        internals::NodeId nodeId() const;
+        internals::NodeId parentNodeId() const;
 
         void setNode(const emscripten::val& node);
         void setParentNode(const emscripten::val& node);
+
+        // Take a retained reference on `id` (caller keeps its own ref).
+        void setNodeId(internals::NodeId id);
+        void setParentNodeId(internals::NodeId id);
 
         std::unordered_map<std::string, emscripten::val>& installedListeners();
         const std::unordered_map<std::string, emscripten::val>& installedListeners() const;

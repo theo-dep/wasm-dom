@@ -2,6 +2,7 @@
 
 #ifdef __EMSCRIPTEN__
 #include "internals/diff.hpp"
+#include "internals/jsapi.hpp"
 #endif
 
 #include <wasm-dom/conf.h>
@@ -113,6 +114,41 @@ std::string wasmdom::VNode::toHTML() const
 }
 
 #ifdef __EMSCRIPTEN__
+
+WASMDOM_SH_INLINE
+wasmdom::internals::NodeId wasmdom::internals::allocNode(const emscripten::val& v)
+{
+    if (v.isNull() || v.isUndefined())
+        return nullNodeId;
+    return jsapi::wdom_alloc(v.as_handle());
+}
+
+WASMDOM_SH_INLINE
+emscripten::val wasmdom::internals::resolveNode(NodeId id)
+{
+    return emscripten::val::take_ownership(jsapi::wdom_get(id));
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::retainNode(NodeId id)
+{
+    if (id != nullNodeId)
+        jsapi::wdom_retain(id);
+}
+
+WASMDOM_SH_INLINE
+void wasmdom::internals::dropNode(NodeId id)
+{
+    if (id != nullNodeId)
+        jsapi::wdom_drop(id);
+}
+
+WASMDOM_SH_INLINE
+wasmdom::VNode::SharedData::~SharedData()
+{
+    internals::dropNode(node);
+    internals::dropNode(parentNode);
+}
 
 WASMDOM_SH_INLINE
 void wasmdom::VNode::diff(const VNode& oldVnode)

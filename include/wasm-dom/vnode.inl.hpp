@@ -91,19 +91,50 @@ std::size_t wasmdom::VNode::hash() const { return _data->hash; }
 #ifdef __EMSCRIPTEN__
 
 WASMDOM_INLINE
-const emscripten::val& wasmdom::VNode::node() const { return _data->node; }
+emscripten::val wasmdom::VNode::node() const { return wasmdom::internals::resolveNode(_data->node); }
 
 WASMDOM_INLINE
-emscripten::val& wasmdom::VNode::node() { return _data->node; }
+emscripten::val wasmdom::VNode::parentNode() const { return wasmdom::internals::resolveNode(_data->parentNode); }
 
 WASMDOM_INLINE
-const emscripten::val& wasmdom::VNode::parentNode() const { return _data->parentNode; }
+wasmdom::internals::NodeId wasmdom::VNode::nodeId() const { return _data->node; }
 
 WASMDOM_INLINE
-void wasmdom::VNode::setNode(const emscripten::val& node) { _data->node = node; }
+wasmdom::internals::NodeId wasmdom::VNode::parentNodeId() const { return _data->parentNode; }
 
 WASMDOM_INLINE
-void wasmdom::VNode::setParentNode(const emscripten::val& node) { _data->parentNode = node; }
+void wasmdom::VNode::setNode(const emscripten::val& node)
+{
+    wasmdom::internals::dropNode(_data->node);
+    _data->node = wasmdom::internals::allocNode(node);
+}
+
+WASMDOM_INLINE
+void wasmdom::VNode::setParentNode(const emscripten::val& node)
+{
+    wasmdom::internals::dropNode(_data->parentNode);
+    _data->parentNode = wasmdom::internals::allocNode(node);
+}
+
+WASMDOM_INLINE
+void wasmdom::VNode::setNodeId(wasmdom::internals::NodeId id)
+{
+    if (id == _data->node)
+        return;
+    wasmdom::internals::retainNode(id);
+    wasmdom::internals::dropNode(_data->node);
+    _data->node = id;
+}
+
+WASMDOM_INLINE
+void wasmdom::VNode::setParentNodeId(wasmdom::internals::NodeId id)
+{
+    if (id == _data->parentNode)
+        return;
+    wasmdom::internals::retainNode(id);
+    wasmdom::internals::dropNode(_data->parentNode);
+    _data->parentNode = id;
+}
 
 WASMDOM_INLINE
 std::unordered_map<std::string, emscripten::val>& wasmdom::VNode::installedListeners() { return _data->installedListeners; }

@@ -2,13 +2,13 @@
 
 #include "internals/domapi.hpp"
 #include "internals/domkeys.hpp"
+#include "internals/handletable.hpp"
 #include "internals/wire.hpp"
 
 #include <wasm-dom/attribute.hpp>
 #include <wasm-dom/vnode.hpp>
 
 #include <ranges>
-#include <unordered_map>
 
 namespace wasmdom::internals
 {
@@ -17,18 +17,18 @@ namespace wasmdom::internals
         const Attrs& oldAttrs = oldVnode.attrs();
         const Attrs& attrs = vnode.attrs();
 
-        const emscripten::val& node = vnode.node();
+        const NodeId nodeId = vnode.nodeId();
 
         for (const auto& [key, _] : oldAttrs) {
             if (!attrs.contains(key)) {
-                domapi::removeAttribute(node, key);
+                domapi::removeAttribute(nodeId, key);
             }
         }
 
         for (const auto& [key, val] : attrs) {
             const auto oldAttrsIt = oldAttrs.find(key);
             if (oldAttrsIt == oldAttrs.cend() || oldAttrsIt->second != val) {
-                domapi::setAttribute(node, key, val);
+                domapi::setAttribute(nodeId, key, val);
             }
         }
     }
@@ -42,12 +42,12 @@ namespace wasmdom::internals
             props | std::views::keys | std::ranges::to<std::vector<std::string>>()
         );
 
-        const emscripten::val& node = vnode.node();
-        domapi::setProperty(node, nodeRawsKey, nodeRaws);
+        const NodeId nodeId = vnode.nodeId();
+        domapi::setProperty(nodeId, nodeRawsKey, nodeRaws);
 
         for (const auto& [key, _] : oldProps) {
             if (!props.contains(key)) {
-                domapi::setProperty(node, key, emscripten::val::undefined());
+                domapi::setProperty(nodeId, key, emscripten::val::undefined());
             }
         }
 
@@ -56,7 +56,7 @@ namespace wasmdom::internals
             if (oldPropsIt == oldProps.cend() ||
                 !val.strictlyEquals(oldPropsIt->second) ||
                 key == "value" || key == "checked") {
-                domapi::setProperty(node, key, val);
+                domapi::setProperty(nodeId, key, val);
             }
         }
     }
@@ -74,7 +74,7 @@ namespace wasmdom::internals
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        const emscripten::val& node = vnode.node();
+        const NodeId nodeId = vnode.nodeId();
         auto& installed = vnode.installedListeners();
 
         std::string eventKey;
@@ -83,20 +83,20 @@ namespace wasmdom::internals
             eventKey = formatEventKey(key);
             const auto installedIt = installed.find(eventKey);
             if (installedIt != installed.end()) {
-                domapi::removeEventListener(node, eventKey, installedIt->second);
-                domapi::deleteEventsProperty(node, eventKey);
+                domapi::removeEventListener(nodeId, eventKey, installedIt->second);
+                domapi::deleteEventsProperty(nodeId, eventKey);
                 installed.erase(installedIt);
             }
         }
 
-        domapi::ensureEventsObject(node);
+        domapi::ensureEventsObject(nodeId);
 
         for (auto& [key, val] : callbacks) {
             eventKey = formatEventKey(key);
             const emscripten::val jsCallback = toJsCallback(val);
             const emscripten::val functorAdapter = jsCallback["opcall"].call<emscripten::val>("bind", jsCallback);
-            domapi::addEventListener(node, eventKey, functorAdapter);
-            domapi::setEventsProperty(node, eventKey, functorAdapter);
+            domapi::addEventListener(nodeId, eventKey, functorAdapter);
+            domapi::setEventsProperty(nodeId, eventKey, functorAdapter);
             installed[eventKey] = functorAdapter;
         }
     }
