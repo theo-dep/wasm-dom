@@ -1,3 +1,4 @@
+#include "internals/domoperation.hpp"
 #include "internals/patch.hpp"
 
 #include <wasm-dom/conf.h>
@@ -21,6 +22,8 @@ const wasmdom::VNode& wasmdom::VDom::patch(VNode vnode)
 
     internals::patchVNode(_currentNode, vnode);
     _currentNode = vnode;
+
+    internals::domQueue().flush();
 
     return _currentNode;
 }

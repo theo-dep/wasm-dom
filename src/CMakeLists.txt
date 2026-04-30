@@ -12,6 +12,7 @@ add_library(wasm-dom STATIC
 if(EMSCRIPTEN)
     target_sources(wasm-dom PRIVATE
         internals/domapi.cpp
+        internals/domoperation.cpp
         internals/domrecycler.cpp
         internals/wire.cpp
         vdom.cpp

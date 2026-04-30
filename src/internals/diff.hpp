@@ -2,7 +2,6 @@
 
 #include "internals/domapi.hpp"
 #include "internals/domkeys.hpp"
-#include "internals/jsapi.hpp"
 #include "internals/wire.hpp"
 
 #include <wasm-dom/attribute.hpp>
@@ -43,12 +42,12 @@ namespace wasmdom::internals
             props | std::views::keys | std::ranges::to<std::vector<std::string>>()
         );
 
-        emscripten::val& node = vnode.node();
-        node.set(nodeRawsKey, nodeRaws);
+        const emscripten::val& node = vnode.node();
+        domapi::setProperty(node, nodeRawsKey, nodeRaws);
 
         for (const auto& [key, _] : oldProps) {
             if (!props.contains(key)) {
-                node.set(key, emscripten::val::undefined());
+                domapi::setProperty(node, key, emscripten::val::undefined());
             }
         }
 
@@ -58,7 +57,7 @@ namespace wasmdom::internals
                 !val.strictlyEquals(oldPropsIt->second) ||
                 ((key == "value" || key == "checked") &&
                  !val.strictlyEquals(node[key]))) {
-                node.set(key, val);
+                domapi::setProperty(node, key, val);
             }
         }
     }
@@ -76,26 +75,24 @@ namespace wasmdom::internals
         const Callbacks& oldCallbacks = oldVnode.callbacks();
         const Callbacks& callbacks = vnode.callbacks();
 
-        emscripten::val& node = vnode.node();
+        const emscripten::val& node = vnode.node();
 
         std::string eventKey;
 
         for (const auto& [key, _] : oldCallbacks) {
             eventKey = formatEventKey(key);
-            jsapi::removeEventListener_(node.as_handle(), eventKey.c_str(), node[nodeEventsKey][eventKey].as_handle());
-            node[nodeEventsKey].delete_(eventKey);
+            domapi::removeEventListener(node, eventKey, node[nodeEventsKey][eventKey]);
+            domapi::deleteEventsProperty(node, eventKey);
         }
 
-        if (node[nodeEventsKey].isUndefined()) {
-            node.set(nodeEventsKey, emscripten::val::object());
-        }
+        domapi::ensureEventsObject(node);
 
         for (auto& [key, val] : callbacks) {
             eventKey = formatEventKey(key);
             const emscripten::val jsCallback = toJsCallback(val);
             const emscripten::val functorAdapter = jsCallback["opcall"].call<emscripten::val>("bind", jsCallback);
-            jsapi::addEventListener_(node.as_handle(), eventKey.c_str(), functorAdapter.as_handle());
-            node[nodeEventsKey].set(eventKey, functorAdapter);
+            domapi::addEventListener(node, eventKey, functorAdapter);
+            domapi::setEventsProperty(node, eventKey, functorAdapter);
         }
     }
 

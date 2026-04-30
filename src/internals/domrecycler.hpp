@@ -41,4 +41,9 @@ namespace wasmdom::internals
         std::unordered_map<std::string, std::vector<emscripten::val>> _nodes;
     };
 
+    inline DomRecycler& recycler()
+    {
+        static DomRecycler instance(true);
+        return instance;
+    }
 }
